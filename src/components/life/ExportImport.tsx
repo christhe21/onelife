@@ -1,6 +1,14 @@
 import { useRef, useState } from "react";
-import { Download, Upload } from "lucide-react";
+import { Download, Upload, FileJson, ChevronDown, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAppData } from "@/lib/app-data";
+import { useAppData, downloadTemplate, downloadSkillsReference } from "@/lib/app-data";
 import { toast } from "sonner";
 
 export function ExportImport() {
@@ -25,11 +33,8 @@ export function ExportImport() {
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
-    if (hasData) {
-      setPendingFile(f);
-    } else {
-      doImport(f);
-    }
+    if (hasData) setPendingFile(f);
+    else doImport(f);
   };
 
   const doImport = async (f: File) => {
@@ -43,12 +48,37 @@ export function ExportImport() {
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={exportJSON}>
-        <Download className="mr-2 h-4 w-4" /> Export
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
-        <Upload className="mr-2 h-4 w-4" /> Import
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="sm" variant="outline" className="rounded-full">
+            <FileJson className="mr-2 h-4 w-4" />
+            Data
+            <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-70" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-60">
+          <DropdownMenuLabel>Session data</DropdownMenuLabel>
+          <DropdownMenuItem onClick={exportJSON}>
+            <Download className="mr-2 h-4 w-4" />
+            Export current session
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => inputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Import from JSON…
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>For offline / AI use</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => { downloadTemplate(); toast.success("Template downloaded"); }}>
+            <FileJson className="mr-2 h-4 w-4" />
+            Download JSON template
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { downloadSkillsReference(); toast.success("Skills reference downloaded"); }}>
+            <BookOpen className="mr-2 h-4 w-4" />
+            Download skills reference
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <input
         ref={inputRef}
         type="file"
@@ -56,6 +86,7 @@ export function ExportImport() {
         className="hidden"
         onChange={onFile}
       />
+
       <AlertDialog open={!!pendingFile} onOpenChange={(o) => !o && setPendingFile(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
