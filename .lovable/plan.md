@@ -1,56 +1,76 @@
-# Life Manager App — Plan
+## 1. JSON template download
 
-A single-page app to manage goals, sub-goals, tasks, and a bucket list — all stored in-memory for the session, with JSON export/import for persistence between visits.
+Add a third button next to Export / Import in the header: **Template**.
 
-## Core Principles
-- **No login, no database, no localStorage.** All data lives in React state for the current session.
-- **Export/Import JSON** is the only persistence: download a file, re-upload it next time to restore.
-- **Skills taxonomy** categorizes every goal (Life, Technical, Health, Creative, Financial, Social, Career, Learning).
+Clicking it downloads `life-manager-template.json` containing a fully-populated example payload with at least **two entries per array** and every optional field filled in, so an AI agent (or you, offline) can use it as a schema reference.
 
-## Features
+Template shape (same as Export, so Import accepts it as-is):
 
-### 1. Goals & Sub-Goals
-- Create a goal with: title, description, skill category, start date, target date, status (Not Started / In Progress / Completed).
-- Each goal has **sub-goals** (milestones) with their own title, target date, and done/not-done state.
-- **Progress %** auto-calculated from completed sub-goals (or manual override if no sub-goals).
-- **Timeline view** per goal: horizontal bar from start → target date, with sub-goal markers placed by date.
-- "What are you doing?" — a free-text *current activity / next step* field per goal.
+```json
+{
+  "version": 1,
+  "exportedAt": "2026-01-01T00:00:00.000Z",
+  "goals": [
+    {
+      "id": "example-goal-1",
+      "title": "Learn TypeScript",
+      "description": "Become proficient in advanced TS patterns",
+      "skill": "technical",
+      "startDate": "2026-01-01",
+      "targetDate": "2026-06-30",
+      "status": "in_progress",
+      "currentActivity": "Reading the handbook, chapter 4",
+      "manualProgress": 25,
+      "subGoals": [
+        { "id": "sg-1", "title": "Finish handbook", "targetDate": "2026-03-01", "done": false },
+        { "id": "sg-2", "title": "Build a typed CLI", "targetDate": "2026-05-15", "done": false }
+      ]
+    },
+    {
+      "id": "example-goal-2",
+      "title": "Run a 10K",
+      "description": "Train consistently for a 10K race",
+      "skill": "health",
+      "startDate": "2026-02-01",
+      "targetDate": "2026-08-01",
+      "status": "not_started",
+      "currentActivity": "Buying running shoes",
+      "subGoals": [
+        { "id": "sg-3", "title": "Run 3K nonstop", "targetDate": "2026-03-15", "done": false },
+        { "id": "sg-4", "title": "Run 5K nonstop", "targetDate": "2026-05-15", "done": false }
+      ]
+    }
+  ],
+  "tasks": [
+    { "id": "t-1", "title": "Draft project outline", "dueDate": "2026-01-10", "priority": "high",   "done": false, "goalId": "example-goal-1" },
+    { "id": "t-2", "title": "Buy running shoes",    "dueDate": "2026-02-05", "priority": "medium", "done": false, "goalId": "example-goal-2" }
+  ],
+  "bucketList": [
+    { "id": "b-1", "title": "See the northern lights", "notes": "Ideally from Norway",  "targetYear": 2027, "achieved": false },
+    { "id": "b-2", "title": "Publish a book",          "notes": "Short story collection", "targetYear": 2030, "achieved": false }
+  ]
+}
+```
 
-### 2. Skills
-- Predefined skill categories with icons and colors (Life, Technical, Health, Creative, Financial, Social, Career, Learning).
-- Every goal must be tagged with one skill.
-- Filter/group goals by skill on the dashboard.
+A `SKILL_IDS` comment block won't fit in JSON, so the dropdown in `ExportImport` will also offer a **"Skills reference"** menu item that downloads `skills-reference.json` listing all valid `skill` IDs (`life`, `technical`, `health`, `creative`, `financial`, `social`, `career`, `learning`) with labels — useful when prompting an AI agent.
 
-### 3. Tasks (simple to-do)
-- Flat task list with: title, target completion date, priority (Low/Med/High), done checkbox.
-- Optionally link a task to a goal (dropdown).
-- Sort by due date; overdue tasks highlighted.
+Implementation: add `downloadTemplate()` and `downloadSkillsReference()` helpers in `src/lib/app-data.tsx`, and convert the two header buttons into a compact action group (Export / Import / Template via dropdown) in `ExportImport.tsx`.
 
-### 4. Bucket List
-- Separate simple list: title, optional notes, optional target year, checkbox for "achieved".
-- No skill/timeline — intentionally lightweight.
+## 2. UI rework via design directions
 
-### 5. Export / Import
-- **Download button**: serializes `{ goals, tasks, bucketList, exportedAt, version }` to a JSON file (`life-manager-YYYY-MM-DD.json`).
-- **Upload button**: file picker → validates JSON shape → **replaces** current session state with file contents.
-- Confirmation dialog before overwriting existing in-session data on import.
+The current UI is functional but plain — default shadcn cards, flat header, no visual hierarchy on the dashboard, mobile-cramped tabs.
 
-## UI Structure
-- **Top bar**: app title, Export button, Import button, session indicator ("Unsaved — export to keep your data").
-- **Tabs**: Dashboard | Goals | Tasks | Bucket List.
-  - **Dashboard**: summary cards (active goals, tasks due this week, bucket items), goals grouped by skill.
-  - **Goals**: list with progress bars; click to open detail (sub-goals, timeline, current activity).
-  - **Tasks**: table/list with quick-add input at top.
-  - **Bucket List**: simple cards with checkboxes.
+Flow:
 
-## Technical Notes
-- React + Vite + Tailwind + shadcn/ui (already the project default).
-- Single React Context (`AppDataProvider`) holds `{ goals, tasks, bucketList }` and exposes CRUD + `exportJSON()` / `importJSON(file)`.
-- Types: `Goal`, `SubGoal`, `Task`, `BucketItem`, `Skill` (enum).
-- Timeline rendered with a simple flex/absolute-positioned bar (no chart lib needed).
-- File download via `Blob` + `URL.createObjectURL`; upload via hidden `<input type="file">`.
-- Schema version field in export so future imports can migrate.
-- Beforeunload warning when unsaved changes exist (since nothing persists).
+1. Capture a screenshot of the current Dashboard + Goals view in the live preview.
+2. Ask three visual-preference questions in one round (palette, type pair, layout) — answers lock the design tokens.
+3. Generate 3 rendered design directions for the app shell + dashboard + goal card, all sharing the locked tokens but varying composition / density / emphasis.
+4. Show the 3 prototypes back as a `prototype` question — you pick one.
+5. Implement the chosen direction: update `src/styles.css` tokens, restyle `index.tsx` header/tabs, `Dashboard.tsx` summary cards and skill groups, and `Goals.tsx` goal card + timeline. No logic changes — purely presentational.
 
-## Out of Scope
-- Auth, backend, cloud sync, recurring tasks, notifications, collaboration.
+Mobile (your current 384px viewport) gets explicit attention: tabs become a scrollable row or icon strip, header actions collapse into the dropdown, goal cards go single-column with a tighter timeline.
+
+## Out of scope
+
+- No changes to data model, storage, or import/export logic beyond adding the template download.
+- No new features (no recurring tasks, no reminders, etc.).
