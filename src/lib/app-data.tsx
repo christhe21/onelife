@@ -61,6 +61,81 @@ export const EXPORT_VERSION = 1;
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+function downloadJSON(payload: unknown, filename: string) {
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export const TEMPLATE_PAYLOAD = {
+  version: 1,
+  exportedAt: "2026-01-01T00:00:00.000Z",
+  goals: [
+    {
+      id: "example-goal-1",
+      title: "Learn TypeScript",
+      description: "Become proficient in advanced TS patterns",
+      skill: "technical",
+      startDate: "2026-01-01",
+      targetDate: "2026-06-30",
+      status: "in_progress",
+      currentActivity: "Reading the handbook, chapter 4",
+      manualProgress: 25,
+      subGoals: [
+        { id: "sg-1", title: "Finish handbook", targetDate: "2026-03-01", done: false },
+        { id: "sg-2", title: "Build a typed CLI", targetDate: "2026-05-15", done: false },
+      ],
+    },
+    {
+      id: "example-goal-2",
+      title: "Run a 10K",
+      description: "Train consistently for a 10K race",
+      skill: "health",
+      startDate: "2026-02-01",
+      targetDate: "2026-08-01",
+      status: "not_started",
+      currentActivity: "Buying running shoes",
+      manualProgress: 0,
+      subGoals: [
+        { id: "sg-3", title: "Run 3K nonstop", targetDate: "2026-03-15", done: false },
+        { id: "sg-4", title: "Run 5K nonstop", targetDate: "2026-05-15", done: false },
+      ],
+    },
+  ],
+  tasks: [
+    { id: "t-1", title: "Draft project outline", dueDate: "2026-01-10", priority: "high", done: false, goalId: "example-goal-1" },
+    { id: "t-2", title: "Buy running shoes", dueDate: "2026-02-05", priority: "medium", done: false, goalId: "example-goal-2" },
+  ],
+  bucketList: [
+    { id: "b-1", title: "See the northern lights", notes: "Ideally from Norway", targetYear: 2027, achieved: false },
+    { id: "b-2", title: "Publish a book", notes: "Short story collection", targetYear: 2030, achieved: false },
+  ],
+};
+
+export function downloadTemplate() {
+  downloadJSON(TEMPLATE_PAYLOAD, "life-manager-template.json");
+}
+
+export function downloadSkillsReference() {
+  downloadJSON(
+    {
+      description:
+        "Valid values for the `skill` field on each goal. Use one of these IDs when generating data for life-manager-template.json.",
+      skills: SKILLS.map((s) => ({ id: s.id, label: s.label })),
+      statuses: ["not_started", "in_progress", "completed"],
+      taskPriorities: ["low", "medium", "high"],
+    },
+    "life-manager-skills-reference.json",
+  );
+}
+
+
 interface Ctx extends AppData {
   addGoal: (g: Omit<Goal, "id" | "subGoals">) => void;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
