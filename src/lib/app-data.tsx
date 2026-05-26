@@ -86,7 +86,7 @@ function downloadJSON(payload: unknown, filename: string) {
 
 // ---- Normalization (defensive — accepts AI-generated / partial JSON) ----
 function normalizeGoal(raw: any): Goal {
-  const skill: SkillId = SKILL_IDS.has(raw?.skill) ? raw.skill : "life";
+  const skill: SkillId = typeof raw?.skill === "string" && raw.skill.trim() ? raw.skill : "life";
   const status: GoalStatus = STATUSES.includes(raw?.status) ? raw.status : "not_started";
   const today = new Date().toISOString().slice(0, 10);
   const subGoals: SubGoal[] = Array.isArray(raw?.subGoals)
