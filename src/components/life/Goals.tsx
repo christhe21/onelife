@@ -266,7 +266,7 @@ function GoalCard({ goal }: { goal: Goal }) {
             <div>
               <Label className="text-xs">Sub-goals / milestones</Label>
               <div className="mt-2 space-y-1">
-                {goal.subGoals.map((s) => (
+                {subGoals.map((s) => (
                   <div key={s.id} className="flex items-center gap-2 rounded-md border p-2">
                     <Checkbox
                       checked={s.done}
@@ -283,7 +283,7 @@ function GoalCard({ goal }: { goal: Goal }) {
                     </Button>
                   </div>
                 ))}
-                {goal.subGoals.length === 0 && (
+                {subGoals.length === 0 && (
                   <p className="text-xs text-muted-foreground">No milestones yet.</p>
                 )}
               </div>
@@ -312,6 +312,34 @@ function GoalCard({ goal }: { goal: Goal }) {
                 </Button>
               </div>
             </div>
+            <div>
+              <Label className="text-xs">Quick-add task linked to this goal</Label>
+              <div className="mt-2 flex gap-2">
+                <Input
+                  placeholder="Task title"
+                  value={quickTask}
+                  onChange={(e) => setQuickTask(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && quickTask.trim()) {
+                      addTask({ title: quickTask, priority: "medium", goalId: goal.id });
+                      setQuickTask("");
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    if (!quickTask.trim()) return;
+                    addTask({ title: quickTask, priority: "medium", goalId: goal.id });
+                    setQuickTask("");
+                  }}
+                >
+                  Add task
+                </Button>
+              </div>
+            </div>
+
           </div>
         )}
       </CardContent>
