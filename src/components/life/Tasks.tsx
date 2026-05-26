@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAppData, type Task } from "@/lib/app-data";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
@@ -19,6 +28,77 @@ const PRIORITY_COLOR: Record<Task["priority"], string> = {
   medium: "bg-amber-200 text-amber-800",
   high: "bg-red-200 text-red-800",
 };
+
+function EditTaskDialog({ task }: { task: Task }) {
+  const { updateTask, goals } = useAppData();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: task.title,
+    dueDate: task.dueDate ?? "",
+    priority: task.priority,
+    goalId: task.goalId ?? "none",
+  });
+
+  const save = () => {
+    if (!form.title.trim()) return;
+    updateTask(task.id, {
+      title: form.title,
+      dueDate: form.dueDate || undefined,
+      priority: form.priority,
+      goalId: form.goalId === "none" ? undefined : form.goalId,
+    });
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" title="Edit task">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Edit task</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Title</Label>
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Due date</Label>
+              <Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+            </div>
+            <div>
+              <Label>Priority</Label>
+              <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as Task["priority"] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label>Linked goal</Label>
+            <Select value={form.goalId} onValueChange={(v) => setForm({ ...form, goalId: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No goal</SelectItem>
+                {goals.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter><Button onClick={save}>Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function Tasks() {
   const { tasks, goals, addTask, toggleTask, deleteTask } = useAppData();
@@ -61,12 +141,7 @@ export function Tasks() {
             onKeyDown={(e) => e.key === "Enter" && submit()}
             className="min-w-[200px] flex-1"
           />
-          <Input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="w-40"
-          />
+          <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-40" />
           <Select value={priority} onValueChange={(v) => setPriority(v as Task["priority"])}>
             <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -117,6 +192,7 @@ export function Tasks() {
                   <span className={`rounded-full px-2 py-0.5 text-xs ${PRIORITY_COLOR[t.priority]}`}>
                     {t.priority}
                   </span>
+                  <EditTaskDialog task={t} />
                   <Button size="icon" variant="ghost" onClick={() => deleteTask(t.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
