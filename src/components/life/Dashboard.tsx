@@ -93,19 +93,12 @@ export function Dashboard() {
                 <CardContent className="space-y-3">
                   {gs.map((g) => {
                     const pct = progressFor(g);
-                    const meta = skillMeta(g.skill);
                     return (
-                      <div key={g.id} className="space-y-1.5">
+                      <div key={g.id} className="space-y-1">
                         <div className="flex items-center justify-between gap-2 text-sm">
                           <span className="truncate font-medium">{g.title}</span>
-                          <span
-                            className="text-xs font-semibold tabular-nums"
-                            style={{ color: meta.color }}
-                          >
-                            {pct}%
-                          </span>
                         </div>
-                        <Progress value={pct} />
+                        <SkillProgress value={pct} color={skill.color} />
                         {g.currentActivity && (
                           <p className="text-xs italic text-muted-foreground">
                             “{g.currentActivity}”
