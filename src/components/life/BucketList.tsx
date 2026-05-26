@@ -1,12 +1,65 @@
 import { useState } from "react";
-import { Plus, Trash2, Target } from "lucide-react";
+import { Plus, Trash2, Target, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import { useAppData } from "@/lib/app-data";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { useAppData, type BucketItem } from "@/lib/app-data";
 import { toast } from "sonner";
+
+function EditBucketDialog({ item }: { item: BucketItem }) {
+  const { updateBucket } = useAppData();
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: item.title,
+    notes: item.notes ?? "",
+    targetYear: item.targetYear ? String(item.targetYear) : "",
+  });
+  const save = () => {
+    if (!form.title.trim()) return;
+    updateBucket(item.id, {
+      title: form.title,
+      notes: form.notes || undefined,
+      targetYear: form.targetYear ? Number(form.targetYear) : undefined,
+    });
+    setOpen(false);
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" title="Edit"><Pencil className="h-4 w-4" /></Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Edit bucket item</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Title</Label>
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div>
+            <Label>Target year</Label>
+            <Input type="number" value={form.targetYear} onChange={(e) => setForm({ ...form, targetYear: e.target.value })} />
+          </div>
+          <div>
+            <Label>Notes</Label>
+            <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </div>
+        </div>
+        <DialogFooter><Button onClick={save}>Save</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function BucketList() {
   const { bucketList, addBucket, toggleBucket, deleteBucket, addGoal } = useAppData();
