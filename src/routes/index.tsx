@@ -7,6 +7,7 @@ import { Dashboard } from "@/components/life/Dashboard";
 import { Goals } from "@/components/life/Goals";
 import { Tasks } from "@/components/life/Tasks";
 import { BucketList } from "@/components/life/BucketList";
+import { Skills } from "@/components/life/Skills";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -46,6 +47,7 @@ function Shell() {
       {tab === "goals" && <Goals />}
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
+      {tab === "skills" && <Skills />}
     </AppShell>
   );
 }
