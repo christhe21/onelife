@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-export const SKILLS = [
+export interface Skill {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export const DEFAULT_SKILLS: Skill[] = [
   { id: "life", label: "Life", color: "#10b981" },
   { id: "technical", label: "Technical", color: "#3b82f6" },
   { id: "health", label: "Health", color: "#ef4444" },
@@ -9,9 +15,11 @@ export const SKILLS = [
   { id: "social", label: "Social", color: "#ec4899" },
   { id: "career", label: "Career", color: "#6366f1" },
   { id: "learning", label: "Learning", color: "#14b8a6" },
-] as const;
+];
 
-export type SkillId = (typeof SKILLS)[number]["id"];
+// Back-compat export (for template/reference downloads — read-only).
+export const SKILLS = DEFAULT_SKILLS;
+export type SkillId = string;
 export type GoalStatus = "not_started" | "in_progress" | "completed";
 
 export interface SubGoal {
