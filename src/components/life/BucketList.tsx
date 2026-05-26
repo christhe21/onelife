@@ -81,9 +81,36 @@ export function BucketList() {
                     <div className="mt-1 text-xs text-muted-foreground">{b.notes}</div>
                   )}
                 </div>
-                <Button size="icon" variant="ghost" onClick={() => deleteBucket(b.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex flex-col gap-1">
+                  {!b.achieved && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      title="Promote to a goal"
+                      onClick={() => {
+                        const today = new Date().toISOString().slice(0, 10);
+                        const target = b.targetYear
+                          ? `${b.targetYear}-12-31`
+                          : new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10);
+                        addGoal({
+                          title: b.title,
+                          description: b.notes,
+                          skill: "life",
+                          startDate: today,
+                          targetDate: target,
+                          status: "not_started",
+                        });
+                        toast.success(`"${b.title}" added as a goal`);
+                      }}
+                    >
+                      <Target className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button size="icon" variant="ghost" onClick={() => deleteBucket(b.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
               </CardContent>
             </Card>
           ))}
