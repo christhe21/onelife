@@ -197,12 +197,16 @@ function GoalCard({ goal }: { goal: Goal }) {
     addSubGoal,
     toggleSubGoal,
     deleteSubGoal,
+    addTask,
   } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const [subTitle, setSubTitle] = useState("");
   const [subDate, setSubDate] = useState("");
+  const [quickTask, setQuickTask] = useState("");
   const meta = skillMeta(goal.skill);
   const pct = progressFor(goal);
+  const subGoals = goal.subGoals ?? [];
+
 
   return (
     <Card>
