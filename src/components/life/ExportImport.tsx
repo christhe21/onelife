@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Download, Upload, FileJson, ChevronDown, BookOpen } from "lucide-react";
+import { Download, Upload, FileJson, ChevronDown, BookOpen, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,9 +23,11 @@ import { useAppData, downloadTemplate, downloadSkillsReference } from "@/lib/app
 import { toast } from "sonner";
 
 export function ExportImport() {
-  const { exportJSON, importJSON, goals, tasks, bucketList } = useAppData();
+  const { exportJSON, importJSON, clearAll, goals, tasks, bucketList } = useAppData();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+
 
   const hasData = goals.length + tasks.length + bucketList.length > 0;
 
