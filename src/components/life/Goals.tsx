@@ -160,7 +160,7 @@ function Timeline({ goal }: { goal: Goal }) {
           className="absolute inset-y-0 left-0 rounded-full bg-primary/20"
           style={{ width: `${nowPct}%` }}
         />
-        {goal.subGoals.map((s) => {
+        {(goal.subGoals ?? []).map((s) => {
           if (!s.targetDate) return null;
           const t = new Date(s.targetDate).getTime();
           const pct = Math.min(100, Math.max(0, ((t - start) / span) * 100));
@@ -176,6 +176,7 @@ function Timeline({ goal }: { goal: Goal }) {
             />
           );
         })}
+
         <div
           className="absolute top-0 h-full w-0.5 bg-foreground"
           style={{ left: `${nowPct}%` }}
@@ -197,12 +198,16 @@ function GoalCard({ goal }: { goal: Goal }) {
     addSubGoal,
     toggleSubGoal,
     deleteSubGoal,
+    addTask,
   } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const [subTitle, setSubTitle] = useState("");
   const [subDate, setSubDate] = useState("");
+  const [quickTask, setQuickTask] = useState("");
   const meta = skillMeta(goal.skill);
   const pct = progressFor(goal);
+  const subGoals = goal.subGoals ?? [];
+
 
   return (
     <Card>
@@ -262,7 +267,7 @@ function GoalCard({ goal }: { goal: Goal }) {
             <div>
               <Label className="text-xs">Sub-goals / milestones</Label>
               <div className="mt-2 space-y-1">
-                {goal.subGoals.map((s) => (
+                {subGoals.map((s) => (
                   <div key={s.id} className="flex items-center gap-2 rounded-md border p-2">
                     <Checkbox
                       checked={s.done}
@@ -279,7 +284,7 @@ function GoalCard({ goal }: { goal: Goal }) {
                     </Button>
                   </div>
                 ))}
-                {goal.subGoals.length === 0 && (
+                {subGoals.length === 0 && (
                   <p className="text-xs text-muted-foreground">No milestones yet.</p>
                 )}
               </div>
@@ -308,6 +313,34 @@ function GoalCard({ goal }: { goal: Goal }) {
                 </Button>
               </div>
             </div>
+            <div>
+              <Label className="text-xs">Quick-add task linked to this goal</Label>
+              <div className="mt-2 flex gap-2">
+                <Input
+                  placeholder="Task title"
+                  value={quickTask}
+                  onChange={(e) => setQuickTask(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && quickTask.trim()) {
+                      addTask({ title: quickTask, priority: "medium", goalId: goal.id });
+                      setQuickTask("");
+                    }
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    if (!quickTask.trim()) return;
+                    addTask({ title: quickTask, priority: "medium", goalId: goal.id });
+                    setQuickTask("");
+                  }}
+                >
+                  Add task
+                </Button>
+              </div>
+            </div>
+
           </div>
         )}
       </CardContent>

@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAppData } from "@/lib/app-data";
+import { toast } from "sonner";
 
 export function BucketList() {
-  const { bucketList, addBucket, toggleBucket, deleteBucket } = useAppData();
+  const { bucketList, addBucket, toggleBucket, deleteBucket, addGoal } = useAppData();
+
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [year, setYear] = useState("");
@@ -79,9 +81,36 @@ export function BucketList() {
                     <div className="mt-1 text-xs text-muted-foreground">{b.notes}</div>
                   )}
                 </div>
-                <Button size="icon" variant="ghost" onClick={() => deleteBucket(b.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex flex-col gap-1">
+                  {!b.achieved && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      title="Promote to a goal"
+                      onClick={() => {
+                        const today = new Date().toISOString().slice(0, 10);
+                        const target = b.targetYear
+                          ? `${b.targetYear}-12-31`
+                          : new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10);
+                        addGoal({
+                          title: b.title,
+                          description: b.notes,
+                          skill: "life",
+                          startDate: today,
+                          targetDate: target,
+                          status: "not_started",
+                        });
+                        toast.success(`"${b.title}" added as a goal`);
+                      }}
+                    >
+                      <Target className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button size="icon" variant="ghost" onClick={() => deleteBucket(b.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+
               </CardContent>
             </Card>
           ))}
