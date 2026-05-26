@@ -160,7 +160,7 @@ function Timeline({ goal }: { goal: Goal }) {
           className="absolute inset-y-0 left-0 rounded-full bg-primary/20"
           style={{ width: `${nowPct}%` }}
         />
-        {goal.subGoals.map((s) => {
+        {(goal.subGoals ?? []).map((s) => {
           if (!s.targetDate) return null;
           const t = new Date(s.targetDate).getTime();
           const pct = Math.min(100, Math.max(0, ((t - start) / span) * 100));
@@ -176,6 +176,7 @@ function Timeline({ goal }: { goal: Goal }) {
             />
           );
         })}
+
         <div
           className="absolute top-0 h-full w-0.5 bg-foreground"
           style={{ left: `${nowPct}%` }}
