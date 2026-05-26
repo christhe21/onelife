@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAppData } from "@/lib/app-data";
+import { toast } from "sonner";
 
 export function BucketList() {
-  const { bucketList, addBucket, toggleBucket, deleteBucket } = useAppData();
+  const { bucketList, addBucket, toggleBucket, deleteBucket, addGoal } = useAppData();
+
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [year, setYear] = useState("");
