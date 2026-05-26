@@ -256,6 +256,11 @@ export function downloadSkillsReference() {
 }
 
 interface Ctx extends AppData {
+  skills: Skill[];
+  addSkill: (s: Omit<Skill, "id"> & { id?: string }) => void;
+  updateSkill: (id: string, patch: Partial<Omit<Skill, "id">>) => void;
+  deleteSkill: (id: string) => void;
+
   addGoal: (g: Omit<Goal, "id" | "subGoals">) => string;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
@@ -264,10 +269,12 @@ interface Ctx extends AppData {
   deleteSubGoal: (goalId: string, subId: string) => void;
 
   addTask: (t: Omit<Task, "id" | "done">) => void;
+  updateTask: (id: string, patch: Partial<Task>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
 
   addBucket: (b: Omit<BucketItem, "id" | "achieved">) => void;
+  updateBucket: (id: string, patch: Partial<BucketItem>) => void;
   toggleBucket: (id: string) => void;
   deleteBucket: (id: string) => void;
 
@@ -279,35 +286,52 @@ interface Ctx extends AppData {
 
 const AppDataContext = createContext<Ctx | null>(null);
 
-function loadInitial(): AppData {
-  if (typeof window === "undefined") return { goals: [], tasks: [], bucketList: [] };
+interface Stored extends AppData {
+  skills?: Skill[];
+}
+
+function loadInitial(): Stored {
+  const empty: Stored = { goals: [], tasks: [], bucketList: [], skills: DEFAULT_SKILLS };
+  if (typeof window === "undefined") return empty;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { goals: [], tasks: [], bucketList: [] };
-    return normalizeAppData(JSON.parse(raw));
+    if (!raw) return empty;
+    const parsed = JSON.parse(raw);
+    const data = normalizeAppData(parsed);
+    const skills: Skill[] = Array.isArray(parsed?.skills) && parsed.skills.length
+      ? parsed.skills
+          .filter((s: any) => s && typeof s.id === "string" && typeof s.label === "string")
+          .map((s: any) => ({ id: s.id, label: s.label, color: typeof s.color === "string" ? s.color : "#10b981" }))
+      : DEFAULT_SKILLS;
+    return { ...data, skills };
   } catch {
-    return { goals: [], tasks: [], bucketList: [] };
+    return empty;
   }
 }
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const initial = useRef<AppData | null>(null);
+  const initial = useRef<Stored | null>(null);
   if (initial.current === null) initial.current = loadInitial();
 
   const [goals, setGoals] = useState<Goal[]>(initial.current.goals);
   const [tasks, setTasks] = useState<Task[]>(initial.current.tasks);
   const [bucketList, setBucketList] = useState<BucketItem[]>(initial.current.bucketList);
+  const [skills, setSkills] = useState<Skill[]>(initial.current.skills ?? DEFAULT_SKILLS);
 
-  // Persist to localStorage on every change (debounced).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const t = setTimeout(() => {
       try {
         window.localStorage.setItem(
           STORAGE_KEY,
-          JSON.stringify({ version: EXPORT_VERSION, goals, tasks, bucketList }),
+          JSON.stringify({ version: EXPORT_VERSION, goals, tasks, bucketList, skills }),
         );
       } catch {
+        /* quota exceeded — ignore */
+      }
+    }, 200);
+    return () => clearTimeout(t);
+  }, [goals, tasks, bucketList, skills]);
         /* quota exceeded — ignore */
       }
     }, 200);
