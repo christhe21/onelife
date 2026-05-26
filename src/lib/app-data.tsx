@@ -381,11 +381,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ),
 
     addTask: (t) => setTasks((cur) => [...cur, { ...t, id: uid(), done: false }]),
+    updateTask: (id, patch) =>
+      setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t))),
     toggleTask: (id) =>
       setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, done: !t.done } : t))),
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
 
     addBucket: (b) => setBucketList((cur) => [...cur, { ...b, id: uid(), achieved: false }]),
+    updateBucket: (id, patch) =>
+      setBucketList((cur) => cur.map((b) => (b.id === id ? { ...b, ...patch } : b))),
     toggleBucket: (id) =>
       setBucketList((cur) =>
         cur.map((b) => (b.id === id ? { ...b, achieved: !b.achieved } : b))
