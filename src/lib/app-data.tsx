@@ -332,16 +332,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }, 200);
     return () => clearTimeout(t);
   }, [goals, tasks, bucketList, skills]);
-        /* quota exceeded — ignore */
-      }
-    }, 200);
-    return () => clearTimeout(t);
-  }, [goals, tasks, bucketList]);
-
   const value: Ctx = {
     goals,
     tasks,
     bucketList,
+    skills,
+    addSkill: (s) =>
+      setSkills((cur) => {
+        const id = s.id?.trim() || s.label.toLowerCase().replace(/[^a-z0-9]+/g, "-") || uid();
+        if (cur.some((x) => x.id === id)) return cur;
+        return [...cur, { id, label: s.label, color: s.color }];
+      }),
+    updateSkill: (id, patch) =>
+      setSkills((cur) => cur.map((s) => (s.id === id ? { ...s, ...patch } : s))),
+    deleteSkill: (id) => setSkills((cur) => cur.filter((s) => s.id !== id)),
     addGoal: (g) => {
       const id = uid();
       setGoals((cur) => [...cur, { ...g, id, subGoals: [] }]);
