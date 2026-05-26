@@ -69,7 +69,6 @@ export const EXPORT_VERSION = 1;
 const STORAGE_KEY = "life-manager:v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const SKILL_IDS = new Set(SKILLS.map((s) => s.id));
 const STATUSES: GoalStatus[] = ["not_started", "in_progress", "completed"];
 const PRIORITIES: Task["priority"][] = ["low", "medium", "high"];
 
