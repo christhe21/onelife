@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 export const SKILLS = [
   { id: "life", label: "Life", color: "#10b981" },
@@ -58,8 +58,12 @@ export interface AppData {
 }
 
 export const EXPORT_VERSION = 1;
+const STORAGE_KEY = "life-manager:v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+const SKILL_IDS = new Set(SKILLS.map((s) => s.id));
+const STATUSES: GoalStatus[] = ["not_started", "in_progress", "completed"];
+const PRIORITIES: Task["priority"][] = ["low", "medium", "high"];
 
 function downloadJSON(payload: unknown, filename: string) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -73,9 +77,118 @@ function downloadJSON(payload: unknown, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+// ---- Normalization (defensive — accepts AI-generated / partial JSON) ----
+function normalizeGoal(raw: any): Goal {
+  const skill: SkillId = SKILL_IDS.has(raw?.skill) ? raw.skill : "life";
+  const status: GoalStatus = STATUSES.includes(raw?.status) ? raw.status : "not_started";
+  const today = new Date().toISOString().slice(0, 10);
+  const subGoals: SubGoal[] = Array.isArray(raw?.subGoals)
+    ? raw.subGoals.map((s: any) => ({
+        id: typeof s?.id === "string" ? s.id : uid(),
+        title: String(s?.title ?? "Untitled milestone"),
+        targetDate: typeof s?.targetDate === "string" ? s.targetDate : undefined,
+        done: Boolean(s?.done),
+      }))
+    : [];
+  return {
+    id: typeof raw?.id === "string" ? raw.id : uid(),
+    title: String(raw?.title ?? "Untitled goal"),
+    description: typeof raw?.description === "string" ? raw.description : undefined,
+    skill,
+    startDate: typeof raw?.startDate === "string" ? raw.startDate : today,
+    targetDate: typeof raw?.targetDate === "string" ? raw.targetDate : today,
+    status,
+    currentActivity: typeof raw?.currentActivity === "string" ? raw.currentActivity : undefined,
+    subGoals,
+    manualProgress:
+      typeof raw?.manualProgress === "number"
+        ? Math.max(0, Math.min(100, raw.manualProgress))
+        : undefined,
+  };
+}
+
+function normalizeTask(raw: any): Task {
+  return {
+    id: typeof raw?.id === "string" ? raw.id : uid(),
+    title: String(raw?.title ?? "Untitled task"),
+    dueDate: typeof raw?.dueDate === "string" ? raw.dueDate : undefined,
+    priority: PRIORITIES.includes(raw?.priority) ? raw.priority : "medium",
+    done: Boolean(raw?.done),
+    goalId: typeof raw?.goalId === "string" ? raw.goalId : undefined,
+  };
+}
+
+function normalizeBucket(raw: any): BucketItem {
+  return {
+    id: typeof raw?.id === "string" ? raw.id : uid(),
+    title: String(raw?.title ?? "Untitled"),
+    notes: typeof raw?.notes === "string" ? raw.notes : undefined,
+    targetYear: typeof raw?.targetYear === "number" ? raw.targetYear : undefined,
+    achieved: Boolean(raw?.achieved),
+  };
+}
+
+function normalizeAppData(raw: any): AppData {
+  if (!raw || typeof raw !== "object") throw new Error("File is not a JSON object");
+  const issues: string[] = [];
+  if (raw.goals != null && !Array.isArray(raw.goals)) issues.push("`goals` must be an array");
+  if (raw.tasks != null && !Array.isArray(raw.tasks)) issues.push("`tasks` must be an array");
+  if (raw.bucketList != null && !Array.isArray(raw.bucketList))
+    issues.push("`bucketList` must be an array");
+  if (issues.length) throw new Error(issues.join("; "));
+  return {
+    goals: Array.isArray(raw.goals) ? raw.goals.map(normalizeGoal) : [],
+    tasks: Array.isArray(raw.tasks) ? raw.tasks.map(normalizeTask) : [],
+    bucketList: Array.isArray(raw.bucketList) ? raw.bucketList.map(normalizeBucket) : [],
+  };
+}
+
+// ---- Template (with embedded AI system prompt) ----
+const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Your job is to interview the user and then produce a JSON file they can upload into the "Life Manager" app.
+
+Step 1 — Interview the user. Ask conversationally (one batch of questions at a time):
+  1. Age, life stage, location/time-zone, weekly hours available for personal goals.
+  2. Current skills they're proud of, and 2–3 areas they want to grow.
+  3. 3–7 concrete goals across different areas of life (career, health, financial, learning, creative, social, life, technical).
+     For each: a clear title, a one-sentence description, a realistic target date, and 2–4 sub-goals/milestones with their own target dates.
+  4. Tasks for the next 2 weeks (5–10), each with due date, priority (low|medium|high), and optionally linked to one of the goals above.
+  5. A small bucket list (3–6 lifetime wishes) with optional target year.
+
+Step 2 — Output ONE JSON code block matching this exact shape (no commentary outside the block):
+
+{
+  "version": 1,
+  "goals":      [ { "id": "...", "title": "...", "description": "...", "skill": "<one of: life|technical|health|creative|financial|social|career|learning>", "startDate": "YYYY-MM-DD", "targetDate": "YYYY-MM-DD", "status": "not_started|in_progress|completed", "currentActivity": "...", "manualProgress": 0, "subGoals": [ { "id": "...", "title": "...", "targetDate": "YYYY-MM-DD", "done": false } ] } ],
+  "tasks":      [ { "id": "...", "title": "...", "dueDate": "YYYY-MM-DD", "priority": "low|medium|high", "done": false, "goalId": "<id of a goal above, or omit>" } ],
+  "bucketList": [ { "id": "...", "title": "...", "notes": "...", "targetYear": 2030, "achieved": false } ]
+}
+
+Rules:
+  - Use stable string ids (e.g. "goal-1", "sg-1", "t-1", "b-1"). Reference them consistently from tasks.goalId.
+  - Dates must be ISO YYYY-MM-DD. \`skill\` must be one of the allowed IDs above.
+  - Keep targets realistic given the user's stated weekly hours.
+  - Default \`manualProgress\` to 0 and \`done\`/\`achieved\` to false unless the user says otherwise.
+  - Do not invent personal facts the user did not share. Ask if unsure.`;
+
 export const TEMPLATE_PAYLOAD = {
   version: 1,
   exportedAt: "2026-01-01T00:00:00.000Z",
+  _ai: {
+    instructions:
+      "Copy `_ai.systemPrompt` below into ChatGPT / Claude / any LLM as the system message. Answer its questions. It will return a JSON block — save it as a .json file and upload it via the Data → Import menu. Keys prefixed with `_` are ignored by the importer, so this same file can be uploaded as-is.",
+    systemPrompt: AI_SYSTEM_PROMPT,
+    schema: {
+      skill: SKILLS.map((s) => s.id),
+      goalStatus: STATUSES,
+      taskPriority: PRIORITIES,
+      dateFormat: "YYYY-MM-DD",
+      required: {
+        goal: ["id", "title", "skill", "startDate", "targetDate", "status", "subGoals"],
+        task: ["id", "title", "priority", "done"],
+        bucketItem: ["id", "title", "achieved"],
+      },
+    },
+  },
   goals: [
     {
       id: "example-goal-1",
@@ -128,16 +241,15 @@ export function downloadSkillsReference() {
       description:
         "Valid values for the `skill` field on each goal. Use one of these IDs when generating data for life-manager-template.json.",
       skills: SKILLS.map((s) => ({ id: s.id, label: s.label })),
-      statuses: ["not_started", "in_progress", "completed"],
-      taskPriorities: ["low", "medium", "high"],
+      statuses: STATUSES,
+      taskPriorities: PRIORITIES,
     },
     "life-manager-skills-reference.json",
   );
 }
 
-
 interface Ctx extends AppData {
-  addGoal: (g: Omit<Goal, "id" | "subGoals">) => void;
+  addGoal: (g: Omit<Goal, "id" | "subGoals">) => string;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
   addSubGoal: (goalId: string, title: string, targetDate?: string) => void;
@@ -155,32 +267,55 @@ interface Ctx extends AppData {
   exportJSON: () => void;
   importJSON: (file: File) => Promise<void>;
   replaceAll: (data: AppData) => void;
+  clearAll: () => void;
 }
 
 const AppDataContext = createContext<Ctx | null>(null);
 
-export function AppDataProvider({ children }: { children: ReactNode }) {
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [bucketList, setBucketList] = useState<BucketItem[]>([]);
+function loadInitial(): AppData {
+  if (typeof window === "undefined") return { goals: [], tasks: [], bucketList: [] };
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { goals: [], tasks: [], bucketList: [] };
+    return normalizeAppData(JSON.parse(raw));
+  } catch {
+    return { goals: [], tasks: [], bucketList: [] };
+  }
+}
 
-  // Warn before unload if user has data (it's session-only).
+export function AppDataProvider({ children }: { children: ReactNode }) {
+  const initial = useRef<AppData | null>(null);
+  if (initial.current === null) initial.current = loadInitial();
+
+  const [goals, setGoals] = useState<Goal[]>(initial.current.goals);
+  const [tasks, setTasks] = useState<Task[]>(initial.current.tasks);
+  const [bucketList, setBucketList] = useState<BucketItem[]>(initial.current.bucketList);
+
+  // Persist to localStorage on every change (debounced).
   useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      if (goals.length || tasks.length || bucketList.length) {
-        e.preventDefault();
-        e.returnValue = "";
+    if (typeof window === "undefined") return;
+    const t = setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ version: EXPORT_VERSION, goals, tasks, bucketList }),
+        );
+      } catch {
+        /* quota exceeded — ignore */
       }
-    };
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
+    }, 200);
+    return () => clearTimeout(t);
   }, [goals, tasks, bucketList]);
 
   const value: Ctx = {
     goals,
     tasks,
     bucketList,
-    addGoal: (g) => setGoals((cur) => [...cur, { ...g, id: uid(), subGoals: [] }]),
+    addGoal: (g) => {
+      const id = uid();
+      setGoals((cur) => [...cur, { ...g, id, subGoals: [] }]);
+      return id;
+    },
     updateGoal: (id, patch) =>
       setGoals((cur) => cur.map((g) => (g.id === id ? { ...g, ...patch } : g))),
     deleteGoal: (id) => setGoals((cur) => cur.filter((g) => g.id !== id)),
@@ -234,18 +369,32 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     importJSON: async (file) => {
       const text = await file.text();
-      const data = JSON.parse(text);
-      if (!data || !Array.isArray(data.goals) || !Array.isArray(data.tasks) || !Array.isArray(data.bucketList)) {
-        throw new Error("Invalid file shape");
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error("File is not valid JSON");
       }
+      const data = normalizeAppData(parsed);
       setGoals(data.goals);
       setTasks(data.tasks);
       setBucketList(data.bucketList);
     },
     replaceAll: (data) => {
-      setGoals(data.goals);
-      setTasks(data.tasks);
-      setBucketList(data.bucketList);
+      const norm = normalizeAppData(data);
+      setGoals(norm.goals);
+      setTasks(norm.tasks);
+      setBucketList(norm.bucketList);
+    },
+    clearAll: () => {
+      setGoals([]);
+      setTasks([]);
+      setBucketList([]);
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
     },
   };
 
@@ -259,11 +408,12 @@ export function useAppData() {
 }
 
 export function progressFor(g: Goal): number {
-  if (g.subGoals.length === 0) return g.manualProgress ?? (g.status === "completed" ? 100 : 0);
-  const done = g.subGoals.filter((s) => s.done).length;
-  return Math.round((done / g.subGoals.length) * 100);
+  const subs = g.subGoals ?? [];
+  if (subs.length === 0) return g.manualProgress ?? (g.status === "completed" ? 100 : 0);
+  const done = subs.filter((s) => s.done).length;
+  return Math.round((done / subs.length) * 100);
 }
 
 export function skillMeta(id: SkillId) {
-  return SKILLS.find((s) => s.id === id)!;
+  return SKILLS.find((s) => s.id === id) ?? SKILLS[0];
 }
