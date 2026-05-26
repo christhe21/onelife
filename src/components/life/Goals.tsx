@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SkillProgress } from "@/components/life/SkillProgress";
 import {
   Select,
   SelectContent,
@@ -24,9 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  SKILLS,
   progressFor,
-  skillMeta,
   useAppData,
   type GoalStatus,
   type SkillId,
@@ -39,37 +37,44 @@ const STATUS_LABEL: Record<GoalStatus, string> = {
   completed: "Completed",
 };
 
-function NewGoalDialog() {
-  const { addGoal } = useAppData();
+interface GoalDialogProps {
+  goal?: Goal;
+  trigger: React.ReactNode;
+}
+
+function GoalDialog({ goal, trigger }: GoalDialogProps) {
+  const { addGoal, updateGoal, skills } = useAppData();
   const [open, setOpen] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
+  const isEdit = !!goal;
+
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    skill: "life" as SkillId,
-    startDate: today,
-    targetDate: today,
-    status: "not_started" as GoalStatus,
-    currentActivity: "",
+    title: goal?.title ?? "",
+    description: goal?.description ?? "",
+    skill: (goal?.skill ?? "life") as SkillId,
+    startDate: goal?.startDate ?? today,
+    targetDate: goal?.targetDate ?? today,
+    status: (goal?.status ?? "not_started") as GoalStatus,
+    currentActivity: goal?.currentActivity ?? "",
+    manualProgress: goal?.manualProgress ?? 0,
   });
 
   const submit = () => {
     if (!form.title.trim()) return;
-    addGoal(form);
+    if (isEdit) {
+      updateGoal(goal!.id, form);
+    } else {
+      addGoal(form);
+    }
     setOpen(false);
-    setForm({ ...form, title: "", description: "", currentActivity: "" });
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="mr-2 h-4 w-4" /> New goal
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create a goal</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit goal" : "Create a goal"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
@@ -92,7 +97,7 @@ function NewGoalDialog() {
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {SKILLS.map((s) => (
+                  {skills.map((s) => (
                     <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -137,9 +142,21 @@ function NewGoalDialog() {
               onChange={(e) => setForm({ ...form, currentActivity: e.target.value })}
             />
           </div>
+          <div>
+            <Label>Manual progress override (%) — used when there are no milestones</Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              value={form.manualProgress}
+              onChange={(e) =>
+                setForm({ ...form, manualProgress: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })
+              }
+            />
+          </div>
         </div>
         <DialogFooter>
-          <Button onClick={submit}>Create</Button>
+          <Button onClick={submit}>{isEdit ? "Save changes" : "Create"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -154,7 +171,7 @@ function Timeline({ goal }: { goal: Goal }) {
   const nowPct = Math.min(100, Math.max(0, ((now - start) / span) * 100));
 
   return (
-    <div className="mt-2">
+    <div className="mt-3">
       <div className="relative h-6 rounded-full bg-muted">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-primary/20"
@@ -176,7 +193,6 @@ function Timeline({ goal }: { goal: Goal }) {
             />
           );
         })}
-
         <div
           className="absolute top-0 h-full w-0.5 bg-foreground"
           style={{ left: `${nowPct}%` }}
@@ -199,15 +215,15 @@ function GoalCard({ goal }: { goal: Goal }) {
     toggleSubGoal,
     deleteSubGoal,
     addTask,
+    skills,
   } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const [subTitle, setSubTitle] = useState("");
   const [subDate, setSubDate] = useState("");
   const [quickTask, setQuickTask] = useState("");
-  const meta = skillMeta(goal.skill);
+  const meta = skills.find((s) => s.id === goal.skill) ?? skills[0] ?? { label: goal.skill, color: "#10b981" };
   const pct = progressFor(goal);
   const subGoals = goal.subGoals ?? [];
-
 
   return (
     <Card>
@@ -226,6 +242,14 @@ function GoalCard({ goal }: { goal: Goal }) {
             )}
           </div>
           <div className="flex items-center gap-1">
+            <GoalDialog
+              goal={goal}
+              trigger={
+                <Button size="icon" variant="ghost" title="Edit goal">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              }
+            />
             <Button size="icon" variant="ghost" onClick={() => setExpanded((e) => !e)}>
               {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
@@ -247,11 +271,10 @@ function GoalCard({ goal }: { goal: Goal }) {
               ))}
             </SelectContent>
           </Select>
-          <span className="text-xs text-muted-foreground">{pct}% complete</span>
         </div>
       </CardHeader>
       <CardContent>
-        <Progress value={pct} />
+        <SkillProgress value={pct} color={meta.color} size="lg" />
         <Timeline goal={goal} />
         {expanded && (
           <div className="mt-4 space-y-4">
@@ -340,7 +363,6 @@ function GoalCard({ goal }: { goal: Goal }) {
                 </Button>
               </div>
             </div>
-
           </div>
         )}
       </CardContent>
@@ -349,7 +371,7 @@ function GoalCard({ goal }: { goal: Goal }) {
 }
 
 export function Goals() {
-  const { goals } = useAppData();
+  const { goals, skills } = useAppData();
   const [filter, setFilter] = useState<SkillId | "all">("all");
   const filtered = filter === "all" ? goals : goals.filter((g) => g.skill === filter);
 
@@ -362,13 +384,19 @@ export function Goals() {
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All skills</SelectItem>
-              {SKILLS.map((s) => (
+              {skills.map((s) => (
                 <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <NewGoalDialog />
+        <GoalDialog
+          trigger={
+            <Button size="sm">
+              <Plus className="mr-2 h-4 w-4" /> New goal
+            </Button>
+          }
+        />
       </div>
       {filtered.length === 0 ? (
         <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">

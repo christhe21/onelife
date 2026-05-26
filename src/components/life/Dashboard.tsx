@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Target, ListChecks, Sparkles, TrendingUp } from "lucide-react";
-import { SKILLS, progressFor, skillMeta, useAppData } from "@/lib/app-data";
+import { SkillProgress } from "@/components/life/SkillProgress";
+import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
-  const { goals, tasks, bucketList } = useAppData();
+  const { goals, tasks, bucketList, skills } = useAppData();
   const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
   const activeGoals = goals.filter((g) => g.status !== "completed").length;
@@ -18,10 +18,9 @@ export function Dashboard() {
   const avgProgress =
     goals.length === 0 ? 0 : Math.round(goals.reduce((a, g) => a + progressFor(g), 0) / goals.length);
 
-  const bySkill = SKILLS.map((s) => ({
-    skill: s,
-    goals: goals.filter((g) => g.skill === s.id),
-  })).filter((g) => g.goals.length > 0);
+  const bySkill = skills
+    .map((s) => ({ skill: s, goals: goals.filter((g) => g.skill === s.id) }))
+    .filter((g) => g.goals.length > 0);
 
   const isEmpty = goals.length + tasks.length + bucketList.length === 0;
 
@@ -94,19 +93,12 @@ export function Dashboard() {
                 <CardContent className="space-y-3">
                   {gs.map((g) => {
                     const pct = progressFor(g);
-                    const meta = skillMeta(g.skill);
                     return (
-                      <div key={g.id} className="space-y-1.5">
+                      <div key={g.id} className="space-y-1">
                         <div className="flex items-center justify-between gap-2 text-sm">
                           <span className="truncate font-medium">{g.title}</span>
-                          <span
-                            className="text-xs font-semibold tabular-nums"
-                            style={{ color: meta.color }}
-                          >
-                            {pct}%
-                          </span>
                         </div>
-                        <Progress value={pct} />
+                        <SkillProgress value={pct} color={skill.color} />
                         {g.currentActivity && (
                           <p className="text-xs italic text-muted-foreground">
                             “{g.currentActivity}”

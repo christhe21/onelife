@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
-export const SKILLS = [
+export interface Skill {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export const DEFAULT_SKILLS: Skill[] = [
   { id: "life", label: "Life", color: "#10b981" },
   { id: "technical", label: "Technical", color: "#3b82f6" },
   { id: "health", label: "Health", color: "#ef4444" },
@@ -9,9 +15,11 @@ export const SKILLS = [
   { id: "social", label: "Social", color: "#ec4899" },
   { id: "career", label: "Career", color: "#6366f1" },
   { id: "learning", label: "Learning", color: "#14b8a6" },
-] as const;
+];
 
-export type SkillId = (typeof SKILLS)[number]["id"];
+// Back-compat export (for template/reference downloads — read-only).
+export const SKILLS = DEFAULT_SKILLS;
+export type SkillId = string;
 export type GoalStatus = "not_started" | "in_progress" | "completed";
 
 export interface SubGoal {
@@ -61,7 +69,6 @@ export const EXPORT_VERSION = 1;
 const STORAGE_KEY = "life-manager:v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const SKILL_IDS = new Set(SKILLS.map((s) => s.id));
 const STATUSES: GoalStatus[] = ["not_started", "in_progress", "completed"];
 const PRIORITIES: Task["priority"][] = ["low", "medium", "high"];
 
@@ -79,7 +86,7 @@ function downloadJSON(payload: unknown, filename: string) {
 
 // ---- Normalization (defensive — accepts AI-generated / partial JSON) ----
 function normalizeGoal(raw: any): Goal {
-  const skill: SkillId = SKILL_IDS.has(raw?.skill) ? raw.skill : "life";
+  const skill: SkillId = typeof raw?.skill === "string" && raw.skill.trim() ? raw.skill : "life";
   const status: GoalStatus = STATUSES.includes(raw?.status) ? raw.status : "not_started";
   const today = new Date().toISOString().slice(0, 10);
   const subGoals: SubGoal[] = Array.isArray(raw?.subGoals)
@@ -249,6 +256,11 @@ export function downloadSkillsReference() {
 }
 
 interface Ctx extends AppData {
+  skills: Skill[];
+  addSkill: (s: Omit<Skill, "id"> & { id?: string }) => void;
+  updateSkill: (id: string, patch: Partial<Omit<Skill, "id">>) => void;
+  deleteSkill: (id: string) => void;
+
   addGoal: (g: Omit<Goal, "id" | "subGoals">) => string;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
@@ -257,10 +269,12 @@ interface Ctx extends AppData {
   deleteSubGoal: (goalId: string, subId: string) => void;
 
   addTask: (t: Omit<Task, "id" | "done">) => void;
+  updateTask: (id: string, patch: Partial<Task>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
 
   addBucket: (b: Omit<BucketItem, "id" | "achieved">) => void;
+  updateBucket: (id: string, patch: Partial<BucketItem>) => void;
   toggleBucket: (id: string) => void;
   deleteBucket: (id: string) => void;
 
@@ -272,45 +286,66 @@ interface Ctx extends AppData {
 
 const AppDataContext = createContext<Ctx | null>(null);
 
-function loadInitial(): AppData {
-  if (typeof window === "undefined") return { goals: [], tasks: [], bucketList: [] };
+interface Stored extends AppData {
+  skills?: Skill[];
+}
+
+function loadInitial(): Stored {
+  const empty: Stored = { goals: [], tasks: [], bucketList: [], skills: DEFAULT_SKILLS };
+  if (typeof window === "undefined") return empty;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { goals: [], tasks: [], bucketList: [] };
-    return normalizeAppData(JSON.parse(raw));
+    if (!raw) return empty;
+    const parsed = JSON.parse(raw);
+    const data = normalizeAppData(parsed);
+    const skills: Skill[] = Array.isArray(parsed?.skills) && parsed.skills.length
+      ? parsed.skills
+          .filter((s: any) => s && typeof s.id === "string" && typeof s.label === "string")
+          .map((s: any) => ({ id: s.id, label: s.label, color: typeof s.color === "string" ? s.color : "#10b981" }))
+      : DEFAULT_SKILLS;
+    return { ...data, skills };
   } catch {
-    return { goals: [], tasks: [], bucketList: [] };
+    return empty;
   }
 }
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
-  const initial = useRef<AppData | null>(null);
+  const initial = useRef<Stored | null>(null);
   if (initial.current === null) initial.current = loadInitial();
 
   const [goals, setGoals] = useState<Goal[]>(initial.current.goals);
   const [tasks, setTasks] = useState<Task[]>(initial.current.tasks);
   const [bucketList, setBucketList] = useState<BucketItem[]>(initial.current.bucketList);
+  const [skills, setSkills] = useState<Skill[]>(initial.current.skills ?? DEFAULT_SKILLS);
 
-  // Persist to localStorage on every change (debounced).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const t = setTimeout(() => {
       try {
         window.localStorage.setItem(
           STORAGE_KEY,
-          JSON.stringify({ version: EXPORT_VERSION, goals, tasks, bucketList }),
+          JSON.stringify({ version: EXPORT_VERSION, goals, tasks, bucketList, skills }),
         );
       } catch {
         /* quota exceeded — ignore */
       }
     }, 200);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList]);
-
+  }, [goals, tasks, bucketList, skills]);
   const value: Ctx = {
     goals,
     tasks,
     bucketList,
+    skills,
+    addSkill: (s) =>
+      setSkills((cur) => {
+        const id = s.id?.trim() || s.label.toLowerCase().replace(/[^a-z0-9]+/g, "-") || uid();
+        if (cur.some((x) => x.id === id)) return cur;
+        return [...cur, { id, label: s.label, color: s.color }];
+      }),
+    updateSkill: (id, patch) =>
+      setSkills((cur) => cur.map((s) => (s.id === id ? { ...s, ...patch } : s))),
+    deleteSkill: (id) => setSkills((cur) => cur.filter((s) => s.id !== id)),
     addGoal: (g) => {
       const id = uid();
       setGoals((cur) => [...cur, { ...g, id, subGoals: [] }]);
@@ -346,11 +381,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ),
 
     addTask: (t) => setTasks((cur) => [...cur, { ...t, id: uid(), done: false }]),
+    updateTask: (id, patch) =>
+      setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t))),
     toggleTask: (id) =>
       setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, done: !t.done } : t))),
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
 
     addBucket: (b) => setBucketList((cur) => [...cur, { ...b, id: uid(), achieved: false }]),
+    updateBucket: (id, patch) =>
+      setBucketList((cur) => cur.map((b) => (b.id === id ? { ...b, ...patch } : b))),
     toggleBucket: (id) =>
       setBucketList((cur) =>
         cur.map((b) => (b.id === id ? { ...b, achieved: !b.achieved } : b))
