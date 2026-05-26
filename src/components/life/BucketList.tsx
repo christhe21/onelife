@@ -159,6 +159,7 @@ export function BucketList() {
                       <Target className="h-4 w-4" />
                     </Button>
                   )}
+                  <EditBucketDialog item={b} />
                   <Button size="icon" variant="ghost" onClick={() => deleteBucket(b.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
