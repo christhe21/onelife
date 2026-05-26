@@ -1,16 +1,17 @@
 import { useState, type ReactNode } from "react";
-import { LayoutDashboard, Target, ListChecks, Sparkles, Menu, X } from "lucide-react";
+import { LayoutDashboard, Target, ListChecks, Sparkles, Menu, X, Palette } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type TabId = "dashboard" | "goals" | "tasks" | "bucket";
+export type TabId = "dashboard" | "goals" | "tasks" | "bucket" | "skills";
 
 const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Overview & progress" },
   { id: "goals", label: "Goals", icon: Target, hint: "Goals & sub-goals" },
   { id: "tasks", label: "Tasks", icon: ListChecks, hint: "To-do list" },
   { id: "bucket", label: "Bucket list", icon: Sparkles, hint: "Lifetime wishes" },
+  { id: "skills", label: "Skills", icon: Palette, hint: "Customize skill areas & colors" },
 ];
 
 interface Props {
