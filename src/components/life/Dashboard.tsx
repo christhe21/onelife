@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Target, ListChecks, Sparkles, TrendingUp } from "lucide-react";
-import { SKILLS, progressFor, skillMeta, useAppData } from "@/lib/app-data";
+import { SkillProgress } from "@/components/life/SkillProgress";
+import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
   const { goals, tasks, bucketList } = useAppData();
