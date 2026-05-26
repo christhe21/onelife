@@ -5,7 +5,7 @@ import { SkillProgress } from "@/components/life/SkillProgress";
 import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
-  const { goals, tasks, bucketList } = useAppData();
+  const { goals, tasks, bucketList, skills } = useAppData();
   const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
 
   const activeGoals = goals.filter((g) => g.status !== "completed").length;
@@ -18,10 +18,9 @@ export function Dashboard() {
   const avgProgress =
     goals.length === 0 ? 0 : Math.round(goals.reduce((a, g) => a + progressFor(g), 0) / goals.length);
 
-  const bySkill = SKILLS.map((s) => ({
-    skill: s,
-    goals: goals.filter((g) => g.skill === s.id),
-  })).filter((g) => g.goals.length > 0);
+  const bySkill = skills
+    .map((s) => ({ skill: s, goals: goals.filter((g) => g.skill === s.id) }))
+    .filter((g) => g.goals.length > 0);
 
   const isEmpty = goals.length + tasks.length + bucketList.length === 0;
 
