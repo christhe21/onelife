@@ -44,6 +44,7 @@ function Shell() {
 
   return (
     <AppShell tab={tab} onTab={setTab} stats={stats}>
+      <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
       {tab === "goals" && <Goals />}
       {tab === "tasks" && <Tasks />}
