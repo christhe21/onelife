@@ -141,6 +141,8 @@ function normalizeGoal(raw: any): Goal {
 }
 
 function normalizeTask(raw: any): Task {
+  const clamp = (n: any) =>
+    typeof n === "number" && isFinite(n) ? Math.max(0, Math.min(100, n)) : undefined;
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
     title: String(raw?.title ?? "Untitled task"),
@@ -149,6 +151,10 @@ function normalizeTask(raw: any): Task {
     done: Boolean(raw?.done),
     goalId: typeof raw?.goalId === "string" ? raw.goalId : undefined,
     subtasks: Array.isArray(raw?.subtasks) ? raw.subtasks.map(normalizeSubTask) : [],
+    progress: clamp(raw?.progress),
+    startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
+    endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
+    evidence: typeof raw?.evidence === "string" ? raw.evidence : undefined,
   };
 }
 
