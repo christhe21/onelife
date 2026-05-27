@@ -9,6 +9,7 @@ import { Tasks } from "@/components/life/Tasks";
 import { BucketList } from "@/components/life/BucketList";
 import { Skills } from "@/components/life/Skills";
 import { DueBanner } from "@/components/life/DueBanner";
+import { Overview } from "@/components/life/Overview";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -46,6 +47,7 @@ function Shell() {
     <AppShell tab={tab} onTab={setTab} stats={stats}>
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
+      {tab === "overview" && <Overview />}
       {tab === "goals" && <Goals />}
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
