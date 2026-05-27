@@ -39,7 +39,8 @@ export function SkillsRadar() {
       <CardContent>
         <div className="h-72 w-full">
           {hasData ? (
-            <ResponsiveContainer width="100%" height="100%">
+            <ClientOnly fallback={<div className="h-full" />}>
+              <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={data} outerRadius="78%">
                 <defs>
                   <radialGradient id="radarFill" cx="50%" cy="50%" r="50%">
@@ -76,6 +77,7 @@ export function SkillsRadar() {
                 />
               </RadarChart>
             </ResponsiveContainer>
+            </ClientOnly>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               Add goals and progress to see your radar.
