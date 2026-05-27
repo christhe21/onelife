@@ -69,14 +69,18 @@ export function Dashboard() {
           </CardContent>
         </Card>
       ) : (
-        <div>
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="font-display text-base font-semibold">Progress by skill</h2>
-            <span className="text-xs text-muted-foreground">
-              {bySkill.length} skill area{bySkill.length === 1 ? "" : "s"}
-            </span>
+        <div className="grid gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <SkillsRadar />
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="lg:col-span-3">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h2 className="font-display text-base font-semibold">Progress by skill</h2>
+              <span className="text-xs text-muted-foreground">
+                {bySkill.length} skill area{bySkill.length === 1 ? "" : "s"}
+              </span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
             {bySkill.map(({ skill, goals: gs }) => (
               <Card key={skill.id} className="overflow-hidden">
                 <CardHeader className="pb-2">
