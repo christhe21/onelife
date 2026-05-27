@@ -8,6 +8,7 @@ import { Goals } from "@/components/life/Goals";
 import { Tasks } from "@/components/life/Tasks";
 import { BucketList } from "@/components/life/BucketList";
 import { Skills } from "@/components/life/Skills";
+import { DueBanner } from "@/components/life/DueBanner";
 
 export const Route = createFileRoute("/")({
   component: Index,
