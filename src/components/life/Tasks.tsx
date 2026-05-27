@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Trash2, Pencil } from "lucide-react";
+import { Plus, Trash2, Pencil, ChevronDown, ChevronUp, CalendarDown, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,6 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useAppData, type Task } from "@/lib/app-data";
+import { downloadICS } from "@/lib/calendar-export";
 
 const PRIORITY_COLOR: Record<Task["priority"], string> = {
   low: "bg-slate-200 text-slate-700",
@@ -100,12 +101,104 @@ function EditTaskDialog({ task }: { task: Task }) {
   );
 }
 
+function SubtasksPanel({ task }: { task: Task }) {
+  const { addSubtask, updateSubtask, toggleSubtask, deleteSubtask } = useAppData();
+  const [title, setTitle] = useState("");
+  const [hpw, setHpw] = useState<string>("");
+  const [endDate, setEndDate] = useState("");
+
+  const add = () => {
+    if (!title.trim()) return;
+    addSubtask(task.id, {
+      title: title.trim(),
+      hoursPerWeek: hpw ? Math.max(0.1, Number(hpw)) : undefined,
+      endDate: endDate || undefined,
+    });
+    setTitle("");
+    setHpw("");
+    setEndDate("");
+  };
+
+  return (
+    <div className="border-t bg-muted/30 px-4 py-3">
+      <Label className="text-xs uppercase tracking-wider text-muted-foreground">Sub-tasks</Label>
+      <div className="mt-2 space-y-1">
+        {task.subtasks.length === 0 && (
+          <p className="text-xs italic text-muted-foreground">No sub-tasks yet.</p>
+        )}
+        {task.subtasks.map((s) => (
+          <div key={s.id} className="flex flex-wrap items-center gap-2 rounded border bg-background p-2">
+            <Checkbox checked={s.done} onCheckedChange={() => toggleSubtask(task.id, s.id)} />
+            <Input
+              value={s.title}
+              onChange={(e) => updateSubtask(task.id, s.id, { title: e.target.value })}
+              className={`h-7 min-w-[140px] flex-1 text-sm ${s.done ? "line-through text-muted-foreground" : ""}`}
+            />
+            <div className="flex items-center gap-1">
+              <Input
+                type="number"
+                step="0.5"
+                min="0"
+                placeholder="h/wk"
+                value={s.hoursPerWeek ?? ""}
+                onChange={(e) =>
+                  updateSubtask(task.id, s.id, {
+                    hoursPerWeek: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                className="h-7 w-16 text-xs"
+                title="Hours per week"
+              />
+              <Input
+                type="date"
+                value={s.endDate ?? ""}
+                onChange={(e) => updateSubtask(task.id, s.id, { endDate: e.target.value || undefined })}
+                className="h-7 w-36 text-xs"
+                title="End date"
+              />
+            </div>
+            <Button size="icon" variant="ghost" onClick={() => deleteSubtask(task.id, s.id)}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Input
+          placeholder="New sub-task..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && add()}
+          className="h-8 min-w-[160px] flex-1 text-sm"
+        />
+        <Input
+          type="number"
+          step="0.5"
+          min="0"
+          placeholder="h/wk"
+          value={hpw}
+          onChange={(e) => setHpw(e.target.value)}
+          className="h-8 w-20 text-sm"
+        />
+        <Input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="h-8 w-40 text-sm"
+        />
+        <Button size="sm" onClick={add}><Plus className="mr-1 h-3.5 w-3.5" />Add</Button>
+      </div>
+    </div>
+  );
+}
+
 export function Tasks() {
   const { tasks, goals, addTask, toggleTask, deleteTask } = useAppData();
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
   const [goalId, setGoalId] = useState<string>("none");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const submit = () => {
     if (!title.trim()) return;
@@ -130,8 +223,24 @@ export function Tasks() {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  const exportSchedule = () => {
+    const map: Record<string, string> = {};
+    for (const g of goals) map[g.id] = g.title;
+    downloadICS(tasks, map);
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          Focus blocks are 20 min. Sub-tasks with hours/week schedule themselves until their end date.
+        </p>
+        <Button size="sm" variant="outline" onClick={exportSchedule} title="Download .ics for Google / Apple / Outlook">
+          <Download className="mr-2 h-4 w-4" />
+          Export schedule (.ics)
+        </Button>
+      </div>
+
       <Card>
         <CardContent className="flex flex-wrap gap-2 pt-6">
           <Input
@@ -172,6 +281,12 @@ export function Tasks() {
           {sorted.map((t) => {
             const overdue = !t.done && t.dueDate && t.dueDate < today;
             const goal = goals.find((g) => g.id === t.goalId);
+            const isOpen = expanded.has(t.id);
+            const toggleOpen = () => {
+              const n = new Set(expanded);
+              if (n.has(t.id)) n.delete(t.id); else n.add(t.id);
+              setExpanded(n);
+            };
             return (
               <Card key={t.id} className={overdue ? "border-red-300" : ""}>
                 <CardContent className="flex items-center gap-3 py-3">
@@ -187,16 +302,23 @@ export function Tasks() {
                         </span>
                       )}
                       {goal && <Badge variant="outline">{goal.title}</Badge>}
+                      {t.subtasks.length > 0 && (
+                        <span>{t.subtasks.filter((s) => s.done).length}/{t.subtasks.length} sub-tasks</span>
+                      )}
                     </div>
                   </div>
                   <span className={`rounded-full px-2 py-0.5 text-xs ${PRIORITY_COLOR[t.priority]}`}>
                     {t.priority}
                   </span>
+                  <Button size="icon" variant="ghost" onClick={toggleOpen} title="Sub-tasks">
+                    {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
                   <EditTaskDialog task={t} />
                   <Button size="icon" variant="ghost" onClick={() => deleteTask(t.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </CardContent>
+                {isOpen && <SubtasksPanel task={t} />}
               </Card>
             );
           })}
