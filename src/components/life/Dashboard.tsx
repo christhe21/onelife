@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Target, ListChecks, Sparkles, TrendingUp } from "lucide-react";
 import { SkillProgress } from "@/components/life/SkillProgress";
 import { SkillsRadar } from "@/components/life/SkillsRadar";
+import { LifeTimeline } from "@/components/life/LifeTimeline";
 import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
@@ -27,6 +28,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <LifeTimeline />
       {/* Hero stats */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
