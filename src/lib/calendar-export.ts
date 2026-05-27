@@ -3,7 +3,7 @@ import type { Task } from "@/lib/app-data";
 const BLOCK_MINUTES = 20;
 const DAY_START_HOUR = 9; // 09:00
 const DAY_END_HOUR = 18;  // 18:00 — fits weekdays + weekends per user
-const BLOCKS_PER_DAY = ((DAY_END_HOUR - DAY_START_HOUR) * 60) / BLOCK_MINUTES;
+
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function fmtICS(d: Date) {
