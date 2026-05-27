@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil, Network, ListTree } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
+import { MindMapCanvas } from "@/components/life/MindMapCanvas";
 
 /**
  * Mindmap-style overview:
