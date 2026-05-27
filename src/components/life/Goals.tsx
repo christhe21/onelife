@@ -169,14 +169,51 @@ function Timeline({ goal }: { goal: Goal }) {
   const now = Date.now();
   const span = Math.max(end - start, 1);
   const nowPct = Math.min(100, Math.max(0, ((now - start) / span) * 100));
+  const daysLeft = Math.ceil((end - now) / 86400000);
+  const totalDays = Math.max(1, Math.ceil((end - start) / 86400000));
+  const overdue = daysLeft < 0;
+  const dueSoon = daysLeft >= 0 && daysLeft <= 7;
+
+  const trackColor = overdue
+    ? "linear-gradient(90deg, oklch(0.62 0.22 25), oklch(0.72 0.18 25))"
+    : dueSoon
+      ? "linear-gradient(90deg, oklch(0.78 0.16 75), oklch(0.86 0.14 85))"
+      : "linear-gradient(90deg, oklch(0.62 0.12 165), oklch(0.78 0.13 155))";
 
   return (
-    <div className="mt-3">
-      <div className="relative h-6 rounded-full bg-muted">
+    <div className="mt-4">
+      <div className="mb-1.5 flex items-center justify-between text-[11px]">
+        <span className="font-medium uppercase tracking-wider text-muted-foreground">
+          Timeline
+        </span>
+        <span
+          className={
+            overdue
+              ? "rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive"
+              : dueSoon
+                ? "rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-700 dark:text-amber-400"
+                : "rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground"
+          }
+        >
+          {overdue
+            ? `${Math.abs(daysLeft)}d overdue`
+            : daysLeft === 0
+              ? "Due today"
+              : `${daysLeft}d left · ${Math.round(nowPct)}% elapsed`}
+        </span>
+      </div>
+
+      <div className="relative h-3 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50">
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-primary/20"
-          style={{ width: `${nowPct}%` }}
+          className="h-full rounded-full transition-[width] duration-700 ease-out"
+          style={{
+            width: `${nowPct}%`,
+            background: trackColor,
+            boxShadow: "0 0 10px -2px currentColor",
+          }}
         />
+
+        {/* milestone dots */}
         {(goal.subGoals ?? []).map((s) => {
           if (!s.targetDate) return null;
           const t = new Date(s.targetDate).getTime();
@@ -184,23 +221,30 @@ function Timeline({ goal }: { goal: Goal }) {
           return (
             <div
               key={s.id}
-              className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background"
+              className="group absolute top-1/2 z-10 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
               style={{
                 left: `${pct}%`,
-                backgroundColor: s.done ? "#10b981" : "#94a3b8",
+                backgroundColor: s.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
               }}
               title={`${s.title} – ${s.targetDate}`}
             />
           );
         })}
+
+        {/* today marker */}
         <div
-          className="absolute top-0 h-full w-0.5 bg-foreground"
+          className="absolute -top-1 z-20 flex h-5 -translate-x-1/2 flex-col items-center"
           style={{ left: `${nowPct}%` }}
           title="Today"
-        />
+        >
+          <div className="h-5 w-0.5 rounded-full bg-foreground" />
+          <div className="absolute -top-1 h-2 w-2 rounded-full bg-foreground ring-2 ring-background" />
+        </div>
       </div>
-      <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+
+      <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
         <span>{goal.startDate}</span>
+        <span className="tabular-nums">{totalDays}d span</span>
         <span>{goal.targetDate}</span>
       </div>
     </div>
