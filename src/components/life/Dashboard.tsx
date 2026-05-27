@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Target, ListChecks, Sparkles, TrendingUp } from "lucide-react";
 import { SkillProgress } from "@/components/life/SkillProgress";
+import { SkillsRadar } from "@/components/life/SkillsRadar";
 import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
