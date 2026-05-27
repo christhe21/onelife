@@ -79,8 +79,6 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
         const blocksPerWeek = Math.max(1, Math.round(hpw * (60 / BLOCK_MINUTES)));
         // total weeks from now → end
         const weeks = end ? Math.max(1, Math.ceil((end.getTime() - cursor.getTime()) / (7 * 86400000))) : 4;
-        const total = Math.min(weeks * blocksPerWeek, BLOCKS_PER_DAY * weeks * 7);
-        // Distribute: per week, add `blocksPerWeek` blocks, then jump to start of next week
         for (let w = 0; w < weeks; w++) {
           const weekEnd = new Date(cursor);
           weekEnd.setDate(weekEnd.getDate() + 7);
@@ -97,10 +95,8 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
             placed++;
             cursor = nextSlot(new Date(stop));
           }
-          // jump cursor to start of next week if we filled the quota early
           if (cursor < weekEnd) cursor = nextSlot(new Date(weekEnd));
         }
-        if (total === 0) {} // satisfy lint
       }
     }
   }
