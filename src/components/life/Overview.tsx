@@ -125,17 +125,6 @@ export function Overview() {
           </p>
         </CardHeader>
         <CardContent>
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="font-display text-base">Mindmap</CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Tap a node to expand. Long-press (or double-click) to rename.
-          </p>
-        </CardHeader>
-        <CardContent>
           {/* Legend */}
           <div className="mb-4 flex flex-wrap gap-2">
             {skills.map((s) => (
@@ -146,23 +135,27 @@ export function Overview() {
             ))}
           </div>
 
-          <div className="space-y-1">
-            {skills.map((skill) => (
-              <SkillNode
-                key={skill.id}
-                skill={skill}
-                open={openSkills.has(skill.id)}
-                onToggle={() => toggle(openSkills, skill.id, setOpenSkills)}
-                onRename={(v) => updateSkill(skill.id, { label: v })}
-                goals={goalsBySkill(skill.id)}
-                openGoals={openGoals}
-                toggleGoal={(id) => toggle(openGoals, id, setOpenGoals)}
-                tasksByGoal={tasksByGoal}
-                updateGoal={updateGoal}
-                updateTask={updateTask}
-              />
-            ))}
-          </div>
+          {view === "map" ? (
+            <MindMapCanvas />
+          ) : (
+            <div className="space-y-1">
+              {skills.map((skill) => (
+                <SkillNode
+                  key={skill.id}
+                  skill={skill}
+                  open={openSkills.has(skill.id)}
+                  onToggle={() => toggle(openSkills, skill.id, setOpenSkills)}
+                  onRename={(v) => updateSkill(skill.id, { label: v })}
+                  goals={goalsBySkill(skill.id)}
+                  openGoals={openGoals}
+                  toggleGoal={(id) => toggle(openGoals, id, setOpenGoals)}
+                  tasksByGoal={tasksByGoal}
+                  updateGoal={updateGoal}
+                  updateTask={updateTask}
+                />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
