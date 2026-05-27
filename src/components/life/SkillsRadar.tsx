@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { ClientOnly } from "@tanstack/react-router";
 import {
   Radar,
   RadarChart,
