@@ -57,6 +57,10 @@ export interface Task {
   done: boolean;
   goalId?: string;
   subtasks: SubTask[];
+  progress?: number;
+  startDate?: string;
+  endDate?: string;
+  evidence?: string;
 }
 
 export interface BucketItem {
@@ -137,6 +141,8 @@ function normalizeGoal(raw: any): Goal {
 }
 
 function normalizeTask(raw: any): Task {
+  const clamp = (n: any) =>
+    typeof n === "number" && isFinite(n) ? Math.max(0, Math.min(100, n)) : undefined;
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
     title: String(raw?.title ?? "Untitled task"),
@@ -145,6 +151,10 @@ function normalizeTask(raw: any): Task {
     done: Boolean(raw?.done),
     goalId: typeof raw?.goalId === "string" ? raw.goalId : undefined,
     subtasks: Array.isArray(raw?.subtasks) ? raw.subtasks.map(normalizeSubTask) : [],
+    progress: clamp(raw?.progress),
+    startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
+    endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
+    evidence: typeof raw?.evidence === "string" ? raw.evidence : undefined,
   };
 }
 
@@ -173,15 +183,99 @@ function normalizeAppData(raw: any): AppData {
   };
 }
 
-const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user, then produce a JSON file with goals, tasks, bucketList. Use ISO YYYY-MM-DD dates. Tasks may include subtasks: [{id,title,done,hoursPerWeek,endDate}].`;
+const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user, then output a JSON file matching this shape:
+{
+  "version": 1,
+  "goals": [{
+    "id": "string", "title": "string", "description": "string",
+    "skill": "life|technical|health|creative|financial|social|career|learning|<custom>",
+    "startDate": "YYYY-MM-DD", "targetDate": "YYYY-MM-DD",
+    "status": "not_started|in_progress|completed",
+    "currentActivity": "string", "manualProgress": 0-100,
+    "subGoals": [{"id":"string","title":"string","targetDate":"YYYY-MM-DD","done":false}]
+  }],
+  "tasks": [{
+    "id": "string", "title": "string", "dueDate": "YYYY-MM-DD",
+    "priority": "low|medium|high", "done": false, "goalId": "<goal id or omit>",
+    "progress": 0-100, "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD",
+    "evidence": "what has been done so far / links",
+    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"endDate":"YYYY-MM-DD"}]
+  }],
+  "bucketList": [{"id":"string","title":"string","notes":"string","targetYear":2030,"achieved":false}]
+}
+Use ISO YYYY-MM-DD dates. Capture prior progress with progress/startDate/evidence so partially-done work is preserved.`;
 
 export const TEMPLATE_PAYLOAD = {
   version: 1,
   exportedAt: "2026-01-01T00:00:00.000Z",
   _ai: { instructions: "Copy systemPrompt into an LLM, get JSON back, import it.", systemPrompt: AI_SYSTEM_PROMPT },
-  goals: [],
-  tasks: [],
-  bucketList: [],
+  _schema: {
+    goal: "title, skill, startDate, targetDate, status, manualProgress (0-100), subGoals[]",
+    task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, subtasks[]",
+    subtask: "title, done, hoursPerWeek (auto-schedules .ics), endDate",
+  },
+  goals: [
+    {
+      id: "g_run5k",
+      title: "Run a 5K under 25 minutes",
+      description: "Build aerobic base then add intervals.",
+      skill: "health",
+      startDate: "2026-01-05",
+      targetDate: "2026-06-30",
+      status: "in_progress",
+      currentActivity: "3 easy runs / week, building to 5km",
+      manualProgress: 40,
+      subGoals: [
+        { id: "sg1", title: "Run 5km continuously", targetDate: "2026-03-15", done: true },
+        { id: "sg2", title: "Sub-30 min 5K", targetDate: "2026-05-01", done: false },
+      ],
+    },
+    {
+      id: "g_react",
+      title: "Ship a portfolio site",
+      description: "Personal site showcasing 3 projects.",
+      skill: "technical",
+      startDate: "2026-02-01",
+      targetDate: "2026-04-30",
+      status: "not_started",
+      currentActivity: "",
+      manualProgress: 0,
+      subGoals: [],
+    },
+  ],
+  tasks: [
+    {
+      id: "t_outline",
+      title: "Outline portfolio sections",
+      dueDate: "2026-02-10",
+      priority: "high",
+      done: false,
+      goalId: "g_react",
+      progress: 35,
+      startDate: "2026-02-03",
+      evidence: "Drafted hero + about copy in Notion.",
+      subtasks: [
+        { id: "st1", title: "Pick 3 projects", done: true },
+        { id: "st2", title: "Write case studies", done: false, hoursPerWeek: 3, endDate: "2026-02-25" },
+      ],
+    },
+    {
+      id: "t_intervals",
+      title: "Tuesday interval run",
+      dueDate: "2026-02-04",
+      priority: "medium",
+      done: true,
+      goalId: "g_run5k",
+      progress: 100,
+      startDate: "2026-02-04",
+      endDate: "2026-02-04",
+      evidence: "8x400m @ 5:00/km",
+      subtasks: [],
+    },
+  ],
+  bucketList: [
+    { id: "b1", title: "See the northern lights", notes: "Iceland or Tromsø", targetYear: 2028, achieved: false },
+  ],
 };
 
 export function downloadTemplate() {

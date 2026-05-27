@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil, Network, ListTree } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
+import { MindMapCanvas } from "@/components/life/MindMapCanvas";
 
 /**
  * Mindmap-style overview:
@@ -79,6 +80,7 @@ export function Overview() {
   const { goals, tasks, skills, updateSkill, updateGoal, updateTask } = useAppData();
   const [openSkills, setOpenSkills] = useState<Set<string>>(new Set());
   const [openGoals, setOpenGoals] = useState<Set<string>>(new Set());
+  const [view, setView] = useState<"tree" | "map">("tree");
 
   const toggle = (set: Set<string>, id: string, setter: (s: Set<string>) => void) => {
     const n = new Set(set);
@@ -93,9 +95,33 @@ export function Overview() {
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="font-display text-base">Mindmap</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="font-display text-base">
+              {view === "tree" ? "Mindmap" : "Map view"}
+            </CardTitle>
+            <div className="flex items-center rounded-md border bg-background p-0.5">
+              <Button
+                size="sm"
+                variant={view === "tree" ? "secondary" : "ghost"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setView("tree")}
+              >
+                <ListTree className="mr-1 h-3.5 w-3.5" />Tree
+              </Button>
+              <Button
+                size="sm"
+                variant={view === "map" ? "secondary" : "ghost"}
+                className="h-7 px-2 text-xs"
+                onClick={() => setView("map")}
+              >
+                <Network className="mr-1 h-3.5 w-3.5" />Map
+              </Button>
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground">
-            Tap a node to expand. Long-press (or double-click) to rename.
+            {view === "tree"
+              ? "Tap a node to expand. Long-press (or double-click) to rename."
+              : "Drag to pan, scroll to zoom. Goals can link tasks directly or through sub-goals."}
           </p>
         </CardHeader>
         <CardContent>
@@ -109,23 +135,27 @@ export function Overview() {
             ))}
           </div>
 
-          <div className="space-y-1">
-            {skills.map((skill) => (
-              <SkillNode
-                key={skill.id}
-                skill={skill}
-                open={openSkills.has(skill.id)}
-                onToggle={() => toggle(openSkills, skill.id, setOpenSkills)}
-                onRename={(v) => updateSkill(skill.id, { label: v })}
-                goals={goalsBySkill(skill.id)}
-                openGoals={openGoals}
-                toggleGoal={(id) => toggle(openGoals, id, setOpenGoals)}
-                tasksByGoal={tasksByGoal}
-                updateGoal={updateGoal}
-                updateTask={updateTask}
-              />
-            ))}
-          </div>
+          {view === "map" ? (
+            <MindMapCanvas />
+          ) : (
+            <div className="space-y-1">
+              {skills.map((skill) => (
+                <SkillNode
+                  key={skill.id}
+                  skill={skill}
+                  open={openSkills.has(skill.id)}
+                  onToggle={() => toggle(openSkills, skill.id, setOpenSkills)}
+                  onRename={(v) => updateSkill(skill.id, { label: v })}
+                  goals={goalsBySkill(skill.id)}
+                  openGoals={openGoals}
+                  toggleGoal={(id) => toggle(openGoals, id, setOpenGoals)}
+                  tasksByGoal={tasksByGoal}
+                  updateGoal={updateGoal}
+                  updateTask={updateTask}
+                />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,52 +1,78 @@
-# Plan
+## Scope
 
-## 1. Bug fixes
+Four focused changes, all frontend / data-shape:
 
-**Goals tab crashes after import** — `GoalCard` calls `goal.subGoals.map(...)` and `progressFor` reads `g.subGoals.length`. AI-generated/imported JSON often omits `subGoals` (or `manualProgress`, `status`), so the map throws and React shows "something went wrong".
+1. Tasks UI redesign (less bulky, mobile-first)
+2. Goals & Sub-goals — collapsed by default, description hidden until expand
+3. Mindmap "Map view" — draggable/pannable canvas
+4. JSON template — richer example + new optional fields (progress, startDate, endDate, evidence)
 
-Fix in `src/lib/app-data.tsx` → `importJSON` and `replaceAll`: normalize every record before storing.
-- `goals[]`: ensure `subGoals: []` (array), default `status: "not_started"`, default `skill: "life"` if invalid, default `manualProgress: 0`, generate `id` if missing, coerce `subGoals[].done` to boolean.
-- `tasks[]`: default `priority: "medium"`, `done: false`, generate `id`.
-- `bucketList[]`: default `achieved: false`, generate `id`.
-- Throw a clear error listing which top-level key is wrong (currently only "Invalid file shape").
+---
 
-**Reload loses all data** — currently state lives only in React memory. User now wants reload-safety without a backend. Add lightweight `localStorage` persistence:
-- On mount in `AppDataProvider`, hydrate state from `localStorage["life-manager:v1"]` (wrapped in try/catch).
-- On any change to `goals/tasks/bucketList`, debounce-write the same key.
-- Add a "Clear all data" item to the Data dropdown that wipes storage + state (confirm dialog).
-- This is purely client-side, still no backend, still no login. Keeps the existing export/import as the portability path.
+### 1. Rebuild Tasks UI (`src/components/life/Tasks.tsx`)
 
-## 2. JSON template: embed AI system prompt
+Acting as UI expert: current card uses a 6-control row + always-visible badges + 4 icon buttons + separate subtasks panel. On a 384px viewport it wraps awkwardly and feels heavy.
 
-Update `TEMPLATE_PAYLOAD` in `src/lib/app-data.tsx` to include an `_ai` block at the top of the file (underscore prefix is ignored on import). It contains:
-- `systemPrompt`: a ready-to-paste prompt instructing an LLM to act as a life-planning coach, ask the user about their age, life stage, current skills, ambitions, available time per week, and constraints, then output a JSON file matching the rest of this template's schema.
-- `instructions`: short human-readable note ("Paste `_ai.systemPrompt` into ChatGPT/Claude/etc., answer its questions, then upload the JSON it produces here").
-- `schema`: inline JSON-schema-ish description of every field, valid `skill` IDs, valid `status` values, valid `priority` values, date formats. So the LLM has the contract in one file.
+New layout per task (single compact row):
+```text
+[ ✓ ]  Title here…                              ⋯
+       • Due Mar 4   • Goal: Fitness   • 2/5 sub
+```
+- One row, two text lines max. Priority shown as a thin colored left border (red/amber/slate) instead of a pill — saves horizontal space.
+- Trailing `⋯` opens a popover menu: Edit, Sub-tasks, Delete. Removes 3 always-visible icon buttons.
+- Tap anywhere on the row body (not the checkbox) expands the inline sub-tasks panel.
+- Overdue: red dot + red due text only (no full border-red card).
+- "Add task" collapses to a single floating bar with Title only; advanced fields (date, priority, goal) appear in a popover via a `+ details` button. Keeps top of screen clean on mobile.
+- Move the `Export schedule (.ics)` button into the page header next to the title, with a subtler `outline` style.
 
-The importer ignores any key starting with `_`, so the same file remains directly uploadable.
+Sub-tasks panel: tightened to 1-line rows using small inputs; the h/wk + endDate move behind a "schedule" toggle per sub-task so the row is short by default.
 
-## 3. New features (small, high-value)
+### 2. Goals & Sub-goals — collapsed default (`src/components/life/Goals.tsx`)
 
-a. **Quick-add task on a goal** — in `GoalCard`, an "Add task" inline action that creates a Task pre-linked via `goalId`. Closes the loop between goals → daily work.
+- Default `expanded = false` (already the case) — but ALSO hide `description`, current activity, timeline labels, and sub-goal counts in the collapsed view. Only show: skill dot, title, status badge, progress bar, timeline bar.
+- Description, current activity, sub-goal list, and quick-add task only render inside `expanded`.
+- Tap the card body to expand (not just the chevron button) for easier mobile use.
+- Grid stays `md:grid-cols-2`; collapsed cards become ~40% shorter so more fit on screen.
 
-b. **Task → goal link visible in Tasks tab** — show the linked goal's title as a chip on each task row; clicking it switches to the Goals tab filtered to that skill.
+Outline taxonomy (Goals → Sub-goals → Tasks → Sub-tasks) is already the data model. No schema change needed; just clarify in the Overview legend ("Goals can skip Sub-goals and link Tasks directly").
 
-c. **Overdue + due-today badges** — compute on tasks and on sub-goal milestones; surface red/amber chips on the Dashboard "Tasks open" card and on each goal's timeline tooltip.
+### 3. Mindmap "Map view" (`src/components/life/Overview.tsx`)
 
-d. **Promote bucket-list item to a goal** — one-click button on each bucket item: opens the New Goal dialog prefilled with title + a sensible target date (the `targetYear` if set).
+Add a toggle button: `[ Tree ] [ Map ]` in the Overview card header.
 
-e. **Search box in header** — single input that filters across goals/tasks/bucket by title; sets the active tab to the first matching section.
+- Tree = current accordion view.
+- Map = new component `MindMapCanvas.tsx`:
+  - Full-width canvas (~70vh tall) with pan via pointer-drag and pinch/wheel zoom.
+  - Nodes laid out radially: central "You" → skill nodes (colored) → goal nodes → task nodes → sub-task leaves.
+  - Pure SVG inside a `transform: translate/scale` wrapper. No new dependency.
+  - Single-tap node = expand/collapse children. Long-press = inline rename (reuse existing `useLongPress`).
+  - Legend stays at top.
+  - Minimap / reset-view button bottom-right.
 
-Skipping (not enough payoff for the complexity): recurring tasks, reminders/notifications, charts/analytics, multi-user, calendar view.
+### 4. JSON template & import (`src/lib/app-data.tsx`)
 
-## 4. Files touched
+Extend Task schema (all optional, backward-compatible):
+- `progress?: number` (0–100) — partial completion when not fully done.
+- `startDate?: string` — when user began.
+- `endDate?: string` — actual completion date (separate from `dueDate`).
+- `evidence?: string` — free-text "what they've done so far" / link to artifact.
 
-- `src/lib/app-data.tsx` — normalization on import, localStorage persist/hydrate, `TEMPLATE_PAYLOAD._ai`, optional `clearAll()`.
-- `src/components/life/Goals.tsx` — defensive `goal.subGoals ?? []`, quick-add-task button.
-- `src/components/life/Tasks.tsx` — goal chip, overdue badge.
-- `src/components/life/BucketList.tsx` — "Promote to goal" action.
-- `src/components/life/Dashboard.tsx` — overdue/due-today indicators.
-- `src/components/life/AppShell.tsx` — header search input.
-- `src/components/life/ExportImport.tsx` — "Clear all data" item.
+Goal already has `startDate`, `targetDate`, `manualProgress`, `currentActivity` — keep as-is.
 
-No backend, no new dependencies.
+Update:
+- `normalizeTask` to accept the new fields.
+- `TEMPLATE_PAYLOAD` to include 2 example skills' worth of fully-populated goals/tasks/sub-tasks/bucket items showing every field, plus inline `_comments` per top-level key explaining the schema.
+- `AI_SYSTEM_PROMPT` updated to mention new fields.
+- Surface `progress` in the Task row (thin secondary bar under the title when 0 < progress < 100 and not done).
+- Show `evidence` in the EditTaskDialog as a textarea.
+
+Upload flow unchanged — existing imports still work because all new fields are optional.
+
+---
+
+## Technical notes
+
+- No backend / no new dependencies.
+- All edits in: `src/components/life/Tasks.tsx`, `src/components/life/Goals.tsx`, `src/components/life/Overview.tsx`, `src/lib/app-data.tsx`. New file: `src/components/life/MindMapCanvas.tsx`.
+- Pan/zoom uses pointer events + a `transform` style; no canvas/WebGL. Works on touch.
+- Keep all colors via semantic tokens / existing skill colors.
