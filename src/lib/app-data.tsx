@@ -57,6 +57,10 @@ export interface Task {
   done: boolean;
   goalId?: string;
   subtasks: SubTask[];
+  progress?: number;
+  startDate?: string;
+  endDate?: string;
+  evidence?: string;
 }
 
 export interface BucketItem {
