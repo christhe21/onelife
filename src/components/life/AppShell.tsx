@@ -1,15 +1,16 @@
 import { useState, type ReactNode } from "react";
-import { LayoutDashboard, Target, ListChecks, Sparkles, Menu, X, Palette } from "lucide-react";
+import { LayoutDashboard, Target, ListChecks, Sparkles, Menu, X, Palette, Network } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type TabId = "dashboard" | "goals" | "tasks" | "bucket" | "skills";
+export type TabId = "dashboard" | "overview" | "goals" | "tasks" | "bucket" | "skills";
 
 const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Overview & progress" },
+  { id: "overview", label: "Overview", icon: Network, hint: "Mindmap of skills, goals & tasks" },
   { id: "goals", label: "Goals", icon: Target, hint: "Goals & sub-goals" },
-  { id: "tasks", label: "Tasks", icon: ListChecks, hint: "To-do list" },
+  { id: "tasks", label: "Tasks", icon: ListChecks, hint: "To-do list & focus schedule" },
   { id: "bucket", label: "Bucket list", icon: Sparkles, hint: "Lifetime wishes" },
   { id: "skills", label: "Skills", icon: Palette, hint: "Customize skill areas & colors" },
 ];
