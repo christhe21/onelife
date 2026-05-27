@@ -271,57 +271,69 @@ function GoalCard({ goal }: { goal: Goal }) {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <CardTitle className="flex items-center gap-2">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => !e)}
+            className="min-w-0 flex-1 text-left"
+          >
+            <CardTitle className="flex items-center gap-2 text-base">
               <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: meta.color }}
               />
-              {goal.title}
+              <span className="truncate">{goal.title}</span>
             </CardTitle>
-            {goal.description && (
-              <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
+          </button>
+          <div className="flex items-center gap-0.5">
             <GoalDialog
               goal={goal}
               trigger={
-                <Button size="icon" variant="ghost" title="Edit goal">
-                  <Pencil className="h-4 w-4" />
+                <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit goal">
+                  <Pencil className="h-3.5 w-3.5" />
                 </Button>
               }
             />
-            <Button size="icon" variant="ghost" onClick={() => setExpanded((e) => !e)}>
-              {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setExpanded((e) => !e)}>
+              {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => deleteGoal(goal.id)}>
-              <Trash2 className="h-4 w-4" />
+            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteGoal(goal.id)}>
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Badge variant="secondary">{meta.label}</Badge>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
           <Select
             value={goal.status}
             onValueChange={(v) => updateGoal(goal.id, { status: v as GoalStatus })}
           >
-            <SelectTrigger className="h-7 w-auto text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-6 w-auto text-[11px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               {(Object.keys(STATUS_LABEL) as GoalStatus[]).map((s) => (
                 <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {subGoals.length > 0 && (
+            <span className="text-[11px] text-muted-foreground">
+              {subGoals.filter((s) => s.done).length}/{subGoals.length} milestones
+            </span>
+          )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <SkillProgress value={pct} color={meta.color} size="lg" />
         <Timeline goal={goal} />
         {expanded && (
           <div className="mt-4 space-y-4">
+            {goal.description && (
+              <div>
+                <Label className="text-xs">Description</Label>
+                <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>
+              </div>
+            )}
             <div>
               <Label className="text-xs">Current activity</Label>
               <Textarea
