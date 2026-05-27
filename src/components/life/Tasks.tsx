@@ -296,32 +296,32 @@ function TaskRow({ task }: { task: Task }) {
   const hasProgress = !task.done && (task.progress ?? 0) > 0 && (task.progress ?? 0) < 100;
 
   return (
-    <Card className={`overflow-hidden border-l-4 ${PRIORITY_BORDER[task.priority]}`}>
+    <Card className={`overflow-hidden border-l-[3px] ${PRIORITY_BORDER[task.priority]}`}>
       <CardContent className="p-0">
-        <div className="flex items-start gap-2.5 px-3 py-2.5">
+        <div className="flex items-start gap-3 px-4 py-3.5">
           <Checkbox
             checked={task.done}
             onCheckedChange={() => toggleTask(task.id)}
-            className="mt-0.5"
+            className="mt-1 shrink-0"
           />
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
             className="min-w-0 flex-1 text-left"
           >
-            <div className={`truncate text-sm font-medium ${task.done ? "line-through text-muted-foreground" : ""}`}>
+            <div className={`truncate text-sm font-medium leading-snug ${task.done ? "line-through text-muted-foreground" : ""}`}>
               {task.title}
             </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
               {task.dueDate && (
-                <span className={overdue ? "font-medium text-red-600" : ""}>
-                  <Calendar className="mr-0.5 inline h-3 w-3" />
+                <span className={`inline-flex items-center gap-1 ${overdue ? "font-medium text-red-600" : ""}`}>
+                  <Calendar className="h-3 w-3" />
                   {task.dueDate}{overdue ? " · overdue" : ""}
                 </span>
               )}
               {goal && (
-                <span className="truncate">
-                  <Link2 className="mr-0.5 inline h-3 w-3" />{goal.title}
+                <span className="inline-flex items-center gap-1 truncate">
+                  <Link2 className="h-3 w-3" />{goal.title}
                 </span>
               )}
               {task.subtasks.length > 0 && (
@@ -330,7 +330,7 @@ function TaskRow({ task }: { task: Task }) {
               {hasProgress && <span>{task.progress}%</span>}
             </div>
             {hasProgress && (
-              <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
+              <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full rounded-full bg-primary/70"
                   style={{ width: `${task.progress}%` }}
@@ -340,7 +340,7 @@ function TaskRow({ task }: { task: Task }) {
           </button>
           <Popover>
             <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost" className="-mr-1 h-7 w-7 shrink-0">
+              <Button size="icon" variant="ghost" className="-mr-1 mt-0.5 h-8 w-8 shrink-0">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
@@ -388,7 +388,7 @@ export function Tasks() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
           20-min focus blocks. Sub-tasks with h/wk auto-schedule until end date.
@@ -398,14 +398,16 @@ export function Tasks() {
         </Button>
       </div>
 
-      <AddTaskBar />
+      <div className="rounded-lg border bg-card p-3 shadow-sm">
+        <AddTaskBar />
+      </div>
 
       {sorted.length === 0 ? (
         <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
           No tasks yet.
         </CardContent></Card>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-2.5">
           {sorted.map((t) => <TaskRow key={t.id} task={t} />)}
         </div>
       )}

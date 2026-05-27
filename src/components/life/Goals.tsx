@@ -270,23 +270,23 @@ function GoalCard({ goal }: { goal: Goal }) {
   const subGoals = goal.subGoals ?? [];
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
+    <Card className="overflow-hidden">
+      <CardHeader className="p-3 pb-2 sm:p-4 sm:pb-2">
         <div className="flex items-start justify-between gap-2">
           <button
             type="button"
             onClick={() => setExpanded((e) => !e)}
-            className="min-w-0 flex-1 text-left"
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
           >
-            <CardTitle className="flex items-center gap-2 text-base">
-              <span
-                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                style={{ backgroundColor: meta.color }}
-              />
-              <span className="truncate">{goal.title}</span>
+            <span
+              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: meta.color }}
+            />
+            <CardTitle className="min-w-0 truncate text-sm font-semibold sm:text-base">
+              {goal.title}
             </CardTitle>
           </button>
-          <div className="flex items-center gap-0.5">
+          <div className="flex shrink-0 items-center gap-0.5">
             <GoalDialog
               goal={goal}
               trigger={
@@ -303,13 +303,13 @@ function GoalCard({ goal }: { goal: Goal }) {
             </Button>
           </div>
         </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
           <Select
             value={goal.status}
             onValueChange={(v) => updateGoal(goal.id, { status: v as GoalStatus })}
           >
-            <SelectTrigger className="h-6 w-auto text-[11px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-6 w-auto min-w-0 px-2 text-[11px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               {(Object.keys(STATUS_LABEL) as GoalStatus[]).map((s) => (
                 <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
@@ -323,7 +323,7 @@ function GoalCard({ goal }: { goal: Goal }) {
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="overflow-hidden px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
         <SkillProgress value={pct} color={meta.color} size="lg" />
         <Timeline goal={goal} />
         {expanded && (
@@ -459,7 +459,7 @@ export function Goals() {
           No goals yet. Create your first one.
         </CardContent></Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((g) => <GoalCard key={g.id} goal={g} />)}
         </div>
       )}
