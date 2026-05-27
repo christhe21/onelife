@@ -110,85 +110,21 @@ export function Overview() {
           </div>
 
           <div className="space-y-1">
-            {skills.map((skill) => {
-              const skillGoals = goalsBySkill(skill.id);
-              const open = openSkills.has(skill.id);
-              const longPress = useLongPress(() => {
-                const next = prompt("Rename skill", skill.label);
-                if (next && next.trim()) updateSkill(skill.id, { label: next.trim() });
-              });
-              return (
-                <div key={skill.id}>
-                  <button
-                    type="button"
-                    className="group flex w-full select-none items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-muted/60"
-                    onClick={() => toggle(openSkills, skill.id, setOpenSkills)}
-                    {...longPress}
-                  >
-                    <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
-                    <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: skill.color }} />
-                    <span className="font-medium">{skill.label}</span>
-                    <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                      {skillGoals.length}
-                    </span>
-                  </button>
-                  {open && (
-                    <div className="ml-6 border-l border-border pl-3">
-                      {skillGoals.length === 0 ? (
-                        <p className="py-2 text-xs italic text-muted-foreground">No goals yet.</p>
-                      ) : (
-                        skillGoals.map((g) => {
-                          const tg = tasksByGoal(g.id);
-                          const gOpen = openGoals.has(g.id);
-                          return (
-                            <div key={g.id}>
-                              <div
-                                className="group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60"
-                                onClick={() => toggle(openGoals, g.id, setOpenGoals)}
-                              >
-                                <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-transform ${gOpen ? "rotate-90" : ""}`} />
-                                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: skill.color, opacity: 0.7 }} />
-                                <EditableLabel
-                                  value={g.title}
-                                  onSave={(v) => updateGoal(g.id, { title: v })}
-                                />
-                                <span className="ml-auto text-[10px] text-muted-foreground">
-                                  {tg.length} task{tg.length === 1 ? "" : "s"}
-                                </span>
-                              </div>
-                              {gOpen && (
-                                <div className="ml-5 border-l border-border/60 pl-3">
-                                  {tg.length === 0 ? (
-                                    <p className="py-1 text-xs italic text-muted-foreground">No linked tasks.</p>
-                                  ) : (
-                                    tg.map((t) => (
-                                      <div
-                                        key={t.id}
-                                        className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
-                                      >
-                                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.done ? "bg-emerald-500" : "bg-slate-400"}`} />
-                                        <EditableLabel
-                                          className={t.done ? "line-through text-muted-foreground" : ""}
-                                          value={t.title}
-                                          onSave={(v) => updateTask(t.id, { title: v })}
-                                        />
-                                        {t.dueDate && (
-                                          <span className="ml-auto text-[10px] text-muted-foreground">{t.dueDate}</span>
-                                        )}
-                                      </div>
-                                    ))
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {skills.map((skill) => (
+              <SkillNode
+                key={skill.id}
+                skill={skill}
+                open={openSkills.has(skill.id)}
+                onToggle={() => toggle(openSkills, skill.id, setOpenSkills)}
+                onRename={(v) => updateSkill(skill.id, { label: v })}
+                goals={goalsBySkill(skill.id)}
+                openGoals={openGoals}
+                toggleGoal={(id) => toggle(openGoals, id, setOpenGoals)}
+                tasksByGoal={tasksByGoal}
+                updateGoal={updateGoal}
+                updateTask={updateTask}
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
