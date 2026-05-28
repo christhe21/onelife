@@ -266,7 +266,8 @@ function GoalCard({ goal }: { goal: Goal }) {
   const [subDate, setSubDate] = useState("");
   const [quickTask, setQuickTask] = useState("");
   const meta = skills.find((s) => s.id === goal.skill) ?? skills[0] ?? { label: goal.skill, color: "#10b981" };
-  const pct = progressFor(goal);
+  const { tasks } = useAppData();
+  const pct = progressFor(goal, tasks);
   const subGoals = goal.subGoals ?? [];
 
   return (
