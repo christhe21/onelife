@@ -1,22 +1,38 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from "react";
-import { Maximize2, Minimize2, ZoomIn, ZoomOut, RotateCcw, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { Maximize2, Minimize2, ZoomIn, ZoomOut, RotateCcw, ChevronsDownUp, ChevronsUpDown, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
+
+type Kind = "root" | "skill" | "goal" | "task" | "subtask";
 
 interface Node {
   id: string;
   label: string;
-  x: number;
-  y: number;
-  r: number;
-  color: string;
-  kind: "root" | "skill" | "goal" | "task" | "subtask";
+  r: number; // size hint
+  kind: Kind;
   parent?: string;
   childCount: number;
   expanded: boolean;
+  fill: string;
+  stroke: string;
 }
 
-const RING = { skill: 200, goal: 360, task: 500, sub: 600 };
+const RING = { skill: 220, goal: 380, task: 520, sub: 620 };
+const PALETTE = ["#bfe3d4", "#f7c9a8", "#f3a9a0", "#cdb8f0", "#f5d97a", "#a9d8f0"];
+const ROOT_FILL = "#cdb8f0";
+const PAPER = "#fdf8f0";
+const INK = "#2d3f2a";
+const STORAGE_KEY = "mindmap-positions-v1";
+
+function ensureFonts() {
+  if (typeof document === "undefined") return;
+  if (document.getElementById("mindmap-fonts")) return;
+  const l = document.createElement("link");
+  l.id = "mindmap-fonts";
+  l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&display=swap";
+  document.head.appendChild(l);
+}
 
 export function MindMapCanvas() {
   const { skills, goals, tasks } = useAppData();
@@ -24,16 +40,23 @@ export function MindMapCanvas() {
   const [ty, setTy] = useState(0);
   const [scale, setScale] = useState(0.85);
   const [fullscreen, setFullscreen] = useState(false);
-  const [open, setOpen] = useState<Set<string>>(() => {
-    // default: root + all skills expanded; goals/tasks collapsed
-    const s = new Set<string>(["root"]);
-    return s;
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [open, setOpen] = useState<Set<string>>(() => new Set<string>(["root"]));
+  const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
   });
-  // ensure all skills auto-expand on first render once data is in
+
+  useEffect(() => ensureFonts(), []);
+
   const initRef = useRef(false);
   useEffect(() => {
-    if (initRef.current) return;
-    if (skills.length === 0) return;
+    if (initRef.current || skills.length === 0) return;
     initRef.current = true;
     setOpen((prev) => {
       const n = new Set(prev);
@@ -42,7 +65,8 @@ export function MindMapCanvas() {
     });
   }, [skills]);
 
-  const dragging = useRef<{ x: number; y: number } | null>(null);
+  const panDrag = useRef<{ x: number; y: number } | null>(null);
+  const nodeDrag = useRef<{ id: string; ox: number; oy: number; startClientX: number; startClientY: number; moved: boolean } | null>(null);
 
   const toggle = (id: string) =>
     setOpen((prev) => {
@@ -61,165 +85,206 @@ export function MindMapCanvas() {
   };
   const collapseAll = () => setOpen(new Set<string>(["root"]));
 
-  const { nodes, links } = useMemo(() => {
+  // Seed positions (radial) + node metadata
+  const { nodes, links, seeds } = useMemo(() => {
     const nodes: Node[] = [];
-    const links: { from: string; to: string; color: string; depth: number }[] = [];
+    const links: { from: string; to: string; depth: number; curl: number }[] = [];
+    const seeds: Record<string, { x: number; y: number }> = {};
 
     const activeSkills = skills.filter((s) => goals.some((g) => g.skill === s.id));
     const rootExpanded = open.has("root");
+    seeds["root"] = { x: 0, y: 0 };
     nodes.push({
-      id: "root",
-      label: "You",
-      x: 0,
-      y: 0,
-      r: 38,
-      color: "hsl(var(--primary))",
-      kind: "root",
-      childCount: activeSkills.length,
-      expanded: rootExpanded,
+      id: "root", label: "MIND MAP", r: 56, kind: "root",
+      childCount: activeSkills.length, expanded: rootExpanded,
+      fill: ROOT_FILL, stroke: INK,
     });
 
-    if (!rootExpanded) return { nodes, links };
+    if (!rootExpanded) return { nodes, links, seeds };
 
     const skillCount = Math.max(activeSkills.length, 1);
     activeSkills.forEach((sk, i) => {
       const a = (i / skillCount) * Math.PI * 2 - Math.PI / 2;
-      const sx = Math.cos(a) * RING.skill;
-      const sy = Math.sin(a) * RING.skill;
+      seeds[`s_${sk.id}`] = { x: Math.cos(a) * RING.skill, y: Math.sin(a) * RING.skill };
       const skillGoals = goals.filter((g) => g.skill === sk.id);
       const skillExpanded = open.has(`s_${sk.id}`);
+      const skFill = PALETTE[i % PALETTE.length];
       nodes.push({
-        id: `s_${sk.id}`,
-        label: sk.label,
-        x: sx,
-        y: sy,
-        r: 28,
-        color: sk.color,
-        kind: "skill",
-        parent: "root",
-        childCount: skillGoals.length,
-        expanded: skillExpanded,
+        id: `s_${sk.id}`, label: sk.label, r: 44, kind: "skill", parent: "root",
+        childCount: skillGoals.length, expanded: skillExpanded,
+        fill: skFill, stroke: sk.color,
       });
-      links.push({ from: "root", to: `s_${sk.id}`, color: sk.color, depth: 1 });
+      links.push({ from: "root", to: `s_${sk.id}`, depth: 1, curl: (i % 2 === 0 ? 1 : -1) });
 
       if (!skillExpanded) return;
       const sectorHalf = Math.PI / skillCount;
       skillGoals.forEach((g, gi) => {
         const span = Math.max(skillGoals.length - 1, 1);
         const ga = a + ((gi / span) - 0.5) * sectorHalf * 0.95;
-        const gx = Math.cos(ga) * RING.goal;
-        const gy = Math.sin(ga) * RING.goal;
+        seeds[`g_${g.id}`] = { x: Math.cos(ga) * RING.goal, y: Math.sin(ga) * RING.goal };
         const gTasks = tasks.filter((t) => t.goalId === g.id);
         const goalExpanded = open.has(`g_${g.id}`);
         nodes.push({
-          id: `g_${g.id}`,
-          label: g.title,
-          x: gx,
-          y: gy,
-          r: 22,
-          color: sk.color,
-          kind: "goal",
-          parent: `s_${sk.id}`,
-          childCount: gTasks.length,
-          expanded: goalExpanded,
+          id: `g_${g.id}`, label: g.title, r: 36, kind: "goal", parent: `s_${sk.id}`,
+          childCount: gTasks.length, expanded: goalExpanded,
+          fill: PALETTE[(i + 2) % PALETTE.length], stroke: sk.color,
         });
-        links.push({ from: `s_${sk.id}`, to: `g_${g.id}`, color: sk.color, depth: 2 });
+        links.push({ from: `s_${sk.id}`, to: `g_${g.id}`, depth: 2, curl: (gi % 2 === 0 ? 1 : -1) });
 
         if (!goalExpanded) return;
         const tSpan = Math.max(gTasks.length - 1, 1);
         const tSectorHalf = sectorHalf / Math.max(skillGoals.length, 1);
         gTasks.forEach((t, ti) => {
           const ta = ga + ((ti / tSpan) - 0.5) * tSectorHalf * 0.95;
-          const txp = Math.cos(ta) * RING.task;
-          const typ = Math.sin(ta) * RING.task;
+          seeds[`t_${t.id}`] = { x: Math.cos(ta) * RING.task, y: Math.sin(ta) * RING.task };
           const sub = t.subtasks ?? [];
           const taskExpanded = open.has(`t_${t.id}`);
           nodes.push({
-            id: `t_${t.id}`,
-            label: t.title,
-            x: txp,
-            y: typ,
-            r: 15,
-            color: sk.color,
-            kind: "task",
-            parent: `g_${g.id}`,
-            childCount: sub.length,
-            expanded: taskExpanded,
+            id: `t_${t.id}`, label: t.title, r: 28, kind: "task", parent: `g_${g.id}`,
+            childCount: sub.length, expanded: taskExpanded,
+            fill: PALETTE[(i + 4) % PALETTE.length], stroke: sk.color,
           });
-          links.push({ from: `g_${g.id}`, to: `t_${t.id}`, color: sk.color, depth: 3 });
+          links.push({ from: `g_${g.id}`, to: `t_${t.id}`, depth: 3, curl: (ti % 2 === 0 ? 1 : -1) });
 
           if (!taskExpanded) return;
           const sSpan = Math.max(sub.length - 1, 1);
           sub.forEach((s, si) => {
             const sa = ta + ((si / sSpan) - 0.5) * (tSectorHalf / Math.max(gTasks.length, 1)) * 0.95;
-            const sxx = Math.cos(sa) * RING.sub;
-            const syy = Math.sin(sa) * RING.sub;
+            seeds[`st_${s.id}`] = { x: Math.cos(sa) * RING.sub, y: Math.sin(sa) * RING.sub };
             nodes.push({
-              id: `st_${s.id}`,
-              label: s.title,
-              x: sxx,
-              y: syy,
-              r: 10,
-              color: sk.color,
-              kind: "subtask",
-              parent: `t_${t.id}`,
-              childCount: 0,
-              expanded: true,
+              id: `st_${s.id}`, label: s.title, r: 22, kind: "subtask", parent: `t_${t.id}`,
+              childCount: 0, expanded: true,
+              fill: PALETTE[(i + 3) % PALETTE.length], stroke: sk.color,
             });
-            links.push({ from: `t_${t.id}`, to: `st_${s.id}`, color: sk.color, depth: 4 });
+            links.push({ from: `t_${t.id}`, to: `st_${s.id}`, depth: 4, curl: (si % 2 === 0 ? 1 : -1) });
           });
         });
       });
     });
 
-    return { nodes, links };
+    return { nodes, links, seeds };
   }, [skills, goals, tasks, open]);
 
-  const findNode = (id: string) => nodes.find((n) => n.id === id);
+  const pos = (id: string) => positions[id] ?? seeds[id] ?? { x: 0, y: 0 };
 
-  const onDown = (e: RPointerEvent<HTMLDivElement>) => {
+  const persist = (next: Record<string, { x: number; y: number }>) => {
+    setPositions(next);
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+
+  const autoArrange = () => persist({});
+
+  // Canvas pan
+  const onCanvasDown = (e: RPointerEvent<HTMLDivElement>) => {
+    if (nodeDrag.current) return;
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    dragging.current = { x: e.clientX - tx, y: e.clientY - ty };
+    panDrag.current = { x: e.clientX - tx, y: e.clientY - ty };
   };
-  const onMove = (e: RPointerEvent<HTMLDivElement>) => {
-    if (!dragging.current) return;
-    setTx(e.clientX - dragging.current.x);
-    setTy(e.clientY - dragging.current.y);
+  const onCanvasMove = (e: RPointerEvent<HTMLDivElement>) => {
+    if (nodeDrag.current) {
+      const nd = nodeDrag.current;
+      const dx = (e.clientX - nd.startClientX) / scale;
+      const dy = (e.clientY - nd.startClientY) / scale;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) nd.moved = true;
+      setPositions((prev) => ({ ...prev, [nd.id]: { x: nd.ox + dx, y: nd.oy + dy } }));
+      return;
+    }
+    if (!panDrag.current) return;
+    setTx(e.clientX - panDrag.current.x);
+    setTy(e.clientY - panDrag.current.y);
   };
-  const onUp = () => {
-    dragging.current = null;
+  const onCanvasUp = () => {
+    if (nodeDrag.current) {
+      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); } catch { /* ignore */ }
+    }
+    panDrag.current = null;
+    nodeDrag.current = null;
   };
   const onWheel = (e: React.WheelEvent) => {
     const factor = e.deltaY > 0 ? 0.9 : 1.1;
     setScale((s) => Math.max(0.2, Math.min(3, s * factor)));
   };
-  const reset = () => {
-    setTx(0);
-    setTy(0);
-    setScale(0.85);
-  };
+  const reset = () => { setTx(0); setTy(0); setScale(0.85); };
 
-  // ESC exits fullscreen
   useEffect(() => {
     if (!fullscreen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFullscreen(false);
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFullscreen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [fullscreen]);
 
-  const containerCls = fullscreen
-    ? "fixed inset-0 z-50 bg-background p-3 flex flex-col"
-    : "relative";
+  const onNodeDown = (e: React.PointerEvent<SVGGElement>, n: Node) => {
+    e.stopPropagation();
+    const p = pos(n.id);
+    nodeDrag.current = { id: n.id, ox: p.x, oy: p.y, startClientX: e.clientX, startClientY: e.clientY, moved: false };
+  };
+  const onNodeClick = (e: React.MouseEvent, n: Node) => {
+    e.stopPropagation();
+    if (nodeDrag.current?.moved) return;
+    if (n.childCount > 0) toggle(n.id);
+  };
+
+  const containerCls = fullscreen ? "fixed inset-0 z-50 bg-background p-3 flex flex-col" : "relative";
   const canvasCls = fullscreen
-    ? "relative flex-1 w-full cursor-grab touch-none overflow-hidden rounded-lg border bg-muted/10 active:cursor-grabbing"
-    : "relative h-[70vh] w-full cursor-grab touch-none overflow-hidden rounded-lg border bg-muted/10 active:cursor-grabbing";
+    ? "relative flex-1 w-full cursor-grab touch-none overflow-hidden rounded-lg border active:cursor-grabbing"
+    : "relative h-[70vh] w-full cursor-grab touch-none overflow-hidden rounded-lg border active:cursor-grabbing";
+
+  // Render helpers
+  const renderShape = (n: Node, hovered: boolean) => {
+    const baseProps = {
+      fill: n.fill,
+      stroke: n.stroke,
+      strokeWidth: hovered ? 3 : 2,
+      vectorEffect: "non-scaling-stroke" as const,
+      style: { filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.08))" },
+    };
+    if (n.kind === "root") {
+      return <rect x={-90} y={-40} width={180} height={80} rx={20} ry={20} {...baseProps} />;
+    }
+    if (n.kind === "skill") {
+      const s = n.r;
+      return <rect x={-s} y={-s * 0.75} width={s * 2} height={s * 1.5} rx={22} ry={22} {...baseProps} />;
+    }
+    if (n.kind === "goal" || n.kind === "subtask") {
+      return <ellipse cx={0} cy={0} rx={n.r * 1.4} ry={n.r * 0.7} {...baseProps} />;
+    }
+    // task
+    const s = n.r;
+    return <rect x={-s * 1.3} y={-s * 0.7} width={s * 2.6} height={s * 1.4} rx={16} ry={16} {...baseProps} />;
+  };
+
+  const labelFont = (kind: Kind) => {
+    if (kind === "root") return { family: "'Caveat', cursive", size: 26, weight: 700 };
+    if (kind === "skill") return { family: "'Patrick Hand', cursive", size: 18, weight: 400 };
+    if (kind === "goal") return { family: "'Patrick Hand', cursive", size: 15, weight: 400 };
+    if (kind === "task") return { family: "'Patrick Hand', cursive", size: 13, weight: 400 };
+    return { family: "'Patrick Hand', cursive", size: 12, weight: 400 };
+  };
+
+  // wrap label into max 2 lines
+  const wrap = (label: string, maxChars: number): string[] => {
+    if (label.length <= maxChars) return [label];
+    const words = label.split(" ");
+    const lines: string[] = [];
+    let cur = "";
+    for (const w of words) {
+      if ((cur + " " + w).trim().length > maxChars) {
+        if (cur) lines.push(cur);
+        cur = w;
+      } else cur = (cur + " " + w).trim();
+      if (lines.length === 1 && (cur.length > maxChars)) break;
+    }
+    if (cur) lines.push(cur);
+    if (lines.length > 2) {
+      lines.length = 2;
+      lines[1] = lines[1].slice(0, maxChars - 1) + "…";
+    }
+    return lines;
+  };
 
   return (
     <div className={containerCls}>
-      {/* top controls */}
-      <div className={`flex items-center justify-between gap-2 ${fullscreen ? "mb-2" : "mb-2"}`}>
+      <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={collapseAll}>
             <ChevronsDownUp className="mr-1 h-3.5 w-3.5" />Collapse
@@ -227,13 +292,11 @@ export function MindMapCanvas() {
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={expandAll}>
             <ChevronsUpDown className="mr-1 h-3.5 w-3.5" />Expand
           </Button>
+          <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={autoArrange}>
+            <Shuffle className="mr-1 h-3.5 w-3.5" />Auto-arrange
+          </Button>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 px-2 text-xs"
-          onClick={() => setFullscreen((f) => !f)}
-        >
+        <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={() => setFullscreen((f) => !f)}>
           {fullscreen ? <Minimize2 className="mr-1 h-3.5 w-3.5" /> : <Maximize2 className="mr-1 h-3.5 w-3.5" />}
           {fullscreen ? "Exit" : "Fullscreen"}
         </Button>
@@ -241,15 +304,13 @@ export function MindMapCanvas() {
 
       <div
         className={canvasCls}
-        onPointerDown={onDown}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
-        onPointerLeave={onUp}
+        onPointerDown={onCanvasDown}
+        onPointerMove={onCanvasMove}
+        onPointerUp={onCanvasUp}
+        onPointerLeave={onCanvasUp}
         onWheel={onWheel}
         style={{
-          backgroundImage:
-            "radial-gradient(circle, hsl(var(--border)) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
+          background: `${PAPER} radial-gradient(circle at 20% 30%, rgba(0,0,0,0.025) 0 1px, transparent 1px) 0 0/18px 18px`,
         }}
       >
         <svg
@@ -257,106 +318,100 @@ export function MindMapCanvas() {
           style={{
             transform: `translate(-50%, -50%) translate(${tx}px, ${ty}px) scale(${scale})`,
             transformOrigin: "center",
+            shapeRendering: "geometricPrecision",
           }}
-          width="1600"
-          height="1600"
-          viewBox="-800 -800 1600 1600"
+          width="1800"
+          height="1800"
+          viewBox="-900 -900 1800 1800"
         >
           <defs>
-            <radialGradient id="root-grad" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.95" />
-              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.55" />
-            </radialGradient>
-            <filter id="node-shadow" x="-50%" y="-50%" width="200%" height="200%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.25" />
-            </filter>
+            <marker id="mm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill={INK} />
+            </marker>
           </defs>
 
-          {/* curved links */}
+          {/* arrows */}
           {links.map((l, i) => {
-            const a = findNode(l.from);
-            const b = findNode(l.to);
-            if (!a || !b) return null;
-            const mx = (a.x + b.x) / 2;
-            const my = (a.y + b.y) / 2;
-            // pull control point toward parent for an organic arc
-            const cx = (a.x + mx) / 2;
-            const cy = (a.y + my) / 2;
-            const w = Math.max(0.8, 2.6 - l.depth * 0.5);
+            const a = pos(l.from);
+            const b = pos(l.to);
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const len = Math.hypot(dx, dy) || 1;
+            // shorten end so arrow doesn't overlap shape
+            const pad = 38;
+            const ex = b.x - (dx / len) * pad;
+            const ey = b.y - (dy / len) * pad;
+            const sx = a.x + (dx / len) * pad * 0.7;
+            const sy = a.y + (dy / len) * pad * 0.7;
+            // wavy control point
+            const mx = (sx + ex) / 2 + (-dy / len) * 30 * l.curl;
+            const my = (sy + ey) / 2 + (dx / len) * 30 * l.curl;
+            const w = Math.max(1.2, 2.4 - l.depth * 0.3);
             return (
               <path
                 key={i}
-                d={`M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`}
+                d={`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`}
                 fill="none"
-                stroke={l.color}
-                strokeOpacity={0.45}
+                stroke={INK}
+                strokeOpacity={0.75}
                 strokeWidth={w}
                 strokeLinecap="round"
+                markerEnd="url(#mm-arrow)"
+                vectorEffect="non-scaling-stroke"
+                style={{ pointerEvents: "none" }}
               />
             );
           })}
 
           {/* nodes */}
           {nodes.map((n) => {
+            const p = pos(n.id);
             const interactive = n.childCount > 0;
-            const labelW = Math.min(180, Math.max(60, n.label.length * 6.6));
-            const labelH = 16;
-            const labelY = n.r + 8;
+            const hovered = hoverId === n.id;
+            const font = labelFont(n.kind);
+            const maxChars = n.kind === "root" ? 12 : n.kind === "skill" ? 12 : n.kind === "goal" ? 14 : n.kind === "task" ? 16 : 14;
+            const lines = wrap(n.label, maxChars);
+            const lineH = font.size + 2;
+            const startY = -((lines.length - 1) * lineH) / 2 + 4;
             return (
               <g
                 key={n.id}
-                transform={`translate(${n.x},${n.y})`}
-                style={{ cursor: interactive ? "pointer" : "default" }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (interactive) toggle(n.id);
-                }}
-                className="transition-transform hover:scale-110"
+                transform={`translate(${p.x},${p.y})`}
+                style={{ cursor: interactive ? "pointer" : "grab", touchAction: "none" }}
+                onPointerDown={(e) => onNodeDown(e, n)}
+                onPointerEnter={() => setHoverId(n.id)}
+                onPointerLeave={() => setHoverId((id) => (id === n.id ? null : id))}
+                onClick={(e) => onNodeClick(e, n)}
               >
-                <circle
-                  r={n.r}
-                  fill={n.kind === "root" ? "url(#root-grad)" : n.color}
-                  stroke="hsl(var(--background))"
-                  strokeWidth={2}
-                  fillOpacity={n.kind === "subtask" ? 0.7 : 0.92}
-                  filter="url(#node-shadow)"
-                />
-                {/* collapsed badge */}
+                {renderShape(n, hovered)}
                 {interactive && !n.expanded && (
-                  <g transform={`translate(${n.r * 0.7},${-n.r * 0.7})`}>
-                    <circle r={9} fill="hsl(var(--background))" stroke={n.color} strokeWidth={1.5} />
-                    <text textAnchor="middle" dy="3" style={{ fontSize: 9, fontWeight: 600 }} fill={n.color}>
+                  <g transform={`translate(${n.r * 1.1},${-n.r * 0.7})`} style={{ pointerEvents: "none" }}>
+                    <circle r={11} fill={PAPER} stroke={INK} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 11, fontWeight: 600 }} fill={INK}>
                       +{n.childCount}
                     </text>
                   </g>
                 )}
-                {/* label pill */}
-                <g transform={`translate(${-labelW / 2}, ${labelY})`}>
-                  <rect
-                    width={labelW}
-                    height={labelH}
-                    rx={labelH / 2}
-                    fill="hsl(var(--background))"
-                    fillOpacity={0.92}
-                    stroke="hsl(var(--border))"
-                    strokeWidth={0.8}
-                  />
-                  <text
-                    x={labelW / 2}
-                    y={labelH / 2 + 3.5}
-                    textAnchor="middle"
-                    className="fill-foreground"
-                    style={{ fontSize: n.kind === "root" ? 11 : 10, fontWeight: n.kind === "root" || n.kind === "skill" ? 600 : 500 }}
-                  >
-                    {n.label.length > 26 ? n.label.slice(0, 25) + "…" : n.label}
-                  </text>
-                </g>
+                <text
+                  textAnchor="middle"
+                  fill={INK}
+                  style={{
+                    fontFamily: font.family,
+                    fontSize: font.size,
+                    fontWeight: font.weight,
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  }}
+                >
+                  {lines.map((ln, i) => (
+                    <tspan key={i} x={0} y={startY + i * lineH}>{ln}</tspan>
+                  ))}
+                </text>
               </g>
             );
           })}
         </svg>
 
-        {/* floating toolbar */}
         <div className="absolute bottom-3 right-3 flex items-center gap-0.5 rounded-lg border bg-background/90 p-1 shadow-md backdrop-blur">
           <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setScale((s) => Math.min(3, s * 1.2))} title="Zoom in">
             <ZoomIn className="h-3.5 w-3.5" />
@@ -373,14 +428,13 @@ export function MindMapCanvas() {
           </Button>
         </div>
 
-        {/* zoom indicator */}
         <div className="absolute bottom-3 left-3 rounded-md border bg-background/90 px-2 py-0.5 text-[10px] text-muted-foreground backdrop-blur">
           {Math.round(scale * 100)}%
         </div>
       </div>
 
       <p className="mt-2 text-[11px] text-muted-foreground">
-        Tap a node to expand/collapse · drag to pan · scroll or pinch to zoom
+        Drag nodes to rearrange · tap to expand/collapse · drag empty space to pan · scroll to zoom
       </p>
     </div>
   );
