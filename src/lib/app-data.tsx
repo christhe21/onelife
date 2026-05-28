@@ -528,12 +528,26 @@ export function useAppData() {
   return ctx;
 }
 
-export function progressFor(g: Goal): number {
+export function progressFor(g: Goal, tasks: Task[] = []): number {
+  const linked = tasks.filter((t) => t.goalId === g.id);
+  if (linked.length > 0) {
+    const done = linked.filter((t) => t.done).length;
+    return Math.round((done / linked.length) * 100);
+  }
   const subs = g.subGoals ?? [];
-  if (subs.length === 0) return g.manualProgress ?? (g.status === "completed" ? 100 : 0);
-  const done = subs.filter((s) => s.done).length;
-  return Math.round((done / subs.length) * 100);
+  if (subs.length > 0) {
+    const done = subs.filter((s) => s.done).length;
+    return Math.round((done / subs.length) * 100);
+  }
+  if (g.status === "completed") return 100;
+  return g.manualProgress ?? 0;
 }
+
+export const DEMO_DATA: AppData = {
+  goals: TEMPLATE_PAYLOAD.goals.map((g) => normalizeGoal(g)),
+  tasks: TEMPLATE_PAYLOAD.tasks.map((t) => normalizeTask(t)),
+  bucketList: TEMPLATE_PAYLOAD.bucketList.map((b) => normalizeBucket(b)),
+};
 
 export function skillMeta(id: SkillId) {
   return SKILLS.find((s) => s.id === id) ?? SKILLS[0];
