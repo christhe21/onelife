@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { progressFor, useAppData } from "@/lib/app-data";
 
 export function SkillsRadar() {
-  const { goals, skills } = useAppData();
+  const { goals, skills, tasks } = useAppData();
 
   const data = useMemo(() => {
     return skills.map((s) => {
@@ -21,10 +21,10 @@ export function SkillsRadar() {
       const avg =
         gs.length === 0
           ? 0
-          : Math.round(gs.reduce((a, g) => a + progressFor(g), 0) / gs.length);
+          : Math.round(gs.reduce((a, g) => a + progressFor(g, tasks), 0) / gs.length);
       return { skill: s.label, value: avg, fullMark: 100, color: s.color };
     });
-  }, [goals, skills]);
+  }, [goals, skills, tasks]);
 
   const hasData = data.some((d) => d.value > 0);
 

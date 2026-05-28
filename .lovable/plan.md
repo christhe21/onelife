@@ -1,49 +1,61 @@
-# Mindmap: Hand-drawn Redesign + Drag + Hover Fix
+# Onboarding, Templates & Auto-Progress
 
-## Visual overhaul (`MindMapCanvas.tsx`)
+## 1. Empty-state onboarding (Dashboard)
 
-- Load Google Font **Patrick Hand** (headings) and **Caveat** (root) via `<link>` injected once on mount; apply via inline `font-family` on SVG `<text>` so it doesn't leak into the rest of the app.
-- New pastel palette per node-kind (paper bg `#fdf8f0`, mint `#bfe3d4`, peach `#f7c9a8`, coral `#f3a9a0`, lilac `#cdb8f0`); rotate through palette per skill instead of using skill.color, but keep skill.color as a thin stroke for identity.
-- Node shapes by depth:
-  - root → rounded rectangle "MIND MAP" style, lilac fill
-  - skill → rounded square (rx 18)
-  - goal → ellipse pill
-  - task → small rounded rect
-  - subtask → small ellipse
-- Connectors: dark green (`#2d3f2a`) hand-drawn arrows. Replace Bezier with slightly wavy quadratic path + arrowhead `<marker>` at end. Vary curl direction by index for organic feel.
-- Add subtle paper-texture background (CSS radial-gradient noise) instead of dotted grid.
-- Label rendered INSIDE the shape (not as a separate pill below) — matches the reference.
+Replace the current "Your dashboard is waiting" card in `src/components/life/Dashboard.tsx` with a richer empty state shown whenever `goals + tasks + bucketList` is empty. It exposes three prominent CTAs side-by-side (stack on mobile):
 
-## Free-drag layout
+- **Try a demo** — calls `replaceAll(DEMO_DATA)` to load a curated sample dataset so the user can explore a populated app instantly.
+- **Add your first goal** — opens a new `OnboardingWizard` dialog (see §2).
+- **Import JSON** — primary outlined button that opens a file picker and calls `importJSON(file)` (same logic as the menu item, just surfaced).
 
-- Replace radial auto-layout with: initial radial seed positions stored in a `Map<id, {x,y}>` state on first render.
-- Per-node `onPointerDown` starts node-drag (stopPropagation so canvas pan doesn't trigger); updates that node's position in state on move.
-- Canvas pan still works on empty space.
-- Add "Auto-arrange" button in toolbar to reset positions to radial seed.
-- Persist positions to localStorage keyed by node id so layout survives reload.
+Below the CTAs: a small "Start from a template" grid showing the 5 suggested categories with one science-backed template each (see §3) — click to insert that goal + its starter tasks/sub-goals.
 
-## Hover-jitter fix
+## 2. Onboarding wizard (`src/components/life/OnboardingWizard.tsx`)
 
-Root cause: `className="transition-transform hover:scale-110"` on each `<g>` re-triggers SVG layout on every mouse enter/leave, and child `<text>` re-measures → shake.
+3-step dialog:
 
-Fix:
-- Remove `hover:scale-110` entirely.
-- Replace with a static `<circle>`/`<rect>` "halo" sibling that fades in via `opacity` on hover (CSS only, no transform).
-- Add `pointer-events: visiblePainted` on shapes and `pointer-events: none` on labels so hover target is stable.
-- Add `shape-rendering="geometricPrecision"` and `vector-effect="non-scaling-stroke"` to prevent stroke flicker during pan/zoom.
+1. **Pick a category** — Career, Health, Travel, Faith, Music (chips, maps to existing skills; Travel/Faith/Music auto-created via `addSkill` if missing).
+2. **Pick a template or start blank** — shows the templates filtered by category (see §3). User can also tweak title + target date inline.
+3. **Confirm** — calls `addGoal` then `addSubGoal` for each milestone and `addTask` for each starter task.
 
-## Toolbar
+After finishing, dialog closes; dashboard re-renders with populated data.
 
-Keep existing Collapse/Expand/Fullscreen/Zoom/Reset; add **Auto-arrange** (RotateCcw becomes "Reset view", new Shuffle icon for arrange).
+## 3. Science-backed templates (`src/lib/templates.ts` — new)
 
-## Out of scope
+Curated list, each item: `{ id, category, title, description, rationale, durationDays, subGoals[], tasks[] }`. Rationale cites the research model so it's transparent (shown as small footnote in wizard).
 
-- No changes to data model, Overview tree view, or other components.
-- Tree view in `Overview.tsx` stays as-is.
+Starter set (5, one per category; expandable later):
+- **Career — Deliberate practice project** (Ericsson, 1993): 12-week skill sprint with weekly reflection.
+- **Health — Couch-to-5K** (NHS programme): 9-week progressive run plan.
+- **Travel — One-trip-a-quarter** (experiential-purchase research, Van Boven & Gilovich 2003).
+- **Faith — Daily 10-min contemplative practice** (Kabat-Zinn MBSR-style cadence).
+- **Music — 20-hour rapid-skill ramp** (Kaufman, *The First 20 Hours*): daily 30-min focused practice.
 
-## Technical notes
+Each template ships with 2–4 sub-goals (milestones) and 2–3 starter tasks so progress can auto-compute immediately.
 
-- Fonts loaded with `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Patrick+Hand&display=swap">` appended to `document.head` inside a `useEffect`, guarded so we only append once.
-- Drag state: `useRef` for active drag id + offset, `useState<Map>` for positions (immutable update on move — throttle via `requestAnimationFrame`).
-- Arrow marker defined once in `<defs>`: `<marker id="arrow" ...><path d="M0,0 L8,4 L0,8 z" fill="#2d3f2a"/></marker>`, applied via `marker-end="url(#arrow)"` on each link path.
-- localStorage key: `mindmap-positions-v1`.
+## 4. Auto-calculated goal progress
+
+Update `progressFor` in `src/lib/app-data.tsx` to remove manual input dependency. New rule (in priority order):
+
+1. If goal has tasks linked (`tasks.filter(t => t.goalId === g.id)`), progress = `completed tasks / total tasks × 100`.
+2. Else if goal has sub-goals, progress = `done sub-goals / total × 100` (current behavior).
+3. Else if `status === 'completed'`, 100. Otherwise 0.
+
+Because `progressFor` currently takes only a `Goal`, change its signature to `progressFor(g, tasks)` and update call sites: `Dashboard.tsx`, `Goals.tsx`, `MindMapCanvas.tsx`, `Overview.tsx` (and any other). Pass `tasks` from `useAppData()` at each call site.
+
+Drop the "Manual progress override" input from the Goal create/edit dialog in `Goals.tsx`; replace with a read-only "Progress is auto-calculated from linked tasks and milestones" hint. Keep `manualProgress` in the type for backward-compat with imported JSON but no longer surface it in UI.
+
+## 5. Out of scope
+
+- No backend/Lovable Cloud changes (all local-storage as today).
+- Mind-map, timeline, and existing tabs untouched except for `progressFor` call-site updates.
+
+## Files touched
+
+- new: `src/lib/templates.ts`
+- new: `src/components/life/OnboardingWizard.tsx`
+- new: `src/components/life/EmptyStateHero.tsx` (extracted from Dashboard for clarity)
+- edit: `src/components/life/Dashboard.tsx` (swap empty state, pass `tasks` to `progressFor`)
+- edit: `src/components/life/Goals.tsx` (remove manualProgress input, pass tasks)
+- edit: `src/components/life/MindMapCanvas.tsx` & `Overview.tsx` (pass tasks to `progressFor`)
+- edit: `src/lib/app-data.tsx` (`progressFor` signature; export `DEMO_DATA` reusing `TEMPLATE_PAYLOAD`)

@@ -142,17 +142,8 @@ function GoalDialog({ goal, trigger }: GoalDialogProps) {
               onChange={(e) => setForm({ ...form, currentActivity: e.target.value })}
             />
           </div>
-          <div>
-            <Label>Manual progress override (%) — used when there are no milestones</Label>
-            <Input
-              type="number"
-              min={0}
-              max={100}
-              value={form.manualProgress}
-              onChange={(e) =>
-                setForm({ ...form, manualProgress: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })
-              }
-            />
+          <div className="rounded-md border bg-muted/40 p-2.5 text-xs text-muted-foreground">
+            Progress is auto-calculated from linked tasks (or milestones if no tasks). No manual input needed.
           </div>
         </div>
         <DialogFooter>
@@ -260,13 +251,14 @@ function GoalCard({ goal }: { goal: Goal }) {
     deleteSubGoal,
     addTask,
     skills,
+    tasks,
   } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const [subTitle, setSubTitle] = useState("");
   const [subDate, setSubDate] = useState("");
   const [quickTask, setQuickTask] = useState("");
   const meta = skills.find((s) => s.id === goal.skill) ?? skills[0] ?? { label: goal.skill, color: "#10b981" };
-  const pct = progressFor(goal);
+  const pct = progressFor(goal, tasks);
   const subGoals = goal.subGoals ?? [];
 
   return (
