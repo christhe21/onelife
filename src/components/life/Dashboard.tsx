@@ -4,6 +4,7 @@ import { Target, ListChecks, Sparkles, TrendingUp } from "lucide-react";
 import { SkillProgress } from "@/components/life/SkillProgress";
 import { SkillsRadar } from "@/components/life/SkillsRadar";
 import { LifeTimeline } from "@/components/life/LifeTimeline";
+import { EmptyStateHero } from "@/components/life/EmptyStateHero";
 import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
@@ -18,7 +19,7 @@ export function Dashboard() {
   const bucketDone = bucketList.filter((b) => b.achieved).length;
 
   const avgProgress =
-    goals.length === 0 ? 0 : Math.round(goals.reduce((a, g) => a + progressFor(g), 0) / goals.length);
+    goals.length === 0 ? 0 : Math.round(goals.reduce((a, g) => a + progressFor(g, tasks), 0) / goals.length);
 
   const bySkill = skills
     .map((s) => ({ skill: s, goals: goals.filter((g) => g.skill === s.id) }))
@@ -59,17 +60,7 @@ export function Dashboard() {
       </div>
 
       {isEmpty ? (
-        <Card className="border-dashed">
-          <CardContent className="py-16 text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Target className="h-5 w-5" />
-            </div>
-            <p className="font-display text-base font-medium">Your dashboard is waiting</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add a goal, task or bucket-list item to get started — or import a JSON file.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyStateHero />
       ) : (
         <div className="grid gap-4 lg:grid-cols-5">
           <div className="lg:col-span-2">
@@ -99,7 +90,7 @@ export function Dashboard() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {gs.map((g) => {
-                    const pct = progressFor(g);
+                    const pct = progressFor(g, tasks);
                     return (
                       <div key={g.id} className="space-y-1">
                         <div className="flex items-center justify-between gap-2 text-sm">
