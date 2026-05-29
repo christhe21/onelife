@@ -420,6 +420,10 @@ export function MindMapCanvas() {
                     fontWeight: font.weight,
                     pointerEvents: "none",
                     userSelect: "none",
+                    paintOrder: "stroke",
+                    stroke: n.fill,
+                    strokeWidth: 3,
+                    strokeLinejoin: "round",
                   }}
                 >
                   {lines.map((ln, i) => (
