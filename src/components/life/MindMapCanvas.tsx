@@ -165,7 +165,7 @@ export function MindMapCanvas() {
     return { nodes, links, seeds };
   }, [skills, goals, tasks, open]);
 
-  const pos = (id: string) => positions[id] ?? seeds[id] ?? { x: 0, y: 0 };
+  }, [skills, goals, tasks, open, settings.userName]);
 
   const persist = (next: Record<string, { x: number; y: number }>) => {
     setPositions(next);
