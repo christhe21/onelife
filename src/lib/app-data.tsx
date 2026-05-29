@@ -73,6 +73,8 @@ export interface BucketItem {
 
 export interface Settings {
   birthYear?: number;
+  userName?: string;
+  onboardedAt?: string;
 }
 
 export interface AppData {
@@ -293,6 +295,7 @@ interface Ctx extends AppData {
   skills: Skill[];
   settings: Settings;
   setBirthYear: (y: number | undefined) => void;
+  updateSettings: (patch: Partial<Settings>) => void;
 
   addSkill: (s: Omit<Skill, "id"> & { id?: string }) => void;
   updateSkill: (id: string, patch: Partial<Omit<Skill, "id">>) => void;
@@ -347,7 +350,11 @@ function loadInitial(): Stored {
           .map((s: any) => ({ id: s.id, label: s.label, color: typeof s.color === "string" ? s.color : "#10b981" }))
       : DEFAULT_SKILLS;
     const settings: Settings = parsed?.settings && typeof parsed.settings === "object"
-      ? { birthYear: typeof parsed.settings.birthYear === "number" ? parsed.settings.birthYear : undefined }
+      ? {
+          birthYear: typeof parsed.settings.birthYear === "number" ? parsed.settings.birthYear : undefined,
+          userName: typeof parsed.settings.userName === "string" ? parsed.settings.userName : undefined,
+          onboardedAt: typeof parsed.settings.onboardedAt === "string" ? parsed.settings.onboardedAt : undefined,
+        }
       : {};
     return { ...data, skills, settings };
   } catch {
@@ -393,6 +400,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     skills,
     settings,
     setBirthYear: (y) => setSettings((s) => ({ ...s, birthYear: y })),
+    updateSettings: (patch) => setSettings((s) => ({ ...s, ...patch })),
 
     addSkill: (s) =>
       setSkills((cur) => {
