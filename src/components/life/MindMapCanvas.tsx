@@ -93,8 +93,6 @@ export function MindMapCanvas() {
 
     const activeSkills = skills.filter((s) => goals.some((g) => g.skill === s.id));
     const rootExpanded = open.has("root");
-    const activeSkills = skills.filter((s) => goals.some((g) => g.skill === s.id));
-    const rootExpanded = open.has("root");
     const rootLabel = settings.userName?.trim() ? settings.userName.trim().toUpperCase() : "MY LIFE";
     seeds["root"] = { x: 0, y: 0 };
     nodes.push({
