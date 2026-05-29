@@ -93,13 +93,15 @@ export function MindMapCanvas() {
 
     const activeSkills = skills.filter((s) => goals.some((g) => g.skill === s.id));
     const rootExpanded = open.has("root");
+    const activeSkills = skills.filter((s) => goals.some((g) => g.skill === s.id));
+    const rootExpanded = open.has("root");
+    const rootLabel = settings.userName?.trim() ? settings.userName.trim().toUpperCase() : "MY LIFE";
     seeds["root"] = { x: 0, y: 0 };
     nodes.push({
-      id: "root", label: "MIND MAP", r: 56, kind: "root",
+      id: "root", label: rootLabel, r: 60, kind: "root",
       childCount: activeSkills.length, expanded: rootExpanded,
       fill: ROOT_FILL, stroke: INK,
     });
-
     if (!rootExpanded) return { nodes, links, seeds };
 
     const skillCount = Math.max(activeSkills.length, 1);
