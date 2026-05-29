@@ -30,12 +30,12 @@ function ensureFonts() {
   const l = document.createElement("link");
   l.id = "mindmap-fonts";
   l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&display=swap";
+  l.href = "https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@700&display=swap";
   document.head.appendChild(l);
 }
 
 export function MindMapCanvas() {
-  const { skills, goals, tasks } = useAppData();
+  const { skills, goals, tasks, settings } = useAppData();
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
   const [scale, setScale] = useState(0.85);
