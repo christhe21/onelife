@@ -385,10 +385,13 @@ export function MindMapCanvas() {
             const interactive = n.childCount > 0;
             const hovered = hoverId === n.id;
             const font = labelFont(n.kind);
-            const maxChars = n.kind === "root" ? 12 : n.kind === "skill" ? 12 : n.kind === "goal" ? 14 : n.kind === "task" ? 16 : 14;
+            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 14 : n.kind === "goal" ? 18 : n.kind === "task" ? 20 : 18;
             const lines = wrap(n.label, maxChars);
             const lineH = font.size + 2;
-            const startY = -((lines.length - 1) * lineH) / 2 + 4;
+            const startY = -((lines.length - 1) * lineH) / 2 + font.size / 3;
+            const { halfW, halfH } = nodeBox(n.kind, lines, font.size);
+            const badgeX = halfW * (n.kind === "task" || n.kind === "subtask" ? 0.95 : 0.85);
+            const badgeY = -halfH * 0.85;
             return (
               <g
                 key={n.id}
@@ -399,11 +402,11 @@ export function MindMapCanvas() {
                 onPointerLeave={() => setHoverId((id) => (id === n.id ? null : id))}
                 onClick={(e) => onNodeClick(e, n)}
               >
-                {renderShape(n, hovered)}
+                {renderShape(n, hovered, halfW, halfH)}
                 {interactive && !n.expanded && (
-                  <g transform={`translate(${n.r * 1.1},${-n.r * 0.7})`} style={{ pointerEvents: "none" }}>
+                  <g transform={`translate(${badgeX},${badgeY})`} style={{ pointerEvents: "none" }}>
                     <circle r={11} fill={PAPER} stroke={INK} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 11, fontWeight: 600 }} fill={INK}>
+                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 11, fontWeight: 700 }} fill={INK}>
                       +{n.childCount}
                     </text>
                   </g>
