@@ -3,7 +3,7 @@ import { Sparkles, Upload, Play, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAppData, DEMO_DATA } from "@/lib/app-data";
-import { OnboardingWizard } from "@/components/life/OnboardingWizard";
+import { NewGoalButton } from "@/components/life/NewGoalButton";
 import { toast } from "sonner";
 
 export function EmptyStateHero() {
@@ -44,7 +44,7 @@ export function EmptyStateHero() {
           >
             <Play className="mr-2 h-4 w-4" /> See a demo
           </Button>
-          <OnboardingWizard
+          <NewGoalButton
             trigger={
               <Button size="lg">
                 <Plus className="mr-2 h-4 w-4" /> Add a goal

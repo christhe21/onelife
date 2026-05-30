@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SkillProgress } from "@/components/life/SkillProgress";
+import { NewGoalButton } from "@/components/life/NewGoalButton";
 import {
   Select,
   SelectContent,
@@ -438,13 +439,7 @@ export function Goals() {
             </SelectContent>
           </Select>
         </div>
-        <GoalDialog
-          trigger={
-            <Button size="sm">
-              <Plus className="mr-2 h-4 w-4" /> New goal
-            </Button>
-          }
-        />
+        <NewGoalButton label="New goal" />
       </div>
       {filtered.length === 0 ? (
         <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">
