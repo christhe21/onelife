@@ -173,21 +173,36 @@ export function Onboarding() {
       </div>
 
       {/* Content */}
-      <div className="flex flex-1 items-center justify-center overflow-y-auto p-6">
-        <div className="w-full max-w-lg">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto flex min-h-full w-full max-w-lg items-center justify-center p-6">
+          <div className="w-full">
           {step === "welcome" && (
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-                <Sparkles className="h-7 w-7" />
+            <div className="relative text-center">
+              {/* decorative background blobs */}
+              <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+                <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+                <div className="absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-fuchsia-400/20 blur-3xl" />
+                <div className="absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/10 blur-2xl" />
               </div>
-              <h1 className="font-display text-3xl font-semibold">Welcome to Life Manager</h1>
-              <p className="mt-3 text-sm text-muted-foreground">
-                Let&apos;s set up your dashboard in a few steps — like setting up a new phone.
-                You can change anything later.
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-fuchsia-500 text-primary-foreground shadow-2xl shadow-primary/30 ring-1 ring-white/20">
+                <Sparkles className="h-9 w-9" />
+              </div>
+              <h1 className="font-display text-4xl font-semibold tracking-tight">
+                Welcome to <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">Life Manager</span>
+              </h1>
+              <p className="mx-auto mt-4 max-w-sm text-base text-muted-foreground">
+                Let&apos;s set up your dashboard in a few easy steps — like setting up a new phone. You can change anything later.
               </p>
-              <Button className="mt-6" size="lg" onClick={next}>
-                Get started <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <div className="mt-8 flex flex-col items-center gap-3">
+                <Button
+                  size="lg"
+                  onClick={next}
+                  className="h-12 w-full max-w-xs rounded-full text-base shadow-lg shadow-primary/30 transition hover:shadow-xl hover:shadow-primary/40"
+                >
+                  Get started <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <span className="text-xs text-muted-foreground">Takes about 2 minutes</span>
+              </div>
             </div>
           )}
 
