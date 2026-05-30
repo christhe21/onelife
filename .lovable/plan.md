@@ -1,73 +1,49 @@
-# Today view, onboarding flow, mindmap shape/typography polish
+## New Goal Wizard
 
-## 1. "Today" tab (new)
+Reuse the same step-by-step pattern from `Onboarding.tsx` so that every time the user creates a new goal, they're walked through defining it, breaking it into sub-goals, and adding starter tasks (with optional sub-tasks). Every step after step 1 is skippable.
 
-Add a new top-level tab between Dashboard and Overview in `src/components/life/AppShell.tsx` (`TabId` gets `"today"`; icon `CalendarCheck`). Wire into the tab switch in `src/routes/index.tsx`.
+### Steps
 
-New component `src/components/life/Today.tsx`:
+1. **Goal basics** *(required)* — title, life area (skill), target date, optional description.
+2. **Pick a template?** *(skip)* — if the chosen life area has matching entries in `src/lib/templates.ts`, offer them to pre-fill milestones + tasks. Otherwise auto-skip.
+3. **Milestones / sub-goals** *(skip)* — add any number of `{ title, targetDate }` rows. "Add milestone" + per-row delete, same UI as onboarding step 6.
+4. **Starter tasks** *(skip)* — add tasks `{ title, dueDate, priority }` linked to this goal.
+5. **Sub-tasks per task** *(skip)* — for each task added in step 4, optionally add sub-tasks `{ title, hoursPerWeek?, endDate? }`. Tabs or accordion per task so the screen stays compact. (New — onboarding doesn't have this step.)
+6. **Done** — summary card ("1 goal · N milestones · M tasks · K sub-tasks") + "Go to goal" / "Add another".
 
-- **Header**: greeting with user name (from new `settings.userName`) + today's date + count of "due today / overdue / scheduled hours".
-- **Section A — Due today & overdue** (top): list of tasks where `dueDate <= today && !done`, grouped by goal (goal title as section header, colored dot from skill). Each row: checkbox, title, priority chip, overdue badge if past. Tapping checkbox marks done (uses `updateTask`).
-- **Section B — Time-blocked schedule**: a simple hour grid 6am–11pm. Tasks with `startDate === today` and an `endDate` render as blocks in their slot; unscheduled "due today" tasks appear in a side rail labeled "Unscheduled" and can be drag-assigned to an hour (sets `startDate`/`endDate` on the task). HTML5 drag-and-drop, no new deps.
-- **Empty state**: "Nothing due today — pick something from Goals to focus on" with a button to jump to Goals.
+Header: same progress-dot indicator + "Skip setup" → jumps to Done and saves whatever was filled.
 
-Reuses existing `tasks`/`goals` from `useAppData()`; no schema change beyond storing `startDate`/`endDate` already on `Task`.
+### Where it's triggered
 
-## 2. iPhone-style onboarding flow
+Every existing "Add goal" entry point opens the wizard instead of the current inline form:
+- `Goals.tsx` — "Add goal" button
+- `Dashboard.tsx` — empty-state CTA
+- `EmptyStateHero.tsx` — primary CTA
+- `Today.tsx` — if it has an "Add goal" affordance
 
-A full-screen, step-by-step setup shown on first launch (when `settings.onboardedAt` is unset). Lives in new `src/components/life/Onboarding.tsx` and is rendered by `src/routes/index.tsx` *before* `AppShell` when not onboarded. The current `EmptyStateHero` "Start from a template" grid is removed from Dashboard and folded into step 4 here.
+The wizard opens as a centered modal (Dialog) on desktop and full-screen sheet on mobile, not a fixed-inset takeover like onboarding (since the app is already populated).
 
-Steps (full screen each, progress dots at top, Back / Continue at bottom):
+### Files
 
-1. **Welcome** — brand mark, "Let's set up your life dashboard", Continue.
-2. **Your name** — single text input, saves to `settings.userName` (new field on `Settings`).
-3. **Pick your life areas** — multi-select chips of the default skills (Career, Health, Travel, Faith, Music, Creative, Financial, Social, Learning). Selected ones are kept; unselected are removed from `skills`. Travel/Faith/Music added via `addSkill` if missing.
-4. **Pick a starter template (or skip)** — same template grid that used to live on the dashboard. Selecting one moves to step 5 pre-loaded; "Skip" jumps to step 5 with blank state.
-5. **Your first goal** — title + target date inputs. If a template was picked in step 4, fields are pre-filled and editable. Saves via `addGoal`.
-6. **Add sub-goals / milestones** — inline list editor under that goal. "Add milestone" row; each row title + optional date. Saves via `addSubGoal`. Can skip.
-7. **Add first tasks** — inline list editor for tasks linked to the goal (title + due date + priority). Saves via `addTask` with `goalId`. Can skip.
-8. **You're set** — summary card ("1 goal, N milestones, M tasks") + "Enter your dashboard" button. Sets `settings.onboardedAt = now()`.
+- **New**: `src/components/life/NewGoalWizard.tsx` — the wizard component, controlled via `open` / `onOpenChange` props. Exposes an optional `defaultSkill` so context-aware launchers (e.g. clicking add on a specific skill) can pre-select.
+- **New**: `src/components/life/NewGoalButton.tsx` — small reusable trigger that mounts the wizard, so each call site is a one-liner.
+- **Edit**: `Goals.tsx`, `Dashboard.tsx`, `EmptyStateHero.tsx`, `Today.tsx` — swap inline add-goal UI for `<NewGoalButton />`.
+- **No data-model changes**. Uses existing `addGoal`, `addSubGoal`, `addTask`, `addSubtask` from `useAppData()`.
 
-Persistence: each step writes immediately so refresh mid-flow doesn't lose data. A small "Skip setup" link in the top-right at every step jumps to step 8 with whatever's entered.
+### Behavior details
 
-`EmptyStateHero` is updated: the template grid is removed; only the "See a demo / Add a goal / Import JSON" CTAs remain (still shown on Dashboard when data is empty *after* onboarding, for users who skipped).
+- "Skip" on any step is allowed; the wizard commits the goal as soon as step 1 completes so partial progress isn't lost if the user closes mid-flow.
+- Closing the dialog after step 1 = same as "Skip setup" (keeps the goal, drops the rest).
+- Template selection in step 2 pre-fills steps 3 & 4 but leaves them editable.
 
-## 3. Mindmap UI polish (`src/components/life/MindMapCanvas.tsx`)
+### Out of scope
 
-Logic stays as-is. Visual changes only:
+- No changes to the existing inline edit flow on goal cards.
+- No changes to onboarding itself.
+- No new templates.
 
-- **Shape rules**:
-  - **Center "Life (userName)" node** → ellipse, larger, bold.
-  - **Goal nodes** → ellipse, sized to fit text (auto width based on measured label).
-  - **Sub-goal, task, sub-task nodes** → parallelogram (`<polygon>` with ~12° skew), pastel fill matching current palette.
-- **Text fitting**: measure label width with a hidden `<text>` ref (or canvas `measureText`), set shape width = `textWidth + paddingX*2`, height fixed per node type. No more text overflow.
-- **Typography fix**: switch node labels from `Caveat` to `Patrick Hand` only (Caveat's thin strokes look "not properly filled" at small sizes). Increase `font-weight` to 700 and use `fill: hsl(var(--foreground))` instead of the current low-contrast color so text reads on every pastel fill. Add subtle `paint-order: stroke; stroke: white; stroke-width: 3px` halo so labels stay legible over connector lines.
-- **Center node** uses user's name from `settings.userName` (falls back to "Life").
-- Keep wavy connectors, drag, persistence, and the existing toolbar untouched.
+---
 
-## 4. Data model additions (`src/lib/app-data.tsx`)
-
-Extend `Settings`:
-```ts
-interface Settings {
-  birthYear?: number;
-  userName?: string;
-  onboardedAt?: string; // ISO timestamp
-}
-```
-Add `updateSettings(patch)` helper if not already present. No migration needed (fields optional).
-
-## 5. Sharing
-
-Out of scope this round per your reply.
-
-## Files touched
-
-- new: `src/components/life/Today.tsx`
-- new: `src/components/life/Onboarding.tsx`
-- edit: `src/components/life/AppShell.tsx` (add Today tab)
-- edit: `src/routes/index.tsx` (gate on `settings.onboardedAt`; add Today tab render)
-- edit: `src/components/life/EmptyStateHero.tsx` (remove template grid)
-- edit: `src/components/life/Dashboard.tsx` (no template grid; greeting uses userName)
-- edit: `src/components/life/MindMapCanvas.tsx` (shapes, font, text fitting, center label)
-- edit: `src/lib/app-data.tsx` (`Settings` fields, `updateSettings`)
+**Questions before I build:**
+1. **Modal vs. full-screen**: dialog on desktop / full-screen on mobile sounds right — or do you want the same full-screen takeover as onboarding everywhere?
+2. **Replace inline add forms entirely** in Goals/Dashboard, or keep a "Quick add" (just title) alongside the wizard for power users?
