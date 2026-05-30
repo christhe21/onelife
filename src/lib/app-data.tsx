@@ -523,6 +523,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setGoals([]);
       setTasks([]);
       setBucketList([]);
+      setSkills(DEFAULT_SKILLS);
+      setSettings({});
       try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
     },
   };
