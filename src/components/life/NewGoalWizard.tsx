@@ -46,7 +46,7 @@ interface Props {
 }
 
 export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
-  const { skills, addGoal, addSubGoal, addTask, addSubtask } = useAppData();
+  const { skills, addGoal, addSubGoal, addTask } = useAppData();
   const today = new Date().toISOString().slice(0, 10);
 
   const [step, setStep] = useState<Step>("basics");
@@ -168,7 +168,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
               endDate: st.endDate,
             })),
         });
-        void addSubtask; // referenced to avoid unused warning
+        
       });
     setStep("done");
   };
