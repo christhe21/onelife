@@ -408,6 +408,7 @@ export function Onboarding() {
               </Button>
             </div>
           )}
+          </div>
         </div>
       </div>
 
