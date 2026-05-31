@@ -18,11 +18,24 @@ interface Node {
 }
 
 const RING = { skill: 220, goal: 380, task: 520, sub: 620 };
-const PALETTE = ["#bfe3d4", "#f7c9a8", "#f3a9a0", "#cdb8f0", "#f5d97a", "#a9d8f0"];
-const ROOT_FILL = "#cdb8f0";
-const PAPER = "#fdf8f0";
-const INK = "#2d3f2a";
+// Cool-mist palette (light, airy)
+const PALETTE = ["#eef2ff", "#e0f2fe", "#ecfeff", "#f5f3ff", "#f0f9ff", "#eef2f7"];
+const ROOT_FILL = "#eef2ff";
+const PAPER = "#fafbff";
+const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
+
+// Stopwords for keyword extraction in the mindmap
+const STOPWORDS = new Set([
+  "a","an","the","of","to","for","and","or","but","in","on","with","my","your","our","their","is","are","be","at","by","from","as","that","this","it","i","we","you","they","do","does","get","make","have","has",
+]);
+
+function toKeywords(label: string, max = 3): string {
+  const words = label.replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/\s+/).filter(Boolean);
+  const sig = words.filter((w) => !STOPWORDS.has(w.toLowerCase()));
+  const pick = (sig.length ? sig : words).slice(0, max);
+  return pick.join(" ") || label;
+}
 
 function ensureFonts() {
   if (typeof document === "undefined") return;
@@ -30,7 +43,7 @@ function ensureFonts() {
   const l = document.createElement("link");
   l.id = "mindmap-fonts";
   l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@700&display=swap";
+  l.href = "https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap";
   document.head.appendChild(l);
 }
 
