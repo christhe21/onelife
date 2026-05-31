@@ -409,13 +409,16 @@ export function MindMapCanvas() {
             const interactive = n.childCount > 0;
             const hovered = hoverId === n.id;
             const font = labelFont(n.kind);
-            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 14 : n.kind === "goal" ? 18 : n.kind === "task" ? 20 : 18;
-            const lines = wrap(n.label, maxChars);
+            // Root and skill keep their full label; goals/tasks/sub-tasks get 1–3 keywords
+            const displayLabel =
+              n.kind === "root" || n.kind === "skill" ? n.label : toKeywords(n.label, 3);
+            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 12 : 16;
+            const lines = wrap(displayLabel, maxChars);
             const lineH = font.size + 2;
             const startY = -((lines.length - 1) * lineH) / 2 + font.size / 3;
             const { halfW, halfH } = nodeBox(n.kind, lines, font.size);
-            const badgeX = halfW * (n.kind === "task" || n.kind === "subtask" ? 0.95 : 0.85);
-            const badgeY = -halfH * 0.85;
+            const badgeX = halfW * 0.92;
+            const badgeY = -halfH * 0.92;
             return (
               <g
                 key={n.id}
@@ -426,11 +429,12 @@ export function MindMapCanvas() {
                 onPointerLeave={() => setHoverId((id) => (id === n.id ? null : id))}
                 onClick={(e) => onNodeClick(e, n)}
               >
+                <title>{n.label}</title>
                 {renderShape(n, hovered, halfW, halfH)}
                 {interactive && !n.expanded && (
                   <g transform={`translate(${badgeX},${badgeY})`} style={{ pointerEvents: "none" }}>
-                    <circle r={11} fill={PAPER} stroke={INK} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 11, fontWeight: 700 }} fill={INK}>
+                    <circle r={10} fill="#ffffff" stroke={INK} strokeOpacity={0.5} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: font.family, fontSize: 10, fontWeight: 700 }} fill={INK}>
                       +{n.childCount}
                     </text>
                   </g>
@@ -444,10 +448,7 @@ export function MindMapCanvas() {
                     fontWeight: font.weight,
                     pointerEvents: "none",
                     userSelect: "none",
-                    paintOrder: "stroke",
-                    stroke: n.fill,
-                    strokeWidth: 3,
-                    strokeLinejoin: "round",
+                    letterSpacing: "-0.005em",
                   }}
                 >
                   {lines.map((ln, i) => (
