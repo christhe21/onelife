@@ -285,9 +285,9 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                 <h2 className="font-display text-lg font-semibold">Add milestones</h2>
                 <p className="text-xs text-muted-foreground">Break the goal into checkpoints. Skip to add later.</p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {milestones.map((m, i) => (
-                  <div key={i} className="flex gap-2">
+                  <div key={i} className="flex flex-col gap-2 rounded-xl border bg-card/50 p-3 sm:flex-row sm:items-center">
                     <Input
                       placeholder={`Milestone ${i + 1}`}
                       value={m.title}
@@ -295,11 +295,11 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                     />
                     <Input
                       type="date"
-                      className="w-40"
+                      className="sm:w-44"
                       value={m.date}
                       onChange={(e) => setMilestones((cur) => cur.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)))}
                     />
-                    <Button variant="ghost" size="icon" onClick={() => setMilestones((cur) => cur.filter((_, j) => j !== i))}>
+                    <Button variant="ghost" size="icon" className="self-end sm:self-auto" onClick={() => setMilestones((cur) => cur.filter((_, j) => j !== i))}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
