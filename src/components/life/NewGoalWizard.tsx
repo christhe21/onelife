@@ -317,34 +317,36 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                 <h2 className="font-display text-lg font-semibold">Add starter tasks</h2>
                 <p className="text-xs text-muted-foreground">Concrete next actions. Skip to add later.</p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {tasks.map((t, i) => (
-                  <div key={i} className="flex gap-2">
+                  <div key={i} className="flex flex-col gap-2 rounded-xl border bg-card/50 p-3 sm:flex-row sm:items-center">
                     <Input
                       placeholder={`Task ${i + 1}`}
                       value={t.title}
                       onChange={(e) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
                     />
-                    <Input
-                      type="date"
-                      className="w-40"
-                      value={t.due}
-                      onChange={(e) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, due: e.target.value } : x)))}
-                    />
-                    <Select
-                      value={t.priority}
-                      onValueChange={(v) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, priority: v as TaskDraft["priority"] } : x)))}
-                    >
-                      <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button variant="ghost" size="icon" onClick={() => setTasks((cur) => cur.filter((_, j) => j !== i))}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Input
+                        type="date"
+                        className="w-full sm:w-40"
+                        value={t.due}
+                        onChange={(e) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, due: e.target.value } : x)))}
+                      />
+                      <Select
+                        value={t.priority}
+                        onValueChange={(v) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, priority: v as TaskDraft["priority"] } : x)))}
+                      >
+                        <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button variant="ghost" size="icon" onClick={() => setTasks((cur) => cur.filter((_, j) => j !== i))}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
                 <Button variant="outline" size="sm" onClick={() => setTasks((cur) => [...cur, { title: "", due: addDays(new Date(today), 7), priority: "medium", subtasks: [] }])}>
