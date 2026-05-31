@@ -18,11 +18,24 @@ interface Node {
 }
 
 const RING = { skill: 220, goal: 380, task: 520, sub: 620 };
-const PALETTE = ["#bfe3d4", "#f7c9a8", "#f3a9a0", "#cdb8f0", "#f5d97a", "#a9d8f0"];
-const ROOT_FILL = "#cdb8f0";
-const PAPER = "#fdf8f0";
-const INK = "#2d3f2a";
+// Cool-mist palette (light, airy)
+const PALETTE = ["#eef2ff", "#e0f2fe", "#ecfeff", "#f5f3ff", "#f0f9ff", "#eef2f7"];
+const ROOT_FILL = "#eef2ff";
+const PAPER = "#fafbff";
+const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
+
+// Stopwords for keyword extraction in the mindmap
+const STOPWORDS = new Set([
+  "a","an","the","of","to","for","and","or","but","in","on","with","my","your","our","their","is","are","be","at","by","from","as","that","this","it","i","we","you","they","do","does","get","make","have","has",
+]);
+
+function toKeywords(label: string, max = 3): string {
+  const words = label.replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/\s+/).filter(Boolean);
+  const sig = words.filter((w) => !STOPWORDS.has(w.toLowerCase()));
+  const pick = (sig.length ? sig : words).slice(0, max);
+  return pick.join(" ") || label;
+}
 
 function ensureFonts() {
   if (typeof document === "undefined") return;
@@ -30,7 +43,7 @@ function ensureFonts() {
   const l = document.createElement("link");
   l.id = "mindmap-fonts";
   l.rel = "stylesheet";
-  l.href = "https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@700&display=swap";
+  l.href = "https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap";
   document.head.appendChild(l);
 }
 
@@ -230,51 +243,62 @@ export function MindMapCanvas() {
     : "relative h-[70vh] w-full cursor-grab touch-none overflow-hidden rounded-lg border active:cursor-grabbing";
 
   const labelFont = (kind: Kind) => {
-    if (kind === "root") return { family: "'Patrick Hand', cursive", size: 26, weight: 700 };
-    if (kind === "skill") return { family: "'Patrick Hand', cursive", size: 18, weight: 700 };
-    if (kind === "goal") return { family: "'Patrick Hand', cursive", size: 16, weight: 700 };
-    if (kind === "task") return { family: "'Patrick Hand', cursive", size: 14, weight: 700 };
-    return { family: "'Patrick Hand', cursive", size: 13, weight: 700 };
+    const family = "'Manrope', ui-sans-serif, system-ui, sans-serif";
+    if (kind === "root") return { family, size: 22, weight: 700 };
+    if (kind === "skill") return { family, size: 16, weight: 700 };
+    if (kind === "goal") return { family, size: 14, weight: 600 };
+    if (kind === "task") return { family, size: 13, weight: 500 };
+    return { family, size: 12, weight: 500 };
   };
 
-  // approximate glyph width for Patrick Hand at the given font size
-  const measureWidth = (text: string, fontSize: number) => text.length * fontSize * 0.52;
+  // approximate glyph width for Manrope at the given font size
+  const measureWidth = (text: string, fontSize: number) => text.length * fontSize * 0.56;
 
   // returns half-width and half-height for a node based on its wrapped label
   const nodeBox = (kind: Kind, lines: string[], fontSize: number) => {
     const longest = lines.reduce((m, l) => Math.max(m, l.length), 0);
-    const textW = measureWidth(" ".repeat(Math.max(longest, 4)), fontSize);
-    const padX = kind === "root" ? 28 : kind === "skill" ? 22 : 18;
-    const padY = kind === "root" ? 18 : 12;
+    const textW = measureWidth("M".repeat(Math.max(longest, 3)), fontSize);
+    const padX = kind === "root" ? 24 : kind === "skill" ? 20 : 16;
+    const padY = kind === "root" ? 16 : kind === "skill" ? 14 : 10;
     const lineH = fontSize + 4;
-    const halfW = Math.max(54, textW / 2 + padX);
-    const halfH = Math.max(28, (lines.length * lineH) / 2 + padY);
+    const minHalfW = kind === "root" ? 60 : kind === "skill" ? 52 : 44;
+    const minHalfH = kind === "root" ? 40 : kind === "skill" ? 36 : 22;
+    const halfW = Math.max(minHalfW, textW / 2 + padX);
+    const halfH = Math.max(minHalfH, (lines.length * lineH) / 2 + padY);
     return { halfW, halfH };
   };
 
-  // Render helpers
+  // Render helpers — circles/ellipses for root + skill, rounded rectangles otherwise
   const renderShape = (n: Node, hovered: boolean, halfW: number, halfH: number) => {
     const baseProps = {
       fill: n.fill,
       stroke: n.stroke,
-      strokeWidth: hovered ? 3 : 2,
+      strokeWidth: hovered ? 2.5 : 1.5,
+      strokeOpacity: 0.7,
       vectorEffect: "non-scaling-stroke" as const,
-      style: { filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.08))" },
+      style: { filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.08))" },
     };
-    // Ellipses for root, skill, and goal (text fits in)
-    if (n.kind === "root" || n.kind === "skill" || n.kind === "goal") {
-      return <ellipse cx={0} cy={0} rx={halfW} ry={halfH} {...baseProps} />;
+    if (n.kind === "root" || n.kind === "skill") {
+      // Skills are circle-like; root keeps a wider ellipse to fit the user's name
+      const rx = n.kind === "skill" ? Math.max(halfW, halfH) : halfW;
+      const ry = n.kind === "skill" ? Math.max(halfW, halfH) : halfH;
+      return <ellipse cx={0} cy={0} rx={rx} ry={ry} {...baseProps} />;
     }
-    // Parallelograms for task and subtask
-    const skew = halfH * 0.45;
-    const points = [
-      `${-halfW + skew},${-halfH}`,
-      `${halfW + skew},${-halfH}`,
-      `${halfW - skew},${halfH}`,
-      `${-halfW - skew},${halfH}`,
-    ].join(" ");
-    return <polygon points={points} {...baseProps} />;
+    const rxr = Math.min(14, halfH);
+    return (
+      <rect
+        x={-halfW}
+        y={-halfH}
+        width={halfW * 2}
+        height={halfH * 2}
+        rx={rxr}
+        ry={rxr}
+        {...baseProps}
+      />
+    );
   };
+
+
 
 
   // wrap label into max 2 lines
@@ -385,13 +409,16 @@ export function MindMapCanvas() {
             const interactive = n.childCount > 0;
             const hovered = hoverId === n.id;
             const font = labelFont(n.kind);
-            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 14 : n.kind === "goal" ? 18 : n.kind === "task" ? 20 : 18;
-            const lines = wrap(n.label, maxChars);
+            // Root and skill keep their full label; goals/tasks/sub-tasks get 1–3 keywords
+            const displayLabel =
+              n.kind === "root" || n.kind === "skill" ? n.label : toKeywords(n.label, 3);
+            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 12 : 16;
+            const lines = wrap(displayLabel, maxChars);
             const lineH = font.size + 2;
             const startY = -((lines.length - 1) * lineH) / 2 + font.size / 3;
             const { halfW, halfH } = nodeBox(n.kind, lines, font.size);
-            const badgeX = halfW * (n.kind === "task" || n.kind === "subtask" ? 0.95 : 0.85);
-            const badgeY = -halfH * 0.85;
+            const badgeX = halfW * 0.92;
+            const badgeY = -halfH * 0.92;
             return (
               <g
                 key={n.id}
@@ -402,11 +429,12 @@ export function MindMapCanvas() {
                 onPointerLeave={() => setHoverId((id) => (id === n.id ? null : id))}
                 onClick={(e) => onNodeClick(e, n)}
               >
+                <title>{n.label}</title>
                 {renderShape(n, hovered, halfW, halfH)}
                 {interactive && !n.expanded && (
                   <g transform={`translate(${badgeX},${badgeY})`} style={{ pointerEvents: "none" }}>
-                    <circle r={11} fill={PAPER} stroke={INK} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: "'Patrick Hand', cursive", fontSize: 11, fontWeight: 700 }} fill={INK}>
+                    <circle r={10} fill="#ffffff" stroke={INK} strokeOpacity={0.5} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: font.family, fontSize: 10, fontWeight: 700 }} fill={INK}>
                       +{n.childCount}
                     </text>
                   </g>
@@ -420,10 +448,7 @@ export function MindMapCanvas() {
                     fontWeight: font.weight,
                     pointerEvents: "none",
                     userSelect: "none",
-                    paintOrder: "stroke",
-                    stroke: n.fill,
-                    strokeWidth: 3,
-                    strokeLinejoin: "round",
+                    letterSpacing: "-0.005em",
                   }}
                 >
                   {lines.map((ln, i) => (
