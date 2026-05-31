@@ -243,51 +243,62 @@ export function MindMapCanvas() {
     : "relative h-[70vh] w-full cursor-grab touch-none overflow-hidden rounded-lg border active:cursor-grabbing";
 
   const labelFont = (kind: Kind) => {
-    if (kind === "root") return { family: "'Patrick Hand', cursive", size: 26, weight: 700 };
-    if (kind === "skill") return { family: "'Patrick Hand', cursive", size: 18, weight: 700 };
-    if (kind === "goal") return { family: "'Patrick Hand', cursive", size: 16, weight: 700 };
-    if (kind === "task") return { family: "'Patrick Hand', cursive", size: 14, weight: 700 };
-    return { family: "'Patrick Hand', cursive", size: 13, weight: 700 };
+    const family = "'Manrope', ui-sans-serif, system-ui, sans-serif";
+    if (kind === "root") return { family, size: 22, weight: 700 };
+    if (kind === "skill") return { family, size: 16, weight: 700 };
+    if (kind === "goal") return { family, size: 14, weight: 600 };
+    if (kind === "task") return { family, size: 13, weight: 500 };
+    return { family, size: 12, weight: 500 };
   };
 
-  // approximate glyph width for Patrick Hand at the given font size
-  const measureWidth = (text: string, fontSize: number) => text.length * fontSize * 0.52;
+  // approximate glyph width for Manrope at the given font size
+  const measureWidth = (text: string, fontSize: number) => text.length * fontSize * 0.56;
 
   // returns half-width and half-height for a node based on its wrapped label
   const nodeBox = (kind: Kind, lines: string[], fontSize: number) => {
     const longest = lines.reduce((m, l) => Math.max(m, l.length), 0);
-    const textW = measureWidth(" ".repeat(Math.max(longest, 4)), fontSize);
-    const padX = kind === "root" ? 28 : kind === "skill" ? 22 : 18;
-    const padY = kind === "root" ? 18 : 12;
+    const textW = measureWidth("M".repeat(Math.max(longest, 3)), fontSize);
+    const padX = kind === "root" ? 24 : kind === "skill" ? 20 : 16;
+    const padY = kind === "root" ? 16 : kind === "skill" ? 14 : 10;
     const lineH = fontSize + 4;
-    const halfW = Math.max(54, textW / 2 + padX);
-    const halfH = Math.max(28, (lines.length * lineH) / 2 + padY);
+    const minHalfW = kind === "root" ? 60 : kind === "skill" ? 52 : 44;
+    const minHalfH = kind === "root" ? 40 : kind === "skill" ? 36 : 22;
+    const halfW = Math.max(minHalfW, textW / 2 + padX);
+    const halfH = Math.max(minHalfH, (lines.length * lineH) / 2 + padY);
     return { halfW, halfH };
   };
 
-  // Render helpers
+  // Render helpers — circles/ellipses for root + skill, rounded rectangles otherwise
   const renderShape = (n: Node, hovered: boolean, halfW: number, halfH: number) => {
     const baseProps = {
       fill: n.fill,
       stroke: n.stroke,
-      strokeWidth: hovered ? 3 : 2,
+      strokeWidth: hovered ? 2.5 : 1.5,
+      strokeOpacity: 0.7,
       vectorEffect: "non-scaling-stroke" as const,
-      style: { filter: "drop-shadow(0 2px 0 rgba(0,0,0,0.08))" },
+      style: { filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.08))" },
     };
-    // Ellipses for root, skill, and goal (text fits in)
-    if (n.kind === "root" || n.kind === "skill" || n.kind === "goal") {
-      return <ellipse cx={0} cy={0} rx={halfW} ry={halfH} {...baseProps} />;
+    if (n.kind === "root" || n.kind === "skill") {
+      // Skills are circle-like; root keeps a wider ellipse to fit the user's name
+      const rx = n.kind === "skill" ? Math.max(halfW, halfH) : halfW;
+      const ry = n.kind === "skill" ? Math.max(halfW, halfH) : halfH;
+      return <ellipse cx={0} cy={0} rx={rx} ry={ry} {...baseProps} />;
     }
-    // Parallelograms for task and subtask
-    const skew = halfH * 0.45;
-    const points = [
-      `${-halfW + skew},${-halfH}`,
-      `${halfW + skew},${-halfH}`,
-      `${halfW - skew},${halfH}`,
-      `${-halfW - skew},${halfH}`,
-    ].join(" ");
-    return <polygon points={points} {...baseProps} />;
+    const rxr = Math.min(14, halfH);
+    return (
+      <rect
+        x={-halfW}
+        y={-halfH}
+        width={halfW * 2}
+        height={halfH * 2}
+        rx={rxr}
+        ry={rxr}
+        {...baseProps}
+      />
+    );
   };
+
+
 
 
   // wrap label into max 2 lines
