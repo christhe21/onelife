@@ -288,7 +288,7 @@ export function MindMapCanvas() {
       fill: n.fill,
       stroke: n.stroke,
       strokeWidth: hovered ? 2.5 : 1.5,
-      strokeOpacity: 0.7,
+      strokeOpacity: 0.95,
       vectorEffect: "non-scaling-stroke" as const,
       style: { filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.08))" },
     };
