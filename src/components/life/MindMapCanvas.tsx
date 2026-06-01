@@ -37,6 +37,20 @@ function toKeywords(label: string, max = 3): string {
   return pick.join(" ") || label;
 }
 
+// Darken a hex color so the border reads as a deeper shade of the fill
+function darken(hex: string, amount = 0.4): string {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const num = parseInt(full, 16);
+  let r = (num >> 16) & 0xff;
+  let g = (num >> 8) & 0xff;
+  let b = num & 0xff;
+  r = Math.max(0, Math.round(r * (1 - amount)));
+  g = Math.max(0, Math.round(g * (1 - amount)));
+  b = Math.max(0, Math.round(b * (1 - amount)));
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
 function ensureFonts() {
   if (typeof document === "undefined") return;
   if (document.getElementById("mindmap-fonts")) return;
