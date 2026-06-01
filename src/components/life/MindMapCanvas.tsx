@@ -181,7 +181,7 @@ export function MindMapCanvas() {
             nodes.push({
               id: `st_${s.id}`, label: s.title, r: 22, kind: "subtask", parent: `t_${t.id}`,
               childCount: 0, expanded: true,
-              fill: PALETTE[(i + 3) % PALETTE.length], stroke: sk.color,
+              fill: PALETTE[(i + 3) % PALETTE.length], stroke: darken(PALETTE[(i + 3) % PALETTE.length]),
             });
             links.push({ from: `t_${t.id}`, to: `st_${s.id}`, depth: 4, curl: (si % 2 === 0 ? 1 : -1) });
           });
