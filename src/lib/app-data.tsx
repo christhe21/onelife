@@ -325,6 +325,7 @@ interface Ctx extends AppData {
 
   exportJSON: () => void;
   importJSON: (file: File) => Promise<void>;
+  appendJSON: (file: File) => Promise<{ goals: number; tasks: number; bucket: number }>;
   replaceAll: (data: AppData) => void;
   clearAll: () => void;
 }
@@ -512,6 +513,30 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setGoals(data.goals);
       setTasks(data.tasks);
       setBucketList(data.bucketList);
+    },
+    appendJSON: async (file) => {
+      const text = await file.text();
+      let parsed: unknown;
+      try { parsed = JSON.parse(text); } catch { throw new Error("File is not valid JSON"); }
+      const data = normalizeAppData(parsed);
+      // Remap ids so we never collide with existing data, and rewire goalId references
+      const goalIdMap = new Map<string, string>();
+      const newGoals = data.goals.map((g) => {
+        const nid = uid();
+        goalIdMap.set(g.id, nid);
+        return { ...g, id: nid, subGoals: g.subGoals.map((s) => ({ ...s, id: uid() })) };
+      });
+      const newTasks = data.tasks.map((t) => ({
+        ...t,
+        id: uid(),
+        goalId: t.goalId ? goalIdMap.get(t.goalId) ?? undefined : undefined,
+        subtasks: t.subtasks.map((s) => ({ ...s, id: uid() })),
+      }));
+      const newBucket = data.bucketList.map((b) => ({ ...b, id: uid() }));
+      setGoals((cur) => [...cur, ...newGoals]);
+      setTasks((cur) => [...cur, ...newTasks]);
+      setBucketList((cur) => [...cur, ...newBucket]);
+      return { goals: newGoals.length, tasks: newTasks.length, bucket: newBucket.length };
     },
     replaceAll: (data) => {
       const norm = normalizeAppData(data);
