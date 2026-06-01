@@ -137,24 +137,47 @@ export function ExportImport() {
       <AlertDialog open={!!pendingFile} onOpenChange={(o) => !o && setPendingFile(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Replace current data?</AlertDialogTitle>
+            <AlertDialogTitle>How should we import this file?</AlertDialogTitle>
             <AlertDialogDescription>
-              Importing will overwrite all goals, tasks, and bucket-list items in this session.
+              You already have goals, tasks, or bucket-list items in this session. Choose how to bring in the new data.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="grid gap-2 py-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={async () => {
+                const f = pendingFile;
+                setPendingFile(null);
+                if (f) await doAppend(f);
+              }}
+              className="rounded-xl border bg-card p-3 text-left transition hover:border-primary hover:bg-primary/5"
+            >
+              <div className="text-sm font-semibold">Append to existing</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Add the imported goals, tasks, and bucket items alongside what you already have. Nothing is removed.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const f = pendingFile;
+                setPendingFile(null);
+                if (f) await doImport(f);
+              }}
+              className="rounded-xl border bg-card p-3 text-left transition hover:border-destructive hover:bg-destructive/5"
+            >
+              <div className="text-sm font-semibold text-destructive">Replace all data</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Overwrite all current goals, tasks, and bucket items with the contents of the file.
+              </p>
+            </button>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                if (pendingFile) await doImport(pendingFile);
-                setPendingFile(null);
-              }}
-            >
-              Replace
-            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }
