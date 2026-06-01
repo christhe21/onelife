@@ -325,6 +325,7 @@ interface Ctx extends AppData {
 
   exportJSON: () => void;
   importJSON: (file: File) => Promise<void>;
+  appendJSON: (file: File) => Promise<{ goals: number; tasks: number; bucket: number }>;
   replaceAll: (data: AppData) => void;
   clearAll: () => void;
 }
