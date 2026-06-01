@@ -19,7 +19,7 @@ export function LifeTimeline() {
   const [selectedDecade, setSelectedDecade] = useState<number>(currentDecade);
 
   const skillColor = (id: string) => skills.find((s) => s.id === id)?.color ?? "#94a3b8";
-  const skillLabel = (id: string) => skills.find((s) => s.id === id)?.label ?? id;
+  
 
   // Bucket goals into decades by start year
   const { goalsByDecade, dots } = useMemo(() => {
