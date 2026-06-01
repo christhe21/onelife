@@ -125,7 +125,7 @@ export function MindMapCanvas() {
     nodes.push({
       id: "root", label: rootLabel, r: 60, kind: "root",
       childCount: activeSkills.length, expanded: rootExpanded,
-      fill: ROOT_FILL, stroke: INK,
+      fill: ROOT_FILL, stroke: darken(ROOT_FILL),
     });
     if (!rootExpanded) return { nodes, links, seeds };
 
