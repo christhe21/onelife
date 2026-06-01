@@ -416,33 +416,46 @@ export function Onboarding() {
 
       {/* Footer */}
       {step !== "welcome" && step !== "done" && (
-        <div className="flex items-center justify-between border-t px-5 py-3">
-          <Button variant="ghost" size="sm" onClick={back}>
-            <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Back
+        <div className="flex items-center justify-between gap-4 border-t bg-card/60 px-5 py-3 backdrop-blur sm:px-8 sm:py-4">
+          <Button variant="ghost" onClick={back} className="sm:h-11 sm:px-5 sm:text-sm">
+            <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
           </Button>
-          {step === "areas" ? (
-            <Button size="sm" onClick={handleAreasNext} disabled={areas.size === 0}>
-              Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
-            </Button>
-          ) : step === "goal" ? (
-            <Button size="sm" onClick={createGoal} disabled={!goalTitle.trim()}>
-              Create goal <ArrowRight className="ml-1 h-3.5 w-3.5" />
-            </Button>
-          ) : step === "milestones" ? (
-            <Button size="sm" onClick={saveMilestones}>
-              Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
-            </Button>
-          ) : step === "tasks" ? (
-            <Button size="sm" onClick={saveTasks}>
-              Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
-            </Button>
-          ) : (
-            <Button size="sm" onClick={next} disabled={step === "name" && !name.trim()}>
-              Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
-            </Button>
-          )}
+          {(() => {
+            const common =
+              "h-10 rounded-full px-5 text-sm shadow-md shadow-primary/20 sm:h-12 sm:min-w-[180px] sm:px-7 sm:text-base sm:shadow-lg sm:shadow-primary/30 sm:hover:shadow-xl sm:hover:shadow-primary/40 transition";
+            if (step === "areas")
+              return (
+                <Button onClick={handleAreasNext} disabled={areas.size === 0} className={common}>
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              );
+            if (step === "goal")
+              return (
+                <Button onClick={createGoal} disabled={!goalTitle.trim()} className={common}>
+                  Create goal <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              );
+            if (step === "milestones")
+              return (
+                <Button onClick={saveMilestones} className={common}>
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              );
+            if (step === "tasks")
+              return (
+                <Button onClick={saveTasks} className={common}>
+                  Continue <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              );
+            return (
+              <Button onClick={next} disabled={step === "name" && !name.trim()} className={common}>
+                Continue <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            );
+          })()}
         </div>
       )}
+
     </div>
   );
 }
