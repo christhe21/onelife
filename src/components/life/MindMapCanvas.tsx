@@ -139,7 +139,7 @@ export function MindMapCanvas() {
       nodes.push({
         id: `s_${sk.id}`, label: sk.label, r: 44, kind: "skill", parent: "root",
         childCount: skillGoals.length, expanded: skillExpanded,
-        fill: skFill, stroke: sk.color,
+        fill: skFill, stroke: darken(skFill),
       });
       links.push({ from: "root", to: `s_${sk.id}`, depth: 1, curl: (i % 2 === 0 ? 1 : -1) });
 
