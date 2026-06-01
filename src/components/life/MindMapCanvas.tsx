@@ -169,7 +169,7 @@ export function MindMapCanvas() {
           nodes.push({
             id: `t_${t.id}`, label: t.title, r: 28, kind: "task", parent: `g_${g.id}`,
             childCount: sub.length, expanded: taskExpanded,
-            fill: PALETTE[(i + 4) % PALETTE.length], stroke: sk.color,
+            fill: PALETTE[(i + 4) % PALETTE.length], stroke: darken(PALETTE[(i + 4) % PALETTE.length]),
           });
           links.push({ from: `g_${g.id}`, to: `t_${t.id}`, depth: 3, curl: (ti % 2 === 0 ? 1 : -1) });
 
