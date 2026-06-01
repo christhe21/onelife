@@ -23,7 +23,7 @@ import { useAppData, downloadTemplate, downloadSkillsReference } from "@/lib/app
 import { toast } from "sonner";
 
 export function ExportImport() {
-  const { exportJSON, importJSON, clearAll, goals, tasks, bucketList } = useAppData();
+  const { exportJSON, importJSON, appendJSON, clearAll, goals, tasks, bucketList } = useAppData();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -43,6 +43,15 @@ export function ExportImport() {
     try {
       await importJSON(f);
       toast.success("Data imported");
+    } catch (err) {
+      toast.error("Invalid file: " + (err as Error).message);
+    }
+  };
+
+  const doAppend = async (f: File) => {
+    try {
+      const r = await appendJSON(f);
+      toast.success(`Added ${r.goals} goals, ${r.tasks} tasks, ${r.bucket} bucket items`);
     } catch (err) {
       toast.error("Invalid file: " + (err as Error).message);
     }
