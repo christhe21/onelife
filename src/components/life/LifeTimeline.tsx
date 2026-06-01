@@ -1,18 +1,43 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
+import { cn } from "@/lib/utils";
 
 const LIFE_SPAN = 80;
-const DECADES = 8; // 0-9, 10-19, ..., 70-79
 
 export function LifeTimeline() {
   const { goals, skills, settings, setBirthYear } = useAppData();
   const [draft, setDraft] = useState<string>(settings.birthYear ? String(settings.birthYear) : "");
 
-  if (!settings.birthYear) {
+  const birth = settings.birthYear;
+  const now = new Date();
+  const currentAge = birth ? now.getFullYear() - birth : 0;
+  const currentDecade = Math.floor(currentAge / 10);
+  const [selectedDecade, setSelectedDecade] = useState<number>(currentDecade);
+
+  const skillColor = (id: string) => skills.find((s) => s.id === id)?.color ?? "#94a3b8";
+  const skillLabel = (id: string) => skills.find((s) => s.id === id)?.label ?? id;
+
+  // Bucket goals into decades by start year
+  const { goalsByDecade, dots } = useMemo(() => {
+    const by: Record<number, typeof goals> = {};
+    const ds: { age: number; color: string; title: string }[] = [];
+    for (let d = 0; d < 8; d++) by[d] = [];
+    if (!birth) return { goalsByDecade: by, dots: ds };
+    for (const g of goals) {
+      if (!g.startDate) continue;
+      const age = new Date(g.startDate).getFullYear() - birth;
+      const decade = Math.floor(age / 10);
+      if (decade >= 0 && decade < 8) by[decade].push(g);
+      if (age >= 0 && age <= LIFE_SPAN) ds.push({ age, color: skillColor(g.skill), title: g.title });
+    }
+    return { goalsByDecade: by, dots: ds };
+  }, [goals, birth, skills]);
+
+  if (!birth) {
     return (
       <Card>
         <CardHeader className="pb-2">
@@ -47,36 +72,22 @@ export function LifeTimeline() {
     );
   }
 
-  const birth = settings.birthYear;
-  const now = new Date();
-  const currentAge = now.getFullYear() - birth;
-  const skillColor = (id: string) => skills.find((s) => s.id === id)?.color ?? "#94a3b8";
-
-  // Bucket goals into decades by their start year
-  const goalsByDecade: Record<number, typeof goals> = {};
-  for (let d = 0; d < DECADES; d++) goalsByDecade[d] = [];
-  for (const g of goals) {
-    if (!g.startDate) continue;
-    const start = new Date(g.startDate);
-    const age = start.getFullYear() - birth;
-    const decade = Math.floor(age / 10);
-    if (decade >= 0 && decade < DECADES) goalsByDecade[decade].push(g);
-  }
-
-  const currentDecade = Math.floor(currentAge / 10);
+  const progressPct = Math.min(100, Math.max(0, (currentAge / LIFE_SPAN) * 100));
+  const selected = goalsByDecade[selectedDecade] ?? [];
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardHeader className="flex flex-row items-start justify-between gap-2 pb-2">
         <div>
           <CardTitle className="font-display text-base">Life canvas</CardTitle>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Born {birth} · Age {currentAge} · {LIFE_SPAN} years across {DECADES} decades
+            Born {birth} · Age {currentAge} · {Math.round(progressPct)}% of {LIFE_SPAN} years
           </p>
         </div>
         <Button
           size="sm"
-          variant="outline"
+          variant="ghost"
+          className="h-7 px-2 text-xs"
           onClick={() => {
             const v = prompt("Birth year", String(birth));
             const y = v ? parseInt(v, 10) : NaN;
@@ -86,102 +97,130 @@ export function LifeTimeline() {
           Edit
         </Button>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-          {Array.from({ length: DECADES }).map((_, d) => {
-            const ageStart = d * 10;
-            const ageEnd = ageStart + 9;
-            const yearStart = birth + ageStart;
-            const yearEnd = birth + ageEnd;
-            const isPast = d < currentDecade;
-            const isCurrent = d === currentDecade;
-            const decadeGoals = goalsByDecade[d];
-
-            return (
-              <div
-                key={d}
-                className={`relative rounded-lg border p-3 transition-opacity ${
-                  isPast ? "bg-muted/30 opacity-70" : isCurrent ? "border-primary/50 bg-primary/5" : "bg-card"
-                }`}
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-display text-lg font-semibold tabular-nums">
-                      {ageStart}s
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {yearStart}–{yearEnd}
-                    </span>
-                  </div>
-                  {isCurrent && (
-                    <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                      You are here · {currentAge}
-                    </span>
-                  )}
-                </div>
-
-                {/* 10 year cells */}
-                <div className="relative grid grid-cols-10 gap-px overflow-hidden rounded bg-border/50">
-                  {Array.from({ length: 10 }).map((_, i) => {
-                    const cellAge = ageStart + i;
-                    const cellIsNow = cellAge === currentAge;
-                    return (
-                      <div
-                        key={i}
-                        className={`h-7 ${cellIsNow ? "bg-primary/20" : "bg-background"}`}
-                        title={`Age ${cellAge} · ${birth + cellAge}`}
-                      />
-                    );
-                  })}
-                  {/* today marker line inside current decade */}
-                  {isCurrent && (
-                    <div
-                      className="pointer-events-none absolute top-0 z-10 h-full w-0.5 bg-primary"
-                      style={{
-                        left: `${((currentAge - ageStart + (now.getMonth() / 12)) / 10) * 100}%`,
-                      }}
-                    />
-                  )}
-                </div>
-
-                {/* Goal pills */}
-                <div className="mt-2 min-h-[20px] space-y-1">
-                  {decadeGoals.length === 0 ? (
-                    <p className="text-[10px] italic text-muted-foreground">No goals planned.</p>
-                  ) : (
-                    decadeGoals.map((g) => {
-                      const startAge = new Date(g.startDate).getFullYear() - birth;
-                      const endAge = g.targetDate ? new Date(g.targetDate).getFullYear() - birth : startAge;
-                      const leftPct = Math.max(0, ((startAge - ageStart) / 10) * 100);
-                      const widthPct = Math.max(8, Math.min(100 - leftPct, ((endAge - startAge + 1) / 10) * 100));
-                      return (
-                        <div key={g.id} className="relative h-5">
-                          <div
-                            className="absolute top-0 flex h-5 items-center overflow-hidden rounded px-1.5 text-[10px] font-medium text-white shadow-sm"
-                            style={{
-                              left: `${leftPct}%`,
-                              width: `${widthPct}%`,
-                              backgroundColor: skillColor(g.skill),
-                            }}
-                            title={`${g.title}\n${g.startDate} → ${g.targetDate}`}
-                          >
-                            <span className="truncate">{g.title}</span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            );
-          })}
+      <CardContent className="space-y-3">
+        {/* Life ribbon — one row */}
+        <div className="px-1 pt-2">
+          <div className="relative h-10">
+            {/* track */}
+            <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted" />
+            {/* lived portion */}
+            <div
+              className="absolute left-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-primary/70"
+              style={{ width: `${progressPct}%` }}
+            />
+            {/* decade ticks */}
+            {Array.from({ length: 9 }).map((_, i) => {
+              const left = (i / 8) * 100;
+              const isCurrent = i === currentDecade;
+              const isSelected = i === selectedDecade;
+              const d = i < 8 ? i : null;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => d !== null && setSelectedDecade(d)}
+                  className="group absolute top-0 flex h-full -translate-x-1/2 flex-col items-center"
+                  style={{ left: `${left}%` }}
+                  aria-label={d !== null ? `Decade ${d * 10}s` : `Age ${LIFE_SPAN}`}
+                >
+                  <span
+                    className={cn(
+                      "h-3 w-0.5 rounded-full bg-border transition-colors",
+                      isCurrent && "bg-primary",
+                      isSelected && "bg-foreground",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "mt-1 text-[10px] tabular-nums text-muted-foreground transition-colors",
+                      (isCurrent || isSelected) && "font-semibold text-foreground",
+                    )}
+                  >
+                    {i * 10}
+                  </span>
+                </button>
+              );
+            })}
+            {/* goal dots */}
+            {dots.map((d, i) => {
+              const left = (d.age / LIFE_SPAN) * 100;
+              return (
+                <span
+                  key={i}
+                  title={`${d.title} · age ${d.age}`}
+                  className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
+                  style={{ left: `${left}%`, backgroundColor: d.color }}
+                />
+              );
+            })}
+            {/* you-are-here marker */}
+            <div
+              className="pointer-events-none absolute top-0 z-10 flex h-full -translate-x-1/2 flex-col items-center"
+              style={{ left: `${progressPct}%` }}
+            >
+              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-semibold leading-none text-primary-foreground">
+                {currentAge}
+              </span>
+              <span className="mt-0.5 h-3 w-px bg-primary" />
+            </div>
+          </div>
         </div>
 
-        {/* Legend */}
-        <div className="mt-3 flex flex-wrap gap-2">
+        {/* Selected decade detail */}
+        <div className="rounded-lg border bg-card/60 p-3">
+          <div className="mb-2 flex items-baseline justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-lg font-semibold tabular-nums">
+                {selectedDecade * 10}s
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                {birth + selectedDecade * 10}–{birth + selectedDecade * 10 + 9}
+              </span>
+              {selectedDecade === currentDecade && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                  You are here
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {selected.length} {selected.length === 1 ? "goal" : "goals"}
+            </span>
+          </div>
+
+          {selected.length === 0 ? (
+            <p className="py-2 text-center text-[11px] italic text-muted-foreground">
+              No goals planned for this decade yet.
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {selected.map((g) => {
+                const startAge = new Date(g.startDate).getFullYear() - birth;
+                const endAge = g.targetDate ? new Date(g.targetDate).getFullYear() - birth : startAge;
+                return (
+                  <li key={g.id} className="flex items-center gap-2 text-xs">
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: skillColor(g.skill) }}
+                    />
+                    <span className="truncate font-medium">{g.title}</span>
+                    <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                      age {startAge}{endAge !== startAge ? `–${endAge}` : ""}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {/* compact legend */}
+        <div className="flex flex-wrap gap-1.5">
           {skills.map((s) => (
-            <span key={s.id} className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px]">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+            <span
+              key={s.id}
+              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px]"
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: s.color }} />
               {s.label}
             </span>
           ))}
