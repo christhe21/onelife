@@ -18,9 +18,9 @@ interface Node {
 }
 
 const RING = { skill: 220, goal: 380, task: 520, sub: 620 };
-// Cool-mist palette (light, airy)
-const PALETTE = ["#eef2ff", "#e0f2fe", "#ecfeff", "#f5f3ff", "#f0f9ff", "#eef2f7"];
-const ROOT_FILL = "#eef2ff";
+// Cool-mist palette — light but with a touch more saturation for legibility
+const PALETTE = ["#dbe4ff", "#c7e3ff", "#cffafe", "#e9defc", "#d8ecff", "#dde6f0"];
+const ROOT_FILL = "#dbe4ff";
 const PAPER = "#fafbff";
 const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
