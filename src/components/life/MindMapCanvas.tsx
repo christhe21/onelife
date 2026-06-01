@@ -37,6 +37,20 @@ function toKeywords(label: string, max = 3): string {
   return pick.join(" ") || label;
 }
 
+// Darken a hex color so the border reads as a deeper shade of the fill
+function darken(hex: string, amount = 0.4): string {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const num = parseInt(full, 16);
+  let r = (num >> 16) & 0xff;
+  let g = (num >> 8) & 0xff;
+  let b = num & 0xff;
+  r = Math.max(0, Math.round(r * (1 - amount)));
+  g = Math.max(0, Math.round(g * (1 - amount)));
+  b = Math.max(0, Math.round(b * (1 - amount)));
+  return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+}
+
 function ensureFonts() {
   if (typeof document === "undefined") return;
   if (document.getElementById("mindmap-fonts")) return;
@@ -111,7 +125,7 @@ export function MindMapCanvas() {
     nodes.push({
       id: "root", label: rootLabel, r: 60, kind: "root",
       childCount: activeSkills.length, expanded: rootExpanded,
-      fill: ROOT_FILL, stroke: INK,
+      fill: ROOT_FILL, stroke: darken(ROOT_FILL),
     });
     if (!rootExpanded) return { nodes, links, seeds };
 
@@ -125,7 +139,7 @@ export function MindMapCanvas() {
       nodes.push({
         id: `s_${sk.id}`, label: sk.label, r: 44, kind: "skill", parent: "root",
         childCount: skillGoals.length, expanded: skillExpanded,
-        fill: skFill, stroke: sk.color,
+        fill: skFill, stroke: darken(skFill),
       });
       links.push({ from: "root", to: `s_${sk.id}`, depth: 1, curl: (i % 2 === 0 ? 1 : -1) });
 
@@ -140,7 +154,7 @@ export function MindMapCanvas() {
         nodes.push({
           id: `g_${g.id}`, label: g.title, r: 36, kind: "goal", parent: `s_${sk.id}`,
           childCount: gTasks.length, expanded: goalExpanded,
-          fill: PALETTE[(i + 2) % PALETTE.length], stroke: sk.color,
+          fill: PALETTE[(i + 2) % PALETTE.length], stroke: darken(PALETTE[(i + 2) % PALETTE.length]),
         });
         links.push({ from: `s_${sk.id}`, to: `g_${g.id}`, depth: 2, curl: (gi % 2 === 0 ? 1 : -1) });
 
@@ -155,7 +169,7 @@ export function MindMapCanvas() {
           nodes.push({
             id: `t_${t.id}`, label: t.title, r: 28, kind: "task", parent: `g_${g.id}`,
             childCount: sub.length, expanded: taskExpanded,
-            fill: PALETTE[(i + 4) % PALETTE.length], stroke: sk.color,
+            fill: PALETTE[(i + 4) % PALETTE.length], stroke: darken(PALETTE[(i + 4) % PALETTE.length]),
           });
           links.push({ from: `g_${g.id}`, to: `t_${t.id}`, depth: 3, curl: (ti % 2 === 0 ? 1 : -1) });
 
@@ -167,7 +181,7 @@ export function MindMapCanvas() {
             nodes.push({
               id: `st_${s.id}`, label: s.title, r: 22, kind: "subtask", parent: `t_${t.id}`,
               childCount: 0, expanded: true,
-              fill: PALETTE[(i + 3) % PALETTE.length], stroke: sk.color,
+              fill: PALETTE[(i + 3) % PALETTE.length], stroke: darken(PALETTE[(i + 3) % PALETTE.length]),
             });
             links.push({ from: `t_${t.id}`, to: `st_${s.id}`, depth: 4, curl: (si % 2 === 0 ? 1 : -1) });
           });
@@ -274,7 +288,7 @@ export function MindMapCanvas() {
       fill: n.fill,
       stroke: n.stroke,
       strokeWidth: hovered ? 2.5 : 1.5,
-      strokeOpacity: 0.7,
+      strokeOpacity: 0.95,
       vectorEffect: "non-scaling-stroke" as const,
       style: { filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.08))" },
     };
