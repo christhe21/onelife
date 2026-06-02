@@ -12,6 +12,8 @@ import { Skills } from "@/components/life/Skills";
 import { DueBanner } from "@/components/life/DueBanner";
 import { Overview } from "@/components/life/Overview";
 import { Onboarding } from "@/components/life/Onboarding";
+import { SettingsView } from "@/components/life/Settings";
+import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -39,6 +41,7 @@ function Index() {
 function Shell() {
   const [tab, setTab] = useState<TabId>("dashboard");
   const { goals, tasks, bucketList, settings } = useAppData();
+  useAppSettingsEffects();
   const stats = {
     goals: goals.filter((g) => g.status !== "completed").length,
     tasks: tasks.filter((t) => !t.done).length,
@@ -59,6 +62,7 @@ function Shell() {
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
       {tab === "skills" && <Skills />}
+      {tab === "settings" && <SettingsView />}
     </AppShell>
   );
 }
