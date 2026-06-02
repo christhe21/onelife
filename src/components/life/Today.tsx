@@ -228,11 +228,11 @@ function TaskGroup({
                     key={t.id}
                     draggable
                     onDragStart={(e) => onDragStart(e, t.id)}
-                    className="flex items-center gap-2 rounded-md border bg-card px-2 py-1.5 text-sm"
+                    className="flex w-full min-w-0 items-center gap-2 rounded-md border bg-card px-2 py-1.5 text-sm"
                   >
                     <Checkbox checked={t.done} onCheckedChange={() => onToggle(t.id)} />
-                    <span className={cn("flex-1 truncate", t.done && "line-through opacity-60")}>{t.title}</span>
-                    {t.priority === "high" && <Badge variant="destructive" className="text-[10px]">!</Badge>}
+                    <span className={cn("min-w-0 flex-1 truncate", t.done && "line-through opacity-60")}>{t.title}</span>
+                    {t.priority === "high" && <Badge variant="destructive" className="text-[10px] shrink-0">!</Badge>}
                   </li>
                 ))}
               </ul>
