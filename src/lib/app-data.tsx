@@ -71,10 +71,15 @@ export interface BucketItem {
   achieved: boolean;
 }
 
+export type TextScale = "sm" | "base" | "lg" | "xl";
+
 export interface Settings {
   birthYear?: number;
   userName?: string;
   onboardedAt?: string;
+  textScale?: TextScale;
+  notificationsEnabled?: boolean;
+  reminderLeadMinutes?: number;
 }
 
 export interface AppData {
