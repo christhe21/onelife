@@ -360,6 +360,9 @@ function loadInitial(): Stored {
           birthYear: typeof parsed.settings.birthYear === "number" ? parsed.settings.birthYear : undefined,
           userName: typeof parsed.settings.userName === "string" ? parsed.settings.userName : undefined,
           onboardedAt: typeof parsed.settings.onboardedAt === "string" ? parsed.settings.onboardedAt : undefined,
+          textScale: ["sm","base","lg","xl"].includes(parsed.settings.textScale) ? parsed.settings.textScale : undefined,
+          notificationsEnabled: typeof parsed.settings.notificationsEnabled === "boolean" ? parsed.settings.notificationsEnabled : undefined,
+          reminderLeadMinutes: typeof parsed.settings.reminderLeadMinutes === "number" ? parsed.settings.reminderLeadMinutes : undefined,
         }
       : {};
     return { ...data, skills, settings };
