@@ -41,6 +41,7 @@ function Index() {
 function Shell() {
   const [tab, setTab] = useState<TabId>("dashboard");
   const { goals, tasks, bucketList, settings } = useAppData();
+  useAppSettingsEffects();
   const stats = {
     goals: goals.filter((g) => g.status !== "completed").length,
     tasks: tasks.filter((t) => !t.done).length,
@@ -61,6 +62,7 @@ function Shell() {
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
       {tab === "skills" && <Skills />}
+      {tab === "settings" && <SettingsView />}
     </AppShell>
   );
 }
