@@ -59,7 +59,7 @@ export function ExportImport() {
 
   return (
     <div className="flex items-center gap-2">
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button size="sm" variant="outline" className="rounded-full">
             <FileJson className="mr-2 h-4 w-4" />
