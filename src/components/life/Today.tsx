@@ -76,8 +76,8 @@ export function Today({ onGoTasks, onGoGoals }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-end justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
           <h2 className="font-display text-2xl font-semibold">
             {greeting}{name ? `, ${name}` : ""}
           </h2>
@@ -85,7 +85,7 @@ export function Today({ onGoTasks, onGoGoals }: Props) {
             {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
-        <div className="flex gap-2 text-xs">
+        <div className="flex flex-wrap gap-2 text-xs">
           <Badge variant="secondary" className="gap-1"><CalendarCheck className="h-3 w-3" />{dueToday.length} due today</Badge>
           {overdue.length > 0 && (
             <Badge variant="destructive" className="gap-1"><AlertTriangle className="h-3 w-3" />{overdue.length} overdue</Badge>
