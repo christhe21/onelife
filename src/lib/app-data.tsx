@@ -47,6 +47,7 @@ export interface SubTask {
   done: boolean;
   hoursPerWeek?: number;
   endDate?: string;
+  startDate?: string;
 }
 
 export interface Task {
