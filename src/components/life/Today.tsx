@@ -633,7 +633,7 @@ function AddToScheduleDialog({
         if (!v) reset();
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Add to today&apos;s schedule</DialogTitle>
           <DialogDescription>
