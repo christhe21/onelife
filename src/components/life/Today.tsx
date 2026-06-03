@@ -725,14 +725,15 @@ function AddToScheduleDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!selected || from >= till}>
+          <Button onClick={submit} disabled={!selected || from >= till} className="w-full sm:w-auto">
             Schedule
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
