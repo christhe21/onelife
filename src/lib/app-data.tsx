@@ -116,6 +116,7 @@ function normalizeSubTask(raw: any): SubTask {
     hoursPerWeek:
       typeof raw?.hoursPerWeek === "number" && raw.hoursPerWeek > 0 ? raw.hoursPerWeek : undefined,
     endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
+    startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
   };
 }
 
