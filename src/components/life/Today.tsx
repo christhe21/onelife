@@ -633,7 +633,7 @@ function AddToScheduleDialog({
         if (!v) reset();
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Add to today&apos;s schedule</DialogTitle>
           <DialogDescription>
@@ -725,14 +725,15 @@ function AddToScheduleDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!selected || from >= till}>
+          <Button onClick={submit} disabled={!selected || from >= till} className="w-full sm:w-auto">
             Schedule
           </Button>
         </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
