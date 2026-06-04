@@ -12,6 +12,7 @@ import { Skills } from "@/components/life/Skills";
 import { DueBanner } from "@/components/life/DueBanner";
 import { Overview } from "@/components/life/Overview";
 import { Onboarding } from "@/components/life/Onboarding";
+import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 
