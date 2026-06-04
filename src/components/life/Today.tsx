@@ -39,9 +39,9 @@ function isoToHM(iso?: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-function hmToTodayISO(hm: string): string {
+function hmToTodayISO(hm: string, dateYMD?: string): string {
   const [h, m] = hm.split(":").map(Number);
-  const d = new Date();
+  const d = dateYMD ? new Date(`${dateYMD}T00:00:00`) : new Date();
   d.setHours(h || 0, m || 0, 0, 0);
   return d.toISOString();
 }
