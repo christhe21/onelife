@@ -551,12 +551,14 @@ interface FlatItem {
   skillColor?: string;
 }
 
-function AddToScheduleDialog({
+export function AddToScheduleDialog({
   open,
   onOpenChange,
+  defaultDate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  defaultDate?: string;
 }) {
   const { tasks, goals, skills, updateTask, updateSubtask } = useAppData();
   const [query, setQuery] = useState("");
