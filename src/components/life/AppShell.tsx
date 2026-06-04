@@ -1,14 +1,15 @@
 import { useState, type ReactNode } from "react";
-import { LayoutDashboard, Target, ListChecks, Sparkles, Menu, X, Palette, Network, CalendarCheck, Settings as SettingsIcon } from "lucide-react";
+import { LayoutDashboard, Target, ListChecks, Sparkles, Menu, X, Palette, Network, CalendarCheck, CalendarDays, Settings as SettingsIcon } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type TabId = "dashboard" | "today" | "overview" | "goals" | "tasks" | "bucket" | "skills" | "settings";
+export type TabId = "dashboard" | "today" | "calendar" | "overview" | "goals" | "tasks" | "bucket" | "skills" | "settings";
 
 const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Overview & progress" },
   { id: "today", label: "Today", icon: CalendarCheck, hint: "What to focus on today" },
+  { id: "calendar", label: "Calendar", icon: CalendarDays, hint: "Your scheduled tasks" },
   { id: "overview", label: "Overview", icon: Network, hint: "Mindmap of skills, goals & tasks" },
   { id: "goals", label: "Goals", icon: Target, hint: "Goals & sub-goals" },
   { id: "tasks", label: "Tasks", icon: ListChecks, hint: "To-do list & focus schedule" },

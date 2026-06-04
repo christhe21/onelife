@@ -39,9 +39,9 @@ function isoToHM(iso?: string): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-function hmToTodayISO(hm: string): string {
+function hmToTodayISO(hm: string, dateYMD?: string): string {
   const [h, m] = hm.split(":").map(Number);
-  const d = new Date();
+  const d = dateYMD ? new Date(`${dateYMD}T00:00:00`) : new Date();
   d.setHours(h || 0, m || 0, 0, 0);
   return d.toISOString();
 }
@@ -551,12 +551,14 @@ interface FlatItem {
   skillColor?: string;
 }
 
-function AddToScheduleDialog({
+export function AddToScheduleDialog({
   open,
   onOpenChange,
+  defaultDate,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  defaultDate?: string;
 }) {
   const { tasks, goals, skills, updateTask, updateSubtask } = useAppData();
   const [query, setQuery] = useState("");
@@ -614,8 +616,8 @@ function AddToScheduleDialog({
 
   const submit = () => {
     if (!selected) return;
-    const startIso = hmToTodayISO(from);
-    const endIso = hmToTodayISO(till);
+    const startIso = hmToTodayISO(from, defaultDate);
+    const endIso = hmToTodayISO(till, defaultDate);
     if (selected.kind === "task") {
       updateTask(selected.taskId, { startDate: startIso, endDate: endIso });
     } else if (selected.subId) {

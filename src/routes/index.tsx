@@ -12,6 +12,7 @@ import { Skills } from "@/components/life/Skills";
 import { DueBanner } from "@/components/life/DueBanner";
 import { Overview } from "@/components/life/Overview";
 import { Onboarding } from "@/components/life/Onboarding";
+import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 
@@ -57,6 +58,7 @@ function Shell() {
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
       {tab === "today" && <Today onGoTasks={() => setTab("tasks")} onGoGoals={() => setTab("goals")} />}
+      {tab === "calendar" && <CalendarView />}
       {tab === "overview" && <Overview />}
       {tab === "goals" && <Goals />}
       {tab === "tasks" && <Tasks />}
