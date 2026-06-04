@@ -616,8 +616,8 @@ export function AddToScheduleDialog({
 
   const submit = () => {
     if (!selected) return;
-    const startIso = hmToTodayISO(from);
-    const endIso = hmToTodayISO(till);
+    const startIso = hmToTodayISO(from, defaultDate);
+    const endIso = hmToTodayISO(till, defaultDate);
     if (selected.kind === "task") {
       updateTask(selected.taskId, { startDate: startIso, endDate: endIso });
     } else if (selected.subId) {
