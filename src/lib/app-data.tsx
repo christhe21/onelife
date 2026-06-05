@@ -118,6 +118,14 @@ function nonNegNum(v: any): number | undefined {
   return typeof v === "number" && isFinite(v) && v >= 0 ? v : undefined;
 }
 
+function hoursBetween(startISO?: string, endISO?: string): number {
+  if (!startISO || !endISO) return 0;
+  const s = new Date(startISO).getTime();
+  const e = new Date(endISO).getTime();
+  if (!isFinite(s) || !isFinite(e) || e <= s) return 0;
+  return (e - s) / 3_600_000;
+}
+
 function normalizeSubTask(raw: any): SubTask {
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
