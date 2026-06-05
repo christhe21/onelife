@@ -39,6 +39,8 @@ export interface Goal {
   currentActivity?: string;
   subGoals: SubGoal[];
   manualProgress?: number;
+  plannedHours?: number;
+  spentHours?: number;
 }
 
 export interface SubTask {
