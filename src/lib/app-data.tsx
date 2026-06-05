@@ -48,6 +48,8 @@ export interface SubTask {
   hoursPerWeek?: number;
   endDate?: string;
   startDate?: string;
+  plannedHours?: number;
+  spentHours?: number;
 }
 
 export interface Task {
@@ -62,6 +64,8 @@ export interface Task {
   startDate?: string;
   endDate?: string;
   evidence?: string;
+  plannedHours?: number;
+  spentHours?: number;
 }
 
 export interface BucketItem {
