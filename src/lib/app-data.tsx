@@ -485,15 +485,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     updateTask: (id, patch) => setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t))),
     toggleTask: (id) => {
       let promoted: string | undefined;
+      let goalDelta = 0;
+      let goalIdForDelta: string | undefined;
       setTasks((cur) =>
         cur.map((t) => {
           if (t.id !== id) return t;
-          const next = { ...t, done: !t.done };
-          if (next.done && !t.done) promoted = t.goalId;
-          return next;
+          const nowDone = !t.done;
+          const delta = hoursBetween(t.startDate, t.endDate);
+          const curSpent = t.spentHours ?? 0;
+          const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
+          if (nowDone && !t.done) promoted = t.goalId;
+          if (delta > 0) {
+            goalDelta = nowDone ? delta : -delta;
+            goalIdForDelta = t.goalId;
+          }
+          return { ...t, done: nowDone, spentHours: nextSpent };
         })
       );
       promoteGoal(promoted);
+      if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
 
@@ -515,16 +525,34 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ),
     toggleSubtask: (taskId, subId) => {
       let promoted: string | undefined;
+      let goalDelta = 0;
+      let taskDelta = 0;
+      let goalIdForDelta: string | undefined;
       setTasks((cur) =>
         cur.map((t) => {
           if (t.id !== taskId) return t;
-          const subtasks = t.subtasks.map((s) => (s.id === subId ? { ...s, done: !s.done } : s));
-          const wasCompleting = subtasks.find((s) => s.id === subId)?.done;
-          if (wasCompleting) promoted = t.goalId;
-          return { ...t, subtasks };
+          let nextTaskSpent = t.spentHours ?? 0;
+          const subtasks = t.subtasks.map((s) => {
+            if (s.id !== subId) return s;
+            const nowDone = !s.done;
+            const delta = hoursBetween(s.startDate, s.endDate);
+            const curSpent = s.spentHours ?? 0;
+            const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
+            if (nowDone) promoted = t.goalId;
+            if (delta > 0) {
+              const signed = nowDone ? delta : -delta;
+              taskDelta = signed;
+              goalDelta = signed;
+              goalIdForDelta = t.goalId;
+              nextTaskSpent = Math.max(0, nextTaskSpent + signed);
+            }
+            return { ...s, done: nowDone, spentHours: nextSpent };
+          });
+          return { ...t, subtasks, spentHours: taskDelta !== 0 ? nextTaskSpent : t.spentHours };
         })
       );
       promoteGoal(promoted);
+      if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteSubtask: (taskId, subId) =>
       setTasks((cur) =>
