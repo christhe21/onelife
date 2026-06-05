@@ -114,6 +114,10 @@ function downloadJSON(payload: unknown, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function nonNegNum(v: any): number | undefined {
+  return typeof v === "number" && isFinite(v) && v >= 0 ? v : undefined;
+}
+
 function normalizeSubTask(raw: any): SubTask {
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
@@ -123,6 +127,8 @@ function normalizeSubTask(raw: any): SubTask {
       typeof raw?.hoursPerWeek === "number" && raw.hoursPerWeek > 0 ? raw.hoursPerWeek : undefined,
     endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
     startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
+    plannedHours: nonNegNum(raw?.plannedHours),
+    spentHours: nonNegNum(raw?.spentHours),
   };
 }
 
