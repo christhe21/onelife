@@ -178,6 +178,8 @@ function normalizeTask(raw: any): Task {
     startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
     endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
     evidence: typeof raw?.evidence === "string" ? raw.evidence : undefined,
+    plannedHours: nonNegNum(raw?.plannedHours),
+    spentHours: nonNegNum(raw?.spentHours),
   };
 }
 
