@@ -567,6 +567,8 @@ interface FlatItem {
   title: string;
   goalTitle?: string;
   skillColor?: string;
+  plannedHours?: number;
+  spentHours?: number;
 }
 
 export function AddToScheduleDialog({
@@ -586,6 +588,7 @@ export function AddToScheduleDialog({
   const defaultEnd = `${String((now.getHours() + 1) % 24).padStart(2, "0")}:00`;
   const [from, setFrom] = useState(defaultStart);
   const [till, setTill] = useState(defaultEnd);
+  const [plannedHoursStr, setPlannedHoursStr] = useState("");
 
   const flat: FlatItem[] = useMemo(() => {
     const out: FlatItem[] = [];
@@ -598,6 +601,8 @@ export function AddToScheduleDialog({
         title: t.title,
         goalTitle: g?.title,
         skillColor: sk?.color,
+        plannedHours: t.plannedHours,
+        spentHours: t.spentHours,
       });
       for (const s of t.subtasks) {
         out.push({
@@ -607,6 +612,8 @@ export function AddToScheduleDialog({
           title: s.title,
           goalTitle: t.title,
           skillColor: sk?.color,
+          plannedHours: s.plannedHours,
+          spentHours: s.spentHours,
         });
       }
     }
@@ -630,20 +637,47 @@ export function AddToScheduleDialog({
     setSelected(null);
     setFrom(defaultStart);
     setTill(defaultEnd);
+    setPlannedHoursStr("");
+  };
+
+  // Duration in hours from the time pickers
+  const durationH = useMemo(() => {
+    const [fh, fm] = from.split(":").map(Number);
+    const [th, tm] = till.split(":").map(Number);
+    return Math.max(0, (th * 60 + tm - fh * 60 - fm) / 60);
+  }, [from, till]);
+
+  // Sync planned hours field when a new item is selected
+  const onPick = (i: FlatItem) => {
+    setSelected(i);
+    setPlannedHoursStr(i.plannedHours != null ? String(i.plannedHours) : "");
   };
 
   const submit = () => {
     if (!selected) return;
     const startIso = hmToTodayISO(from, defaultDate);
     const endIso = hmToTodayISO(till, defaultDate);
+    const parsedPlanned = plannedHoursStr.trim() === "" ? undefined : Number(plannedHoursStr);
+    const patch: { startDate: string; endDate: string; plannedHours?: number } = {
+      startDate: startIso,
+      endDate: endIso,
+    };
+    if (parsedPlanned != null && isFinite(parsedPlanned) && parsedPlanned >= 0) {
+      patch.plannedHours = parsedPlanned;
+    }
     if (selected.kind === "task") {
-      updateTask(selected.taskId, { startDate: startIso, endDate: endIso });
+      updateTask(selected.taskId, patch);
     } else if (selected.subId) {
-      updateSubtask(selected.taskId, selected.subId, { startDate: startIso, endDate: endIso });
+      updateSubtask(selected.taskId, selected.subId, patch);
     }
     onOpenChange(false);
     reset();
   };
+
+  const remaining =
+    selected?.plannedHours != null
+      ? Math.max(0, selected.plannedHours - (selected.spentHours ?? 0))
+      : null;
 
   return (
     <Dialog
@@ -653,16 +687,16 @@ export function AddToScheduleDialog({
         if (!v) reset();
       }}
     >
-      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md max-h-[90vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle>Add to today&apos;s schedule</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-3 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-base sm:text-lg">Add to schedule</DialogTitle>
+          <DialogDescription className="text-xs">
             Search a task or subtask, then pick a time window.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          <div className="relative">
+        <div className="min-w-0 space-y-3">
+          <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               autoFocus
@@ -672,32 +706,35 @@ export function AddToScheduleDialog({
                 setSelected(null);
               }}
               placeholder="Search tasks & subtasks…"
-              className="pl-8"
+              className="pl-8 text-base"
             />
           </div>
 
           {selected ? (
-            <div className="flex items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm">
+            <div className="flex min-w-0 items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm">
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: selected.skillColor ?? "#888" }}
               />
               {selected.kind === "subtask" && (
-                <Badge variant="outline" className="text-[10px]">
-                  sub
-                </Badge>
+                <Badge variant="outline" className="shrink-0 text-[10px]">sub</Badge>
               )}
               <span className="min-w-0 flex-1 truncate">{selected.title}</span>
+              {remaining != null && (
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {formatHours(remaining)} / {formatHours(selected.plannedHours!)} left
+                </span>
+              )}
               <button
                 onClick={() => setSelected(null)}
-                className="rounded p-1 text-muted-foreground hover:bg-background hover:text-foreground"
+                className="shrink-0 rounded p-1 text-muted-foreground hover:bg-background hover:text-foreground"
                 aria-label="Clear selection"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
           ) : (
-            <div className="max-h-56 overflow-y-auto rounded-md border">
+            <div className="max-h-56 min-w-0 overflow-y-auto rounded-md border">
               {filtered.length === 0 ? (
                 <p className="px-3 py-6 text-center text-xs text-muted-foreground">
                   No matches. Try another search.
@@ -705,23 +742,21 @@ export function AddToScheduleDialog({
               ) : (
                 <ul className="divide-y">
                   {filtered.map((i) => (
-                    <li key={`${i.kind}-${i.taskId}-${i.subId ?? ""}`}>
+                    <li key={`${i.kind}-${i.taskId}-${i.subId ?? ""}`} className="min-w-0">
                       <button
-                        onClick={() => setSelected(i)}
-                        className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-sm hover:bg-muted/60"
+                        onClick={() => onPick(i)}
+                        className="flex w-full min-w-0 items-center gap-2 px-2.5 py-2 text-left text-sm hover:bg-muted/60"
                       >
                         <span
                           className="h-2 w-2 shrink-0 rounded-full"
                           style={{ backgroundColor: i.skillColor ?? "#888" }}
                         />
                         {i.kind === "subtask" && (
-                          <Badge variant="outline" className="text-[10px]">
-                            sub
-                          </Badge>
+                          <Badge variant="outline" className="shrink-0 text-[10px]">sub</Badge>
                         )}
                         <span className="min-w-0 flex-1 truncate">{i.title}</span>
                         {i.goalTitle && (
-                          <span className="ml-2 hidden max-w-[40%] truncate text-[10px] text-muted-foreground sm:inline">
+                          <span className="ml-2 hidden max-w-[40%] shrink-0 truncate text-[10px] text-muted-foreground sm:inline">
                             {i.goalTitle}
                           </span>
                         )}
@@ -733,27 +768,65 @@ export function AddToScheduleDialog({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <label className="space-y-1">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            <label className="min-w-0 space-y-1">
               <span className="text-[11px] font-medium text-muted-foreground">From</span>
-              <Input type="time" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <Input
+                type="time"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                className="text-base"
+              />
             </label>
-            <label className="space-y-1">
+            <label className="min-w-0 space-y-1">
               <span className="text-[11px] font-medium text-muted-foreground">Till</span>
-              <Input type="time" value={till} onChange={(e) => setTill(e.target.value)} />
+              <Input
+                type="time"
+                value={till}
+                onChange={(e) => setTill(e.target.value)}
+                className="text-base"
+              />
             </label>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="min-w-0 flex-1 space-y-1">
+              <span className="text-[11px] font-medium text-muted-foreground">
+                Estimated hours (total)
+              </span>
+              <Input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                step={0.25}
+                value={plannedHoursStr}
+                onChange={(e) => setPlannedHoursStr(e.target.value)}
+                placeholder="e.g. 4"
+                className="text-base"
+              />
+            </label>
+            <div className="rounded-md bg-muted/40 px-2 py-1.5 text-[11px] text-muted-foreground">
+              This block: <span className="font-medium text-foreground">{formatHours(durationH)}</span>
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+        <DialogFooter className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className="w-full sm:w-auto"
+          >
             Cancel
           </Button>
-          <Button onClick={submit} disabled={!selected || from >= till} className="w-full sm:w-auto">
+          <Button
+            onClick={submit}
+            disabled={!selected || from >= till}
+            className="w-full sm:w-auto"
+          >
             Schedule
           </Button>
         </DialogFooter>
-
       </DialogContent>
     </Dialog>
   );
