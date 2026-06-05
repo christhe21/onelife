@@ -217,6 +217,7 @@ const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview th
     "startDate": "YYYY-MM-DD", "targetDate": "YYYY-MM-DD",
     "status": "not_started|in_progress|completed",
     "currentActivity": "string", "manualProgress": 0-100,
+    "plannedHours": 40, "spentHours": 0,
     "subGoals": [{"id":"string","title":"string","targetDate":"YYYY-MM-DD","done":false}]
   }],
   "tasks": [{
@@ -224,11 +225,12 @@ const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview th
     "priority": "low|medium|high", "done": false, "goalId": "<goal id or omit>",
     "progress": 0-100, "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD",
     "evidence": "what has been done so far / links",
-    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"endDate":"YYYY-MM-DD"}]
+    "plannedHours": 4, "spentHours": 0,
+    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"plannedHours":2,"spentHours":0,"endDate":"YYYY-MM-DD"}]
   }],
   "bucketList": [{"id":"string","title":"string","notes":"string","targetYear":2030,"achieved":false}]
 }
-Use ISO YYYY-MM-DD dates. Capture prior progress with progress/startDate/evidence so partially-done work is preserved.`;
+Use ISO YYYY-MM-DD dates. plannedHours = total effort estimate for the goal/task/subtask; spentHours is auto-updated when scheduled blocks are completed. Capture prior progress with progress/startDate/evidence so partially-done work is preserved.`;
 
 export const TEMPLATE_PAYLOAD = {
   version: 1,
