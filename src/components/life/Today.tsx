@@ -468,40 +468,48 @@ function Schedule({
               </div>
             ))}
             {/* Positioned blocks */}
-            <div className="pointer-events-none absolute inset-0 pl-12 pr-2">
+            <div className="pointer-events-none absolute inset-0 pl-14 pr-2">
               {items.map((it, idx) => {
                 const baseHour = HOURS[0];
                 const top = (it.start - baseHour) * HOUR_PX;
-                const height = Math.max(28, it.durH * HOUR_PX - 4);
+                const height = Math.max(18, it.durH * HOUR_PX - 2);
+                const compact = height < 36;
                 const g = goalOf(it.task.goalId);
                 const sk = skillOf(g);
                 const isSub = it.kind === "subtask";
                 const title = isSub ? it.sub.title : it.task.title;
                 const done = isSub ? it.sub.done : it.task.done;
                 const payload = isSub ? `sub:${it.task.id}|${it.sub.id}` : `task:${it.task.id}`;
+                const planned = isSub ? it.sub.plannedHours : it.task.plannedHours;
+                const spent = isSub ? it.sub.spentHours : it.task.spentHours;
+                const remaining =
+                  planned != null ? Math.max(0, planned - (spent ?? 0)) : null;
                 return (
                   <div
                     key={`${it.kind}-${idx}`}
                     draggable
                     onDragStart={(e) => onDragStart(e, payload)}
-                    className="pointer-events-auto absolute left-1 right-1 flex flex-col gap-0.5 rounded-md border bg-card px-2 py-1 text-xs shadow-sm"
+                    className={cn(
+                      "pointer-events-auto absolute left-1 right-1 flex flex-col overflow-hidden rounded-md border bg-card shadow-sm",
+                      compact ? "gap-0 px-2 py-0.5 text-[11px]" : "gap-0.5 px-2 py-1 text-xs",
+                    )}
                     style={{
                       top,
                       height,
                       borderLeft: `3px solid ${sk?.color ?? "#888"}`,
                     }}
                   >
-                    <div className="flex items-start gap-1.5">
+                    <div className="flex min-w-0 items-center gap-1.5">
                       <Checkbox
                         checked={done}
                         onCheckedChange={() =>
                           isSub ? onToggleSubtask(it.task.id, it.sub.id) : onToggleTask(it.task.id)
                         }
-                        className="mt-0.5 h-3.5 w-3.5"
+                        className="h-3.5 w-3.5 shrink-0"
                       />
                       <span
                         className={cn(
-                          "min-w-0 flex-1 truncate font-medium",
+                          "min-w-0 flex-1 truncate font-medium leading-tight",
                           done && "line-through opacity-60",
                         )}
                       >
@@ -509,26 +517,27 @@ function Schedule({
                       </span>
                       <button
                         onClick={() => onUnschedule(it)}
-                        className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
                         aria-label="Remove from schedule"
                       >
                         <X className="h-3 w-3" />
                       </button>
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                      {isSub && <span className="rounded bg-muted px-1">sub</span>}
-                      <span>
-                        {isoToHM(isSub ? it.sub.startDate : it.task.startDate)}
-                        {(isSub ? it.sub.endDate : it.task.endDate)
-                          ? ` – ${isoToHM(isSub ? it.sub.endDate : it.task.endDate)}`
-                          : ""}
-                      </span>
-                      {g && (
-                        <span className="truncate">
-                          · {g.title}
+                    {!compact && (
+                      <div className="flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground">
+                        {isSub && <span className="rounded bg-muted px-1">sub</span>}
+                        <span className="shrink-0">
+                          {isoToHM(isSub ? it.sub.startDate : it.task.startDate)}
+                          {(isSub ? it.sub.endDate : it.task.endDate)
+                            ? ` – ${isoToHM(isSub ? it.sub.endDate : it.task.endDate)}`
+                            : ""}
                         </span>
-                      )}
-                    </div>
+                        {remaining != null && (
+                          <span className="shrink-0">· {formatHours(remaining)} left</span>
+                        )}
+                        {g && <span className="min-w-0 truncate">· {g.title}</span>}
+                      </div>
+                    )}
                   </div>
                 );
               })}
