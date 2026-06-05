@@ -430,6 +430,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const bumpGoalSpent = (goalId: string, delta: number) => {
+    setGoals((cur) =>
+      cur.map((g) =>
+        g.id === goalId ? { ...g, spentHours: Math.max(0, (g.spentHours ?? 0) + delta) } : g
+      )
+    );
+  };
+
   const value: Ctx = {
     goals,
     tasks,
