@@ -237,9 +237,9 @@ export const TEMPLATE_PAYLOAD = {
   exportedAt: "2026-01-01T00:00:00.000Z",
   _ai: { instructions: "Copy systemPrompt into an LLM, get JSON back, import it.", systemPrompt: AI_SYSTEM_PROMPT },
   _schema: {
-    goal: "title, skill, startDate, targetDate, status, manualProgress (0-100), subGoals[]",
-    task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, subtasks[]",
-    subtask: "title, done, hoursPerWeek (auto-schedules .ics), endDate",
+    goal: "title, skill, startDate, targetDate, status, manualProgress (0-100), plannedHours, spentHours, subGoals[]",
+    task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, plannedHours, spentHours, subtasks[]",
+    subtask: "title, done, hoursPerWeek (auto-schedules .ics), endDate, plannedHours, spentHours",
   },
   goals: [
     {
@@ -252,6 +252,8 @@ export const TEMPLATE_PAYLOAD = {
       status: "in_progress",
       currentActivity: "3 easy runs / week, building to 5km",
       manualProgress: 40,
+      plannedHours: 60,
+      spentHours: 22,
       subGoals: [
         { id: "sg1", title: "Run 5km continuously", targetDate: "2026-03-15", done: true },
         { id: "sg2", title: "Sub-30 min 5K", targetDate: "2026-05-01", done: false },
@@ -267,6 +269,8 @@ export const TEMPLATE_PAYLOAD = {
       status: "not_started",
       currentActivity: "",
       manualProgress: 0,
+      plannedHours: 40,
+      spentHours: 0,
       subGoals: [],
     },
   ],
@@ -281,9 +285,11 @@ export const TEMPLATE_PAYLOAD = {
       progress: 35,
       startDate: "2026-02-03",
       evidence: "Drafted hero + about copy in Notion.",
+      plannedHours: 6,
+      spentHours: 2,
       subtasks: [
-        { id: "st1", title: "Pick 3 projects", done: true },
-        { id: "st2", title: "Write case studies", done: false, hoursPerWeek: 3, endDate: "2026-02-25" },
+        { id: "st1", title: "Pick 3 projects", done: true, plannedHours: 1, spentHours: 1 },
+        { id: "st2", title: "Write case studies", done: false, hoursPerWeek: 3, plannedHours: 5, spentHours: 1, endDate: "2026-02-25" },
       ],
     },
     {
@@ -297,6 +303,8 @@ export const TEMPLATE_PAYLOAD = {
       startDate: "2026-02-04",
       endDate: "2026-02-04",
       evidence: "8x400m @ 5:00/km",
+      plannedHours: 1,
+      spentHours: 1,
       subtasks: [],
     },
   ],
