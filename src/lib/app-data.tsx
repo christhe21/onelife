@@ -158,6 +158,8 @@ function normalizeGoal(raw: any): Goal {
       typeof raw?.manualProgress === "number"
         ? Math.max(0, Math.min(100, raw.manualProgress))
         : undefined,
+    plannedHours: nonNegNum(raw?.plannedHours),
+    spentHours: nonNegNum(raw?.spentHours),
   };
 }
 
