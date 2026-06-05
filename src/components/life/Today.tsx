@@ -46,6 +46,15 @@ function hmToTodayISO(hm: string, dateYMD?: string): string {
   return d.toISOString();
 }
 
+function formatHours(h: number): string {
+  if (h <= 0) return "0h";
+  const hh = Math.floor(h);
+  const mm = Math.round((h - hh) * 60);
+  if (hh === 0) return `${mm}m`;
+  if (mm === 0) return `${hh}h`;
+  return `${hh}h ${mm}m`;
+}
+
 function parseHour(iso?: string): number | null {
   if (!iso) return null;
   const d = new Date(iso);
