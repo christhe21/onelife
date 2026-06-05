@@ -39,6 +39,8 @@ export interface Goal {
   currentActivity?: string;
   subGoals: SubGoal[];
   manualProgress?: number;
+  plannedHours?: number;
+  spentHours?: number;
 }
 
 export interface SubTask {
@@ -48,6 +50,8 @@ export interface SubTask {
   hoursPerWeek?: number;
   endDate?: string;
   startDate?: string;
+  plannedHours?: number;
+  spentHours?: number;
 }
 
 export interface Task {
@@ -62,6 +66,8 @@ export interface Task {
   startDate?: string;
   endDate?: string;
   evidence?: string;
+  plannedHours?: number;
+  spentHours?: number;
 }
 
 export interface BucketItem {
@@ -108,6 +114,18 @@ function downloadJSON(payload: unknown, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+function nonNegNum(v: any): number | undefined {
+  return typeof v === "number" && isFinite(v) && v >= 0 ? v : undefined;
+}
+
+function hoursBetween(startISO?: string, endISO?: string): number {
+  if (!startISO || !endISO) return 0;
+  const s = new Date(startISO).getTime();
+  const e = new Date(endISO).getTime();
+  if (!isFinite(s) || !isFinite(e) || e <= s) return 0;
+  return (e - s) / 3_600_000;
+}
+
 function normalizeSubTask(raw: any): SubTask {
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
@@ -117,6 +135,8 @@ function normalizeSubTask(raw: any): SubTask {
       typeof raw?.hoursPerWeek === "number" && raw.hoursPerWeek > 0 ? raw.hoursPerWeek : undefined,
     endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
     startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
+    plannedHours: nonNegNum(raw?.plannedHours),
+    spentHours: nonNegNum(raw?.spentHours),
   };
 }
 
@@ -146,6 +166,8 @@ function normalizeGoal(raw: any): Goal {
       typeof raw?.manualProgress === "number"
         ? Math.max(0, Math.min(100, raw.manualProgress))
         : undefined,
+    plannedHours: nonNegNum(raw?.plannedHours),
+    spentHours: nonNegNum(raw?.spentHours),
   };
 }
 
@@ -164,6 +186,8 @@ function normalizeTask(raw: any): Task {
     startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
     endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
     evidence: typeof raw?.evidence === "string" ? raw.evidence : undefined,
+    plannedHours: nonNegNum(raw?.plannedHours),
+    spentHours: nonNegNum(raw?.spentHours),
   };
 }
 
@@ -201,6 +225,7 @@ const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview th
     "startDate": "YYYY-MM-DD", "targetDate": "YYYY-MM-DD",
     "status": "not_started|in_progress|completed",
     "currentActivity": "string", "manualProgress": 0-100,
+    "plannedHours": 40, "spentHours": 0,
     "subGoals": [{"id":"string","title":"string","targetDate":"YYYY-MM-DD","done":false}]
   }],
   "tasks": [{
@@ -208,20 +233,21 @@ const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview th
     "priority": "low|medium|high", "done": false, "goalId": "<goal id or omit>",
     "progress": 0-100, "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD",
     "evidence": "what has been done so far / links",
-    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"endDate":"YYYY-MM-DD"}]
+    "plannedHours": 4, "spentHours": 0,
+    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"plannedHours":2,"spentHours":0,"endDate":"YYYY-MM-DD"}]
   }],
   "bucketList": [{"id":"string","title":"string","notes":"string","targetYear":2030,"achieved":false}]
 }
-Use ISO YYYY-MM-DD dates. Capture prior progress with progress/startDate/evidence so partially-done work is preserved.`;
+Use ISO YYYY-MM-DD dates. plannedHours = total effort estimate for the goal/task/subtask; spentHours is auto-updated when scheduled blocks are completed. Capture prior progress with progress/startDate/evidence so partially-done work is preserved.`;
 
 export const TEMPLATE_PAYLOAD = {
   version: 1,
   exportedAt: "2026-01-01T00:00:00.000Z",
   _ai: { instructions: "Copy systemPrompt into an LLM, get JSON back, import it.", systemPrompt: AI_SYSTEM_PROMPT },
   _schema: {
-    goal: "title, skill, startDate, targetDate, status, manualProgress (0-100), subGoals[]",
-    task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, subtasks[]",
-    subtask: "title, done, hoursPerWeek (auto-schedules .ics), endDate",
+    goal: "title, skill, startDate, targetDate, status, manualProgress (0-100), plannedHours, spentHours, subGoals[]",
+    task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, plannedHours, spentHours, subtasks[]",
+    subtask: "title, done, hoursPerWeek (auto-schedules .ics), endDate, plannedHours, spentHours",
   },
   goals: [
     {
@@ -234,6 +260,8 @@ export const TEMPLATE_PAYLOAD = {
       status: "in_progress",
       currentActivity: "3 easy runs / week, building to 5km",
       manualProgress: 40,
+      plannedHours: 60,
+      spentHours: 22,
       subGoals: [
         { id: "sg1", title: "Run 5km continuously", targetDate: "2026-03-15", done: true },
         { id: "sg2", title: "Sub-30 min 5K", targetDate: "2026-05-01", done: false },
@@ -249,6 +277,8 @@ export const TEMPLATE_PAYLOAD = {
       status: "not_started",
       currentActivity: "",
       manualProgress: 0,
+      plannedHours: 40,
+      spentHours: 0,
       subGoals: [],
     },
   ],
@@ -263,9 +293,11 @@ export const TEMPLATE_PAYLOAD = {
       progress: 35,
       startDate: "2026-02-03",
       evidence: "Drafted hero + about copy in Notion.",
+      plannedHours: 6,
+      spentHours: 2,
       subtasks: [
-        { id: "st1", title: "Pick 3 projects", done: true },
-        { id: "st2", title: "Write case studies", done: false, hoursPerWeek: 3, endDate: "2026-02-25" },
+        { id: "st1", title: "Pick 3 projects", done: true, plannedHours: 1, spentHours: 1 },
+        { id: "st2", title: "Write case studies", done: false, hoursPerWeek: 3, plannedHours: 5, spentHours: 1, endDate: "2026-02-25" },
       ],
     },
     {
@@ -279,6 +311,8 @@ export const TEMPLATE_PAYLOAD = {
       startDate: "2026-02-04",
       endDate: "2026-02-04",
       evidence: "8x400m @ 5:00/km",
+      plannedHours: 1,
+      spentHours: 1,
       subtasks: [],
     },
   ],
@@ -404,6 +438,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const bumpGoalSpent = (goalId: string, delta: number) => {
+    setGoals((cur) =>
+      cur.map((g) =>
+        g.id === goalId ? { ...g, spentHours: Math.max(0, (g.spentHours ?? 0) + delta) } : g
+      )
+    );
+  };
+
   const value: Ctx = {
     goals,
     tasks,
@@ -459,15 +501,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     updateTask: (id, patch) => setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t))),
     toggleTask: (id) => {
       let promoted: string | undefined;
+      let goalDelta = 0;
+      let goalIdForDelta: string | undefined;
       setTasks((cur) =>
         cur.map((t) => {
           if (t.id !== id) return t;
-          const next = { ...t, done: !t.done };
-          if (next.done && !t.done) promoted = t.goalId;
-          return next;
+          const nowDone = !t.done;
+          const delta = hoursBetween(t.startDate, t.endDate);
+          const curSpent = t.spentHours ?? 0;
+          const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
+          if (nowDone && !t.done) promoted = t.goalId;
+          if (delta > 0) {
+            goalDelta = nowDone ? delta : -delta;
+            goalIdForDelta = t.goalId;
+          }
+          return { ...t, done: nowDone, spentHours: nextSpent };
         })
       );
       promoteGoal(promoted);
+      if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
 
@@ -489,16 +541,34 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ),
     toggleSubtask: (taskId, subId) => {
       let promoted: string | undefined;
+      let goalDelta = 0;
+      let taskDelta = 0;
+      let goalIdForDelta: string | undefined;
       setTasks((cur) =>
         cur.map((t) => {
           if (t.id !== taskId) return t;
-          const subtasks = t.subtasks.map((s) => (s.id === subId ? { ...s, done: !s.done } : s));
-          const wasCompleting = subtasks.find((s) => s.id === subId)?.done;
-          if (wasCompleting) promoted = t.goalId;
-          return { ...t, subtasks };
+          let nextTaskSpent = t.spentHours ?? 0;
+          const subtasks = t.subtasks.map((s) => {
+            if (s.id !== subId) return s;
+            const nowDone = !s.done;
+            const delta = hoursBetween(s.startDate, s.endDate);
+            const curSpent = s.spentHours ?? 0;
+            const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
+            if (nowDone) promoted = t.goalId;
+            if (delta > 0) {
+              const signed = nowDone ? delta : -delta;
+              taskDelta = signed;
+              goalDelta = signed;
+              goalIdForDelta = t.goalId;
+              nextTaskSpent = Math.max(0, nextTaskSpent + signed);
+            }
+            return { ...s, done: nowDone, spentHours: nextSpent };
+          });
+          return { ...t, subtasks, spentHours: taskDelta !== 0 ? nextTaskSpent : t.spentHours };
         })
       );
       promoteGoal(promoted);
+      if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteSubtask: (taskId, subId) =>
       setTasks((cur) =>
