@@ -25,17 +25,6 @@ const PAPER = "#fafbff";
 const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
 
-// Stopwords for keyword extraction in the mindmap
-const STOPWORDS = new Set([
-  "a","an","the","of","to","for","and","or","but","in","on","with","my","your","our","their","is","are","be","at","by","from","as","that","this","it","i","we","you","they","do","does","get","make","have","has",
-]);
-
-function toKeywords(label: string, max = 3): string {
-  const words = label.replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/\s+/).filter(Boolean);
-  const sig = words.filter((w) => !STOPWORDS.has(w.toLowerCase()));
-  const pick = (sig.length ? sig : words).slice(0, max);
-  return pick.join(" ") || label;
-}
 
 // Darken a hex color so the border reads as a deeper shade of the fill
 function darken(hex: string, amount = 0.4): string {
