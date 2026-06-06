@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -461,24 +461,96 @@ function Schedule({
       </CardHeader>
       <CardContent className="p-0">
         <div className="relative max-h-[65vh] overflow-y-auto">
-          <div className="relative">
-            {HOURS.map((h) => (
-              <div
-                key={h}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => onDrop(e, h)}
-                className="relative flex border-t border-border/60 transition hover:bg-muted/30"
-                style={{ height: HOUR_PX }}
-              >
-                <span className="w-14 shrink-0 pl-2 pt-1 text-[10px] tabular-nums text-muted-foreground">
-                  {h.toString().padStart(2, "0")}:00
-                </span>
-                <div className="flex-1" />
-              </div>
-            ))}
-            {/* Positioned blocks */}
-            <div className="pointer-events-none absolute inset-0 pl-14 pr-2">
-              {items.map((it, idx) => {
+          <ScheduleGrid
+            items={items}
+            goalOf={goalOf}
+            skillOf={skillOf}
+            onDrop={onDrop}
+            onDragStart={onDragStart}
+            onToggleTask={onToggleTask}
+            onToggleSubtask={onToggleSubtask}
+            onUnschedule={onUnschedule}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ScheduleGrid({
+  items,
+  goalOf,
+  skillOf,
+  onDrop,
+  onDragStart,
+  onToggleTask,
+  onToggleSubtask,
+  onUnschedule,
+}: {
+  items: ScheduledItem[];
+  goalOf: (id?: string) => { title: string; skill: string } | undefined;
+  skillOf: (g?: { skill: string }) => { color: string; label: string } | undefined;
+  onDrop: (e: React.DragEvent, hour: number) => void;
+  onDragStart: (e: React.DragEvent, payload: string) => void;
+  onToggleTask: (id: string) => void;
+  onToggleSubtask: (taskId: string, subId: string) => void;
+  onUnschedule: (p: ScheduledItem) => void;
+}) {
+  // Tick every 60s so the "now" line stays in sync
+  const [nowH, setNowH] = useState(() => {
+    const d = new Date();
+    return d.getHours() + d.getMinutes() / 60;
+  });
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const d = new Date();
+      setNowH(d.getHours() + d.getMinutes() / 60);
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const baseHour = HOURS[0];
+  const lastHour = HOURS[HOURS.length - 1] + 1;
+  const showNow = nowH >= baseHour && nowH <= lastHour;
+  const nowTop = (nowH - baseHour) * HOUR_PX;
+  const nowLabel = `${String(Math.floor(nowH)).padStart(2, "0")}:${String(Math.round((nowH % 1) * 60)).padStart(2, "0")}`;
+
+  return (
+    <div className="relative">
+      {HOURS.map((h) => (
+        <div
+          key={h}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => onDrop(e, h)}
+          className="relative flex border-t border-border/60 transition hover:bg-muted/30"
+          style={{ height: HOUR_PX }}
+        >
+          <span className="w-14 shrink-0 pl-2 pt-1 text-[10px] tabular-nums text-muted-foreground">
+            {h.toString().padStart(2, "0")}:00
+          </span>
+          <div className="flex-1" />
+        </div>
+      ))}
+      {/* Positioned blocks */}
+      <div className="pointer-events-none absolute inset-0 pl-14 pr-2">{renderBlocks()}</div>
+      {/* Current-time indicator */}
+      {showNow && (
+        <div
+          className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
+          style={{ top: nowTop - 1 }}
+          aria-label={`Now ${nowLabel}`}
+        >
+          <span className="ml-1 rounded bg-destructive px-1 py-px text-[9px] font-semibold leading-none text-destructive-foreground tabular-nums">
+            {nowLabel}
+          </span>
+          <div className="ml-1 h-px flex-1 bg-destructive" />
+          <span className="mr-1 h-2 w-2 rounded-full bg-destructive" />
+        </div>
+      )}
+    </div>
+  );
+
+  function renderBlocks() {
+    return items.map((it, idx) => {
                 const baseHour = HOURS[0];
                 const top = (it.start - baseHour) * HOUR_PX;
                 const height = Math.max(18, it.durH * HOUR_PX - 2);
@@ -549,14 +621,10 @@ function Schedule({
                     )}
                   </div>
                 );
-              })}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+              });
+  }
 }
+
 
 /* ------------ Add-to-schedule dialog ------------ */
 
@@ -711,15 +779,16 @@ export function AddToScheduleDialog({
           </div>
 
           {selected ? (
-            <div className="flex min-w-0 items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm">
+            <div className="flex min-w-0 items-start gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm">
               <span
-                className="h-2 w-2 shrink-0 rounded-full"
+                className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: selected.skillColor ?? "#888" }}
               />
               {selected.kind === "subtask" && (
-                <Badge variant="outline" className="shrink-0 text-[10px]">sub</Badge>
+                <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px]">sub</Badge>
               )}
-              <span className="min-w-0 flex-1 truncate">{selected.title}</span>
+              <span className="min-w-0 flex-1 break-words leading-snug">{selected.title}</span>
+
               {remaining != null && (
                 <span className="shrink-0 text-[10px] text-muted-foreground">
                   {formatHours(remaining)} / {formatHours(selected.plannedHours!)} left
@@ -745,24 +814,27 @@ export function AddToScheduleDialog({
                     <li key={`${i.kind}-${i.taskId}-${i.subId ?? ""}`} className="min-w-0">
                       <button
                         onClick={() => onPick(i)}
-                        className="flex w-full min-w-0 items-center gap-2 px-2.5 py-2 text-left text-sm hover:bg-muted/60"
+                        className="flex w-full min-w-0 items-start gap-2 px-2.5 py-2 text-left text-sm hover:bg-muted/60"
                       >
                         <span
-                          className="h-2 w-2 shrink-0 rounded-full"
+                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                           style={{ backgroundColor: i.skillColor ?? "#888" }}
                         />
                         {i.kind === "subtask" && (
-                          <Badge variant="outline" className="shrink-0 text-[10px]">sub</Badge>
+                          <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px]">sub</Badge>
                         )}
-                        <span className="min-w-0 flex-1 truncate">{i.title}</span>
-                        {i.goalTitle && (
-                          <span className="ml-2 hidden max-w-[40%] shrink-0 truncate text-[10px] text-muted-foreground sm:inline">
-                            {i.goalTitle}
-                          </span>
-                        )}
+                        <span className="min-w-0 flex-1 break-words leading-snug">
+                          {i.title}
+                          {i.goalTitle && (
+                            <span className="ml-1 text-[10px] text-muted-foreground">
+                              · {i.goalTitle}
+                            </span>
+                          )}
+                        </span>
                       </button>
                     </li>
                   ))}
+
                 </ul>
               )}
             </div>

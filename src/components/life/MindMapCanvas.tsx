@@ -25,17 +25,6 @@ const PAPER = "#fafbff";
 const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
 
-// Stopwords for keyword extraction in the mindmap
-const STOPWORDS = new Set([
-  "a","an","the","of","to","for","and","or","but","in","on","with","my","your","our","their","is","are","be","at","by","from","as","that","this","it","i","we","you","they","do","does","get","make","have","has",
-]);
-
-function toKeywords(label: string, max = 3): string {
-  const words = label.replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/\s+/).filter(Boolean);
-  const sig = words.filter((w) => !STOPWORDS.has(w.toLowerCase()));
-  const pick = (sig.length ? sig : words).slice(0, max);
-  return pick.join(" ") || label;
-}
 
 // Darken a hex color so the border reads as a deeper shade of the fill
 function darken(hex: string, amount = 0.4): string {
@@ -315,26 +304,35 @@ export function MindMapCanvas() {
 
 
 
-  // wrap label into max 2 lines
-  const wrap = (label: string, maxChars: number): string[] => {
+  // wrap label into at most `maxLines` lines without truncating words when possible
+  const wrap = (label: string, maxChars: number, maxLines = 3): string[] => {
     if (label.length <= maxChars) return [label];
-    const words = label.split(" ");
+    const words = label.split(/\s+/).filter(Boolean);
     const lines: string[] = [];
     let cur = "";
     for (const w of words) {
-      if ((cur + " " + w).trim().length > maxChars) {
-        if (cur) lines.push(cur);
+      const next = cur ? cur + " " + w : w;
+      if (next.length > maxChars && cur) {
+        lines.push(cur);
         cur = w;
-      } else cur = (cur + " " + w).trim();
-      if (lines.length === 1 && (cur.length > maxChars)) break;
+        if (lines.length === maxLines - 1) {
+          // last line: pack the rest, ellipsize only if it overflows badly
+          const rest = words.slice(words.indexOf(w)).join(" ");
+          if (rest.length <= maxChars * 1.4) {
+            lines.push(rest);
+          } else {
+            lines.push(rest.slice(0, Math.floor(maxChars * 1.4) - 1) + "…");
+          }
+          return lines;
+        }
+      } else {
+        cur = next;
+      }
     }
     if (cur) lines.push(cur);
-    if (lines.length > 2) {
-      lines.length = 2;
-      lines[1] = lines[1].slice(0, maxChars - 1) + "…";
-    }
     return lines;
   };
+
 
   return (
     <div className={containerCls}>
@@ -423,11 +421,11 @@ export function MindMapCanvas() {
             const interactive = n.childCount > 0;
             const hovered = hoverId === n.id;
             const font = labelFont(n.kind);
-            // Root and skill keep their full label; goals/tasks/sub-tasks get 1–3 keywords
-            const displayLabel =
-              n.kind === "root" || n.kind === "skill" ? n.label : toKeywords(n.label, 3);
-            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 12 : 16;
-            const lines = wrap(displayLabel, maxChars);
+            // Show full label everywhere; wrap onto multiple lines and let the node box grow
+            const displayLabel = n.label;
+            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 14 : 18;
+            const lines = wrap(displayLabel, maxChars, n.kind === "subtask" ? 2 : 3);
+
             const lineH = font.size + 2;
             const startY = -((lines.length - 1) * lineH) / 2 + font.size / 3;
             const { halfW, halfH } = nodeBox(n.kind, lines, font.size);
