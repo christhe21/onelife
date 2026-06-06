@@ -813,24 +813,27 @@ export function AddToScheduleDialog({
                     <li key={`${i.kind}-${i.taskId}-${i.subId ?? ""}`} className="min-w-0">
                       <button
                         onClick={() => onPick(i)}
-                        className="flex w-full min-w-0 items-center gap-2 px-2.5 py-2 text-left text-sm hover:bg-muted/60"
+                        className="flex w-full min-w-0 items-start gap-2 px-2.5 py-2 text-left text-sm hover:bg-muted/60"
                       >
                         <span
-                          className="h-2 w-2 shrink-0 rounded-full"
+                          className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                           style={{ backgroundColor: i.skillColor ?? "#888" }}
                         />
                         {i.kind === "subtask" && (
-                          <Badge variant="outline" className="shrink-0 text-[10px]">sub</Badge>
+                          <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px]">sub</Badge>
                         )}
-                        <span className="min-w-0 flex-1 truncate">{i.title}</span>
-                        {i.goalTitle && (
-                          <span className="ml-2 hidden max-w-[40%] shrink-0 truncate text-[10px] text-muted-foreground sm:inline">
-                            {i.goalTitle}
-                          </span>
-                        )}
+                        <span className="min-w-0 flex-1 break-words leading-snug">
+                          {i.title}
+                          {i.goalTitle && (
+                            <span className="ml-1 text-[10px] text-muted-foreground">
+                              · {i.goalTitle}
+                            </span>
+                          )}
+                        </span>
                       </button>
                     </li>
                   ))}
+
                 </ul>
               )}
             </div>
