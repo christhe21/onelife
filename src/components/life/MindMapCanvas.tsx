@@ -432,11 +432,11 @@ export function MindMapCanvas() {
             const interactive = n.childCount > 0;
             const hovered = hoverId === n.id;
             const font = labelFont(n.kind);
-            // Root and skill keep their full label; goals/tasks/sub-tasks get 1–3 keywords
-            const displayLabel =
-              n.kind === "root" || n.kind === "skill" ? n.label : toKeywords(n.label, 3);
-            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 12 : 16;
-            const lines = wrap(displayLabel, maxChars);
+            // Show full label everywhere; wrap onto multiple lines and let the node box grow
+            const displayLabel = n.label;
+            const maxChars = n.kind === "root" ? 14 : n.kind === "skill" ? 14 : 18;
+            const lines = wrap(displayLabel, maxChars, n.kind === "subtask" ? 2 : 3);
+
             const lineH = font.size + 2;
             const startY = -((lines.length - 1) * lineH) / 2 + font.size / 3;
             const { halfW, halfH } = nodeBox(n.kind, lines, font.size);
