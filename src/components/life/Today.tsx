@@ -779,15 +779,16 @@ export function AddToScheduleDialog({
           </div>
 
           {selected ? (
-            <div className="flex min-w-0 items-center gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm">
+            <div className="flex min-w-0 items-start gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm">
               <span
-                className="h-2 w-2 shrink-0 rounded-full"
+                className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: selected.skillColor ?? "#888" }}
               />
               {selected.kind === "subtask" && (
-                <Badge variant="outline" className="shrink-0 text-[10px]">sub</Badge>
+                <Badge variant="outline" className="mt-0.5 shrink-0 text-[10px]">sub</Badge>
               )}
-              <span className="min-w-0 flex-1 truncate">{selected.title}</span>
+              <span className="min-w-0 flex-1 break-words leading-snug">{selected.title}</span>
+
               {remaining != null && (
                 <span className="shrink-0 text-[10px] text-muted-foreground">
                   {formatHours(remaining)} / {formatHours(selected.plannedHours!)} left
