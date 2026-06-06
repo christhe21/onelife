@@ -524,7 +524,7 @@ function ScheduleGrid({
           className="relative flex border-t border-border/60 transition hover:bg-muted/30"
           style={{ height: HOUR_PX }}
         >
-          <span className="w-14 shrink-0 pl-2 pt-1 text-[10px] tabular-nums text-muted-foreground">
+          <span className="relative z-20 w-14 shrink-0 bg-background pl-2 pt-1 text-[10px] font-medium tabular-nums text-muted-foreground">
             {h.toString().padStart(2, "0")}:00
           </span>
           <div className="flex-1" />
