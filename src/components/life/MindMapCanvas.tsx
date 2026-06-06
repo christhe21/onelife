@@ -315,26 +315,35 @@ export function MindMapCanvas() {
 
 
 
-  // wrap label into max 2 lines
-  const wrap = (label: string, maxChars: number): string[] => {
+  // wrap label into at most `maxLines` lines without truncating words when possible
+  const wrap = (label: string, maxChars: number, maxLines = 3): string[] => {
     if (label.length <= maxChars) return [label];
-    const words = label.split(" ");
+    const words = label.split(/\s+/).filter(Boolean);
     const lines: string[] = [];
     let cur = "";
     for (const w of words) {
-      if ((cur + " " + w).trim().length > maxChars) {
-        if (cur) lines.push(cur);
+      const next = cur ? cur + " " + w : w;
+      if (next.length > maxChars && cur) {
+        lines.push(cur);
         cur = w;
-      } else cur = (cur + " " + w).trim();
-      if (lines.length === 1 && (cur.length > maxChars)) break;
+        if (lines.length === maxLines - 1) {
+          // last line: pack the rest, ellipsize only if it overflows badly
+          const rest = words.slice(words.indexOf(w)).join(" ");
+          if (rest.length <= maxChars * 1.4) {
+            lines.push(rest);
+          } else {
+            lines.push(rest.slice(0, Math.floor(maxChars * 1.4) - 1) + "…");
+          }
+          return lines;
+        }
+      } else {
+        cur = next;
+      }
     }
     if (cur) lines.push(cur);
-    if (lines.length > 2) {
-      lines.length = 2;
-      lines[1] = lines[1].slice(0, maxChars - 1) + "…";
-    }
     return lines;
   };
+
 
   return (
     <div className={containerCls}>
