@@ -621,14 +621,10 @@ function ScheduleGrid({
                     )}
                   </div>
                 );
-              })}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+              });
+  }
 }
+
 
 /* ------------ Add-to-schedule dialog ------------ */
 
