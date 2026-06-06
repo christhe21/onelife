@@ -531,7 +531,7 @@ function ScheduleGrid({
         </div>
       ))}
       {/* Positioned blocks */}
-      <div className="pointer-events-none absolute inset-0 pl-14 pr-2">{renderBlocks()}</div>
+      <div className="pointer-events-none absolute inset-0 pl-16 pr-2">{renderBlocks()}</div>
       {/* Current-time indicator */}
       {showNow && (
         <div
