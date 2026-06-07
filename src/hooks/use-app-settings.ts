@@ -39,10 +39,14 @@ export function useAppSettingsEffects() {
           const goal = goals.find((g) => g.id === t.goalId);
           try {
             new Notification(`Upcoming: ${t.title}`, {
-              body: goal ? `In ${Math.max(0, Math.round((start - now) / 60_000))} min · ${goal.title}` : `Starts soon`,
+              body: goal
+                ? `In ${Math.max(0, Math.round((start - now) / 60_000))} min · ${goal.title}`
+                : `Starts soon`,
               tag: t.id,
             });
-          } catch { /* ignore */ }
+          } catch {
+            /* ignore */
+          }
         }
       }
     };

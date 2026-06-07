@@ -32,7 +32,9 @@ function useLongPress(onLongPress: () => void, ms = 500) {
     onPointerDown: start,
     onPointerUp: cancel,
     onPointerLeave: cancel,
-    onPointerMove: () => { moved.current = true; },
+    onPointerMove: () => {
+      moved.current = true;
+    },
   };
 }
 
@@ -40,7 +42,11 @@ function EditableLabel({
   value,
   onSave,
   className,
-}: { value: string; onSave: (v: string) => void; className?: string }) {
+}: {
+  value: string;
+  onSave: (v: string) => void;
+  className?: string;
+}) {
   const [mode, setMode] = useState<Mode>("view");
   const [draft, setDraft] = useState(value);
 
@@ -51,10 +57,19 @@ function EditableLabel({
           autoFocus
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onBlur={() => { onSave(draft.trim() || value); setMode("view"); }}
+          onBlur={() => {
+            onSave(draft.trim() || value);
+            setMode("view");
+          }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { onSave(draft.trim() || value); setMode("view"); }
-            if (e.key === "Escape") { setDraft(value); setMode("view"); }
+            if (e.key === "Enter") {
+              onSave(draft.trim() || value);
+              setMode("view");
+            }
+            if (e.key === "Escape") {
+              setDraft(value);
+              setMode("view");
+            }
           }}
           className="h-7 w-56 text-sm"
         />
@@ -62,12 +77,21 @@ function EditableLabel({
     );
   }
   return (
-    <span className={className} onDoubleClick={(e) => { e.stopPropagation(); setMode("edit"); }}>
+    <span
+      className={className}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        setMode("edit");
+      }}
+    >
       {value}
       <button
         type="button"
         className="ml-1 opacity-0 transition-opacity group-hover:opacity-60 hover:opacity-100"
-        onClick={(e) => { e.stopPropagation(); setMode("edit"); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          setMode("edit");
+        }}
         title="Edit"
       >
         <Pencil className="inline h-3 w-3" />
@@ -84,7 +108,8 @@ export function Overview() {
 
   const toggle = (set: Set<string>, id: string, setter: (s: Set<string>) => void) => {
     const n = new Set(set);
-    if (n.has(id)) n.delete(id); else n.add(id);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
     setter(n);
   };
 
@@ -106,7 +131,8 @@ export function Overview() {
                 className="h-7 px-2 text-xs"
                 onClick={() => setView("tree")}
               >
-                <ListTree className="mr-1 h-3.5 w-3.5" />Tree
+                <ListTree className="mr-1 h-3.5 w-3.5" />
+                Tree
               </Button>
               <Button
                 size="sm"
@@ -114,7 +140,8 @@ export function Overview() {
                 className="h-7 px-2 text-xs"
                 onClick={() => setView("map")}
               >
-                <Network className="mr-1 h-3.5 w-3.5" />Map
+                <Network className="mr-1 h-3.5 w-3.5" />
+                Map
               </Button>
             </div>
           </div>
@@ -128,7 +155,10 @@ export function Overview() {
           {/* Legend */}
           <div className="mb-4 flex flex-wrap gap-2">
             {skills.map((s) => (
-              <span key={s.id} className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px]">
+              <span
+                key={s.id}
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px]"
+              >
                 <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
                 {s.label}
               </span>
@@ -176,7 +206,16 @@ interface SkillNodeProps {
 }
 
 function SkillNode({
-  skill, open, onToggle, onRename, goals, openGoals, toggleGoal, tasksByGoal, updateGoal, updateTask,
+  skill,
+  open,
+  onToggle,
+  onRename,
+  goals,
+  openGoals,
+  toggleGoal,
+  tasksByGoal,
+  updateGoal,
+  updateTask,
 }: SkillNodeProps) {
   const longPress = useLongPress(() => {
     const next = prompt("Rename skill", skill.label);
@@ -190,7 +229,9 @@ function SkillNode({
         onClick={onToggle}
         {...longPress}
       >
-        <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-90" : ""}`} />
+        <ChevronRight
+          className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-90" : ""}`}
+        />
         <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: skill.color }} />
         <span className="font-medium">{skill.label}</span>
         <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
@@ -211,8 +252,13 @@ function SkillNode({
                     className="group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60"
                     onClick={() => toggleGoal(g.id)}
                   >
-                    <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-transform ${gOpen ? "rotate-90" : ""}`} />
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: skill.color, opacity: 0.7 }} />
+                    <ChevronRight
+                      className={`h-3.5 w-3.5 shrink-0 transition-transform ${gOpen ? "rotate-90" : ""}`}
+                    />
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: skill.color, opacity: 0.7 }}
+                    />
                     <EditableLabel value={g.title} onSave={(v) => updateGoal(g.id, { title: v })} />
                     <span className="ml-auto text-[10px] text-muted-foreground">
                       {tg.length} task{tg.length === 1 ? "" : "s"}
@@ -221,17 +267,28 @@ function SkillNode({
                   {gOpen && (
                     <div className="ml-5 border-l border-border/60 pl-3">
                       {tg.length === 0 ? (
-                        <p className="py-1 text-xs italic text-muted-foreground">No linked tasks.</p>
+                        <p className="py-1 text-xs italic text-muted-foreground">
+                          No linked tasks.
+                        </p>
                       ) : (
                         tg.map((t) => (
-                          <div key={t.id} className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60">
-                            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.done ? "bg-emerald-500" : "bg-slate-400"}`} />
+                          <div
+                            key={t.id}
+                            className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.done ? "bg-emerald-500" : "bg-slate-400"}`}
+                            />
                             <EditableLabel
                               className={t.done ? "line-through text-muted-foreground" : ""}
                               value={t.title}
                               onSave={(v) => updateTask(t.id, { title: v })}
                             />
-                            {t.dueDate && <span className="ml-auto text-[10px] text-muted-foreground">{t.dueDate}</span>}
+                            {t.dueDate && (
+                              <span className="ml-auto text-[10px] text-muted-foreground">
+                                {t.dueDate}
+                              </span>
+                            )}
                           </div>
                         ))
                       )}
@@ -246,4 +303,3 @@ function SkillNode({
     </div>
   );
 }
-

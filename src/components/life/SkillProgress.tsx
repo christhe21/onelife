@@ -8,13 +8,7 @@ interface Props {
   className?: string;
 }
 
-export function SkillProgress({
-  value,
-  color,
-  size = "md",
-  showLabel = true,
-  className,
-}: Props) {
+export function SkillProgress({ value, color, size = "md", showLabel = true, className }: Props) {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
   const accent = color ?? "hsl(var(--primary))";
   const heights = { sm: "h-2", md: "h-2.5", lg: "h-3.5" }[size];
@@ -43,7 +37,10 @@ export function SkillProgress({
         />
       </div>
       {showLabel && (
-        <div className={cn("mt-1 flex justify-end font-semibold tabular-nums", labelSize)} style={{ color: accent }}>
+        <div
+          className={cn("mt-1 flex justify-end font-semibold tabular-nums", labelSize)}
+          style={{ color: accent }}
+        >
           {pct}%
         </div>
       )}

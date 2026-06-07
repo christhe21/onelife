@@ -42,7 +42,10 @@ export function Skills() {
               className="h-9 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1"
             />
           </div>
-          <Button onClick={submit}><Plus className="mr-2 h-4 w-4" />Add skill</Button>
+          <Button onClick={submit}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add skill
+          </Button>
         </CardContent>
       </Card>
 
@@ -72,7 +75,9 @@ export function Skills() {
                   variant="ghost"
                   onClick={() => {
                     if (inUse > 0) {
-                      toast.error(`Can't delete: ${inUse} goal${inUse === 1 ? "" : "s"} use this skill`);
+                      toast.error(
+                        `Can't delete: ${inUse} goal${inUse === 1 ? "" : "s"} use this skill`,
+                      );
                       return;
                     }
                     deleteSkill(s.id);

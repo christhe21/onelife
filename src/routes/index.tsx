@@ -57,7 +57,9 @@ function Shell() {
     <AppShell tab={tab} onTab={setTab} stats={stats}>
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
-      {tab === "today" && <Today onGoTasks={() => setTab("tasks")} onGoGoals={() => setTab("goals")} />}
+      {tab === "today" && (
+        <Today onGoTasks={() => setTab("tasks")} onGoGoals={() => setTab("goals")} />
+      )}
       {tab === "calendar" && <CalendarView />}
       {tab === "overview" && <Overview />}
       {tab === "goals" && <Goals />}

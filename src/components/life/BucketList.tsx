@@ -37,25 +37,41 @@ function EditBucketDialog({ item }: { item: BucketItem }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="icon" variant="ghost" title="Edit"><Pencil className="h-4 w-4" /></Button>
+        <Button size="icon" variant="ghost" title="Edit">
+          <Pencil className="h-4 w-4" />
+        </Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Edit bucket item</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Edit bucket item</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div>
             <Label>Title</Label>
-            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <Input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
           </div>
           <div>
             <Label>Target year</Label>
-            <Input type="number" value={form.targetYear} onChange={(e) => setForm({ ...form, targetYear: e.target.value })} />
+            <Input
+              type="number"
+              value={form.targetYear}
+              onChange={(e) => setForm({ ...form, targetYear: e.target.value })}
+            />
           </div>
           <div>
             <Label>Notes</Label>
-            <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <Textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            />
           </div>
         </div>
-        <DialogFooter><Button onClick={save}>Save</Button></DialogFooter>
+        <DialogFooter>
+          <Button onClick={save}>Save</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -98,7 +114,10 @@ export function BucketList() {
               onChange={(e) => setYear(e.target.value)}
               className="w-28"
             />
-            <Button onClick={submit}><Plus className="mr-2 h-4 w-4" />Add</Button>
+            <Button onClick={submit}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add
+            </Button>
           </div>
           <Textarea
             placeholder="Notes (optional)"
@@ -110,9 +129,11 @@ export function BucketList() {
       </Card>
 
       {bucketList.length === 0 ? (
-        <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">
-          Your bucket list is empty. Dream big.
-        </CardContent></Card>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            Your bucket list is empty. Dream big.
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-2 md:grid-cols-2">
           {bucketList.map((b) => (
@@ -124,15 +145,15 @@ export function BucketList() {
                   className="mt-1"
                 />
                 <div className="flex-1">
-                  <div className={`text-sm font-medium ${b.achieved ? "line-through text-muted-foreground" : ""}`}>
+                  <div
+                    className={`text-sm font-medium ${b.achieved ? "line-through text-muted-foreground" : ""}`}
+                  >
                     {b.title}
                   </div>
                   {b.targetYear && (
                     <div className="text-xs text-muted-foreground">By {b.targetYear}</div>
                   )}
-                  {b.notes && (
-                    <div className="mt-1 text-xs text-muted-foreground">{b.notes}</div>
-                  )}
+                  {b.notes && <div className="mt-1 text-xs text-muted-foreground">{b.notes}</div>}
                 </div>
                 <div className="flex flex-col gap-1">
                   {!b.achieved && (
@@ -164,7 +185,6 @@ export function BucketList() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-
               </CardContent>
             </Card>
           ))}

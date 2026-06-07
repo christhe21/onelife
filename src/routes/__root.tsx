@@ -82,8 +82,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "OneLife" },
       { name: "twitter:description", content: "Manage your life" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/2a355cb6-62ea-4b7e-93c7-8b9d29bc8185" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/2a355cb6-62ea-4b7e-93c7-8b9d29bc8185" },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/2a355cb6-62ea-4b7e-93c7-8b9d29bc8185",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/2a355cb6-62ea-4b7e-93c7-8b9d29bc8185",
+      },
       { name: "theme-color", content: "#7d9b76" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },

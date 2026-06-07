@@ -26,11 +26,13 @@ export function LifeTimeline() {
       if (ribbonRef.current && !ribbonRef.current.contains(e.target as Node)) setOpenDot(null);
     };
     window.addEventListener("mousedown", onDown);
-    return () => { clearTimeout(id); window.removeEventListener("mousedown", onDown); };
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener("mousedown", onDown);
+    };
   }, [openDot]);
 
   const skillColor = (id: string) => skills.find((s) => s.id === id)?.color ?? "#94a3b8";
-  
 
   // Bucket goals into decades by start year
   const { goalsByDecade, dots } = useMemo(() => {
@@ -43,7 +45,8 @@ export function LifeTimeline() {
       const age = new Date(g.startDate).getFullYear() - birth;
       const decade = Math.floor(age / 10);
       if (decade >= 0 && decade < 8) by[decade].push(g);
-      if (age >= 0 && age <= LIFE_SPAN) ds.push({ age, color: skillColor(g.skill), title: g.title });
+      if (age >= 0 && age <= LIFE_SPAN)
+        ds.push({ age, color: skillColor(g.skill), title: g.title });
     }
     return { goalsByDecade: by, dots: ds };
   }, [goals, birth, skills]);
@@ -223,7 +226,9 @@ export function LifeTimeline() {
             <ul className="space-y-1.5">
               {selected.map((g) => {
                 const startAge = new Date(g.startDate).getFullYear() - birth;
-                const endAge = g.targetDate ? new Date(g.targetDate).getFullYear() - birth : startAge;
+                const endAge = g.targetDate
+                  ? new Date(g.targetDate).getFullYear() - birth
+                  : startAge;
                 return (
                   <li key={g.id} className="flex items-center gap-2 text-xs">
                     <span
@@ -232,7 +237,8 @@ export function LifeTimeline() {
                     />
                     <span className="truncate font-medium">{g.title}</span>
                     <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                      age {startAge}{endAge !== startAge ? `–${endAge}` : ""}
+                      age {startAge}
+                      {endAge !== startAge ? `–${endAge}` : ""}
                     </span>
                   </li>
                 );

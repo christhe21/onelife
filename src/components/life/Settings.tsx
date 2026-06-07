@@ -119,7 +119,8 @@ export function SettingsView() {
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
             Get a browser notification before tasks you've scheduled for today. Reminders fire while
-            this tab is open — close-tab / background push isn't supported in this session-only build.
+            this tab is open — close-tab / background push isn't supported in this session-only
+            build.
           </p>
 
           <div className="flex items-center justify-between rounded-xl border p-3">
@@ -146,7 +147,9 @@ export function SettingsView() {
                 max={120}
                 value={lead}
                 onChange={(e) => setLead(Number(e.target.value))}
-                onBlur={() => updateSettings({ reminderLeadMinutes: Math.max(0, Math.min(120, lead || 0)) })}
+                onBlur={() =>
+                  updateSettings({ reminderLeadMinutes: Math.max(0, Math.min(120, lead || 0)) })
+                }
               />
             </div>
             <div className="space-y-1.5">

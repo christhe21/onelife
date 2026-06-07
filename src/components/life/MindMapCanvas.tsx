@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from "react";
-import { Maximize2, Minimize2, ZoomIn, ZoomOut, RotateCcw, ChevronsDownUp, ChevronsUpDown, Shuffle } from "lucide-react";
+import {
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Shuffle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
 
@@ -18,7 +27,16 @@ interface Node {
 }
 
 // Bright, saturated palette
-const PALETTE = ["#A5B4FC", "#7DD3FC", "#5EEAD4", "#C4B5FD", "#FCA5A5", "#FDE68A", "#86EFAC", "#F0ABFC"];
+const PALETTE = [
+  "#A5B4FC",
+  "#7DD3FC",
+  "#5EEAD4",
+  "#C4B5FD",
+  "#FCA5A5",
+  "#FDE68A",
+  "#86EFAC",
+  "#F0ABFC",
+];
 const ROOT_FILL = "#FCD34D";
 const PAPER = "#fafbff";
 const INK = "#1f2937";
@@ -27,11 +45,16 @@ const STORAGE_KEY = "mindmap-positions-v1";
 const BASE_R = [0, 260, 460, 660, 860];
 const MIN_ARC = 150; // px of arc length required per child center at any depth
 
-
 // Darken a hex color so the border reads as a deeper shade of the fill
 function darken(hex: string, amount = 0.4): string {
   const h = hex.replace("#", "");
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
   const num = parseInt(full, 16);
   let r = (num >> 16) & 0xff;
   let g = (num >> 8) & 0xff;
@@ -84,7 +107,14 @@ export function MindMapCanvas() {
   }, [skills]);
 
   const panDrag = useRef<{ x: number; y: number } | null>(null);
-  const nodeDrag = useRef<{ id: string; ox: number; oy: number; startClientX: number; startClientY: number; moved: boolean } | null>(null);
+  const nodeDrag = useRef<{
+    id: string;
+    ox: number;
+    oy: number;
+    startClientX: number;
+    startClientY: number;
+    moved: boolean;
+  } | null>(null);
 
   const toggle = (id: string) =>
     setOpen((prev) => {
@@ -110,22 +140,47 @@ export function MindMapCanvas() {
     const seeds: Record<string, { x: number; y: number }> = {};
 
     type Tree = {
-      id: string; kind: Kind; label: string; parent?: string;
-      childCount: number; expanded: boolean; fill: string;
-      children: Tree[]; depth: number;
-      midAngle: number; sweep: number; leaves: number;
+      id: string;
+      kind: Kind;
+      label: string;
+      parent?: string;
+      childCount: number;
+      expanded: boolean;
+      fill: string;
+      children: Tree[];
+      depth: number;
+      midAngle: number;
+      sweep: number;
+      leaves: number;
     };
 
     const activeSkills = skills.filter((s) => goals.some((g) => g.skill === s.id));
     const rootExpanded = open.has("root");
-    const rootLabel = settings.userName?.trim() ? settings.userName.trim().toUpperCase() : "MY LIFE";
+    const rootLabel = settings.userName?.trim()
+      ? settings.userName.trim().toUpperCase()
+      : "MY LIFE";
 
     const mk = (
-      id: string, kind: Kind, label: string, fill: string,
-      expanded: boolean, childCount: number, parent?: string,
+      id: string,
+      kind: Kind,
+      label: string,
+      fill: string,
+      expanded: boolean,
+      childCount: number,
+      parent?: string,
     ): Tree => ({
-      id, kind, label, parent, childCount, expanded, fill,
-      children: [], depth: 0, midAngle: 0, sweep: 0, leaves: 1,
+      id,
+      kind,
+      label,
+      parent,
+      childCount,
+      expanded,
+      fill,
+      children: [],
+      depth: 0,
+      midAngle: 0,
+      sweep: 0,
+      leaves: 1,
     });
 
     const root = mk("root", "root", rootLabel, ROOT_FILL, rootExpanded, activeSkills.length);
@@ -134,26 +189,52 @@ export function MindMapCanvas() {
         const skFill = PALETTE[i % PALETTE.length];
         const skillGoals = goals.filter((g) => g.skill === sk.id);
         const skillExpanded = open.has(`s_${sk.id}`);
-        const skNode = mk(`s_${sk.id}`, "skill", sk.label, skFill, skillExpanded, skillGoals.length, "root");
+        const skNode = mk(
+          `s_${sk.id}`,
+          "skill",
+          sk.label,
+          skFill,
+          skillExpanded,
+          skillGoals.length,
+          "root",
+        );
         root.children.push(skNode);
         if (!skillExpanded) return;
         skillGoals.forEach((g, gi) => {
           const gFill = PALETTE[(i + 2) % PALETTE.length];
           const gTasks = tasks.filter((t) => t.goalId === g.id);
           const goalExpanded = open.has(`g_${g.id}`);
-          const gNode = mk(`g_${g.id}`, "goal", g.title, gFill, goalExpanded, gTasks.length, `s_${sk.id}`);
+          const gNode = mk(
+            `g_${g.id}`,
+            "goal",
+            g.title,
+            gFill,
+            goalExpanded,
+            gTasks.length,
+            `s_${sk.id}`,
+          );
           skNode.children.push(gNode);
           if (!goalExpanded) return;
           gTasks.forEach((t, ti) => {
             const tFill = PALETTE[(i + 4) % PALETTE.length];
             const sub = t.subtasks ?? [];
             const taskExpanded = open.has(`t_${t.id}`);
-            const tNode = mk(`t_${t.id}`, "task", t.title, tFill, taskExpanded, sub.length, `g_${g.id}`);
+            const tNode = mk(
+              `t_${t.id}`,
+              "task",
+              t.title,
+              tFill,
+              taskExpanded,
+              sub.length,
+              `g_${g.id}`,
+            );
             gNode.children.push(tNode);
             if (!taskExpanded) return;
             sub.forEach((s) => {
               const sFill = PALETTE[(i + 3) % PALETTE.length];
-              tNode.children.push(mk(`st_${s.id}`, "subtask", s.title, sFill, true, 0, `t_${t.id}`));
+              tNode.children.push(
+                mk(`st_${s.id}`, "subtask", s.title, sFill, true, 0, `t_${t.id}`),
+              );
             });
           });
         });
@@ -162,7 +243,10 @@ export function MindMapCanvas() {
 
     // leaves count (collapsed = 1)
     const countLeaves = (n: Tree): number => {
-      if (!n.expanded || n.children.length === 0) { n.leaves = 1; return 1; }
+      if (!n.expanded || n.children.length === 0) {
+        n.leaves = 1;
+        return 1;
+      }
       n.leaves = n.children.reduce((s, c) => s + countLeaves(c), 0);
       return n.leaves;
     };
@@ -208,9 +292,15 @@ export function MindMapCanvas() {
         seeds[n.id] = { x: R * Math.cos(n.midAngle), y: R * Math.sin(n.midAngle) };
       }
       nodes.push({
-        id: n.id, label: n.label, r: 40, kind: n.kind, parent: n.parent,
-        childCount: n.childCount, expanded: n.expanded,
-        fill: n.fill, stroke: n.fill,
+        id: n.id,
+        label: n.label,
+        r: 40,
+        kind: n.kind,
+        parent: n.parent,
+        childCount: n.childCount,
+        expanded: n.expanded,
+        fill: n.fill,
+        stroke: n.fill,
       });
       n.children.forEach((c, idx) => {
         links.push({ from: n.id, to: c.id, depth: n.depth + 1, curl: idx % 2 === 0 ? 1 : -1 });
@@ -226,7 +316,11 @@ export function MindMapCanvas() {
 
   const persist = (next: Record<string, { x: number; y: number }>) => {
     setPositions(next);
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
   };
 
   const autoArrange = () => persist({});
@@ -252,7 +346,11 @@ export function MindMapCanvas() {
   };
   const onCanvasUp = () => {
     if (nodeDrag.current) {
-      try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(positions));
+      } catch {
+        /* ignore */
+      }
     }
     panDrag.current = null;
     nodeDrag.current = null;
@@ -261,11 +359,17 @@ export function MindMapCanvas() {
     const factor = e.deltaY > 0 ? 0.9 : 1.1;
     setScale((s) => Math.max(0.2, Math.min(3, s * factor)));
   };
-  const reset = () => { setTx(0); setTy(0); setScale(0.85); };
+  const reset = () => {
+    setTx(0);
+    setTy(0);
+    setScale(0.85);
+  };
 
   useEffect(() => {
     if (!fullscreen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFullscreen(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [fullscreen]);
@@ -273,7 +377,14 @@ export function MindMapCanvas() {
   const onNodeDown = (e: React.PointerEvent<SVGGElement>, n: Node) => {
     e.stopPropagation();
     const p = pos(n.id);
-    nodeDrag.current = { id: n.id, ox: p.x, oy: p.y, startClientX: e.clientX, startClientY: e.clientY, moved: false };
+    nodeDrag.current = {
+      id: n.id,
+      ox: p.x,
+      oy: p.y,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      moved: false,
+    };
   };
   const onNodeClick = (e: React.MouseEvent, n: Node) => {
     e.stopPropagation();
@@ -281,7 +392,9 @@ export function MindMapCanvas() {
     if (n.childCount > 0) toggle(n.id);
   };
 
-  const containerCls = fullscreen ? "fixed inset-0 z-50 bg-background p-3 flex flex-col" : "relative";
+  const containerCls = fullscreen
+    ? "fixed inset-0 z-50 bg-background p-3 flex flex-col"
+    : "relative";
   const canvasCls = fullscreen
     ? "relative flex-1 w-full cursor-grab touch-none overflow-hidden rounded-lg border active:cursor-grabbing"
     : "relative h-[70vh] w-full cursor-grab touch-none overflow-hidden rounded-lg border active:cursor-grabbing";
@@ -345,9 +458,6 @@ export function MindMapCanvas() {
     );
   };
 
-
-
-
   // wrap label into at most `maxLines` lines without truncating words when possible
   const wrap = (label: string, maxChars: number, maxLines = 3): string[] => {
     if (label.length <= maxChars) return [label];
@@ -377,23 +487,34 @@ export function MindMapCanvas() {
     return lines;
   };
 
-
   return (
     <div className={containerCls}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={collapseAll}>
-            <ChevronsDownUp className="mr-1 h-3.5 w-3.5" />Collapse
+            <ChevronsDownUp className="mr-1 h-3.5 w-3.5" />
+            Collapse
           </Button>
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={expandAll}>
-            <ChevronsUpDown className="mr-1 h-3.5 w-3.5" />Expand
+            <ChevronsUpDown className="mr-1 h-3.5 w-3.5" />
+            Expand
           </Button>
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={autoArrange}>
-            <Shuffle className="mr-1 h-3.5 w-3.5" />Auto-arrange
+            <Shuffle className="mr-1 h-3.5 w-3.5" />
+            Auto-arrange
           </Button>
         </div>
-        <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={() => setFullscreen((f) => !f)}>
-          {fullscreen ? <Minimize2 className="mr-1 h-3.5 w-3.5" /> : <Maximize2 className="mr-1 h-3.5 w-3.5" />}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 px-2 text-xs"
+          onClick={() => setFullscreen((f) => !f)}
+        >
+          {fullscreen ? (
+            <Minimize2 className="mr-1 h-3.5 w-3.5" />
+          ) : (
+            <Maximize2 className="mr-1 h-3.5 w-3.5" />
+          )}
           {fullscreen ? "Exit" : "Fullscreen"}
         </Button>
       </div>
@@ -421,7 +542,15 @@ export function MindMapCanvas() {
           viewBox="-900 -900 1800 1800"
         >
           <defs>
-            <marker id="mm-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <marker
+              id="mm-arrow"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
               <path d="M0,0 L10,5 L0,10 z" fill={INK} />
             </marker>
           </defs>
@@ -489,8 +618,20 @@ export function MindMapCanvas() {
                 {renderShape(n, hovered, halfW, halfH)}
                 {interactive && !n.expanded && (
                   <g transform={`translate(${badgeX},${badgeY})`} style={{ pointerEvents: "none" }}>
-                    <circle r={10} fill="#ffffff" stroke={INK} strokeOpacity={0.5} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-                    <text textAnchor="middle" dy="3.5" style={{ fontFamily: font.family, fontSize: 10, fontWeight: 700 }} fill={INK}>
+                    <circle
+                      r={10}
+                      fill="#ffffff"
+                      stroke={INK}
+                      strokeOpacity={0.5}
+                      strokeWidth={1}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <text
+                      textAnchor="middle"
+                      dy="3.5"
+                      style={{ fontFamily: font.family, fontSize: 10, fontWeight: 700 }}
+                      fill={INK}
+                    >
                       +{n.childCount}
                     </text>
                   </g>
@@ -508,7 +649,9 @@ export function MindMapCanvas() {
                   }}
                 >
                   {lines.map((ln, i) => (
-                    <tspan key={i} x={0} y={startY + i * lineH}>{ln}</tspan>
+                    <tspan key={i} x={0} y={startY + i * lineH}>
+                      {ln}
+                    </tspan>
                   ))}
                 </text>
               </g>
@@ -517,18 +660,46 @@ export function MindMapCanvas() {
         </svg>
 
         <div className="absolute bottom-3 right-3 flex items-center gap-0.5 rounded-lg border bg-background/90 p-1 shadow-md backdrop-blur">
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setScale((s) => Math.min(3, s * 1.2))} title="Zoom in">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={() => setScale((s) => Math.min(3, s * 1.2))}
+            title="Zoom in"
+          >
             <ZoomIn className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setScale((s) => Math.max(0.2, s * 0.8))} title="Zoom out">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={() => setScale((s) => Math.max(0.2, s * 0.8))}
+            title="Zoom out"
+          >
             <ZoomOut className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={reset} title="Reset view">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={reset}
+            title="Reset view"
+          >
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
           <div className="mx-0.5 h-4 w-px bg-border" />
-          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setFullscreen((f) => !f)} title="Fullscreen">
-            {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7"
+            onClick={() => setFullscreen((f) => !f)}
+            title="Fullscreen"
+          >
+            {fullscreen ? (
+              <Minimize2 className="h-3.5 w-3.5" />
+            ) : (
+              <Maximize2 className="h-3.5 w-3.5" />
+            )}
           </Button>
         </div>
 

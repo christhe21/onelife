@@ -19,7 +19,9 @@ export function Dashboard() {
   const bucketDone = bucketList.filter((b) => b.achieved).length;
 
   const avgProgress =
-    goals.length === 0 ? 0 : Math.round(goals.reduce((a, g) => a + progressFor(g, tasks), 0) / goals.length);
+    goals.length === 0
+      ? 0
+      : Math.round(goals.reduce((a, g) => a + progressFor(g, tasks), 0) / goals.length);
 
   const bySkill = skills
     .map((s) => ({ skill: s, goals: goals.filter((g) => g.skill === s.id) }))
@@ -74,40 +76,40 @@ export function Dashboard() {
               </span>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-            {bySkill.map(({ skill, goals: gs }) => (
-              <Card key={skill.id} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <span
-                      className="inline-block h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: skill.color }}
-                    />
-                    <span className="font-display">{skill.label}</span>
-                    <Badge variant="secondary" className="ml-auto">
-                      {gs.length}
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {gs.map((g) => {
-                    const pct = progressFor(g, tasks);
-                    return (
-                      <div key={g.id} className="space-y-1">
-                        <div className="flex items-center justify-between gap-2 text-sm">
-                          <span className="truncate font-medium">{g.title}</span>
+              {bySkill.map(({ skill, goals: gs }) => (
+                <Card key={skill.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <span
+                        className="inline-block h-2.5 w-2.5 rounded-full"
+                        style={{ backgroundColor: skill.color }}
+                      />
+                      <span className="font-display">{skill.label}</span>
+                      <Badge variant="secondary" className="ml-auto">
+                        {gs.length}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {gs.map((g) => {
+                      const pct = progressFor(g, tasks);
+                      return (
+                        <div key={g.id} className="space-y-1">
+                          <div className="flex items-center justify-between gap-2 text-sm">
+                            <span className="truncate font-medium">{g.title}</span>
+                          </div>
+                          <SkillProgress value={pct} color={skill.color} />
+                          {g.currentActivity && (
+                            <p className="text-xs italic text-muted-foreground">
+                              “{g.currentActivity}”
+                            </p>
+                          )}
                         </div>
-                        <SkillProgress value={pct} color={skill.color} />
-                        {g.currentActivity && (
-                          <p className="text-xs italic text-muted-foreground">
-                            “{g.currentActivity}”
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            ))}
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </div>

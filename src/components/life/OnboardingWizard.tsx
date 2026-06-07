@@ -72,11 +72,14 @@ export function OnboardingWizard({ trigger, initialTemplate }: Props) {
       status: "not_started",
       currentActivity: "",
     });
-    picked.subGoals.forEach((sg) =>
-      addSubGoal(goalId, sg.title, addDays(base, sg.offsetDays)),
-    );
+    picked.subGoals.forEach((sg) => addSubGoal(goalId, sg.title, addDays(base, sg.offsetDays)));
     picked.tasks.forEach((t) =>
-      addTask({ title: t.title, priority: t.priority, dueDate: addDays(base, t.offsetDays), goalId }),
+      addTask({
+        title: t.title,
+        priority: t.priority,
+        dueDate: addDays(base, t.offsetDays),
+        goalId,
+      }),
     );
     setOpen(false);
     setTimeout(reset, 200);
@@ -140,9 +143,7 @@ export function OnboardingWizard({ trigger, initialTemplate }: Props) {
                     </Badge>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
-                  <p className="mt-1 text-[11px] italic text-muted-foreground/80">
-                    {t.rationale}
-                  </p>
+                  <p className="mt-1 text-[11px] italic text-muted-foreground/80">{t.rationale}</p>
                 </button>
               ))}
             </div>
@@ -166,11 +167,7 @@ export function OnboardingWizard({ trigger, initialTemplate }: Props) {
             </div>
             <div>
               <Label className="text-xs">Start date</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div className="rounded-md border bg-muted/40 p-3 text-xs">
               <p className="font-medium">You&apos;ll get:</p>
@@ -205,9 +202,7 @@ export function OnboardingWizard({ trigger, initialTemplate }: Props) {
               size="sm"
               onClick={() => {
                 // start blank in chosen category
-                const skill = skills.find(
-                  (s) => s.label.toLowerCase() === category!.toLowerCase(),
-                );
+                const skill = skills.find((s) => s.label.toLowerCase() === category!.toLowerCase());
                 const id = addGoal({
                   title: `My ${category} goal`,
                   description: "",

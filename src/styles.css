@@ -63,7 +63,8 @@
   font-style: normal;
   font-weight: 300 800;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/sora/v12/xMQOuFFYT72X5wkB_18qmnndmSdSnk-DKQJRBg.woff2") format("woff2");
+  src: url("https://fonts.gstatic.com/s/sora/v12/xMQOuFFYT72X5wkB_18qmnndmSdSnk-DKQJRBg.woff2")
+    format("woff2");
 }
 @font-face {
   font-family: "Manrope";
@@ -77,21 +78,21 @@
   --radius: 0.875rem;
 
   /* Surfaces */
-  --background: oklch(0.962 0.014 86);          /* #f5f0e8 cream */
-  --foreground: oklch(0.28 0.018 130);          /* deep sage-ink */
-  --card: oklch(0.985 0.008 86);                /* near-white warm */
+  --background: oklch(0.962 0.014 86); /* #f5f0e8 cream */
+  --foreground: oklch(0.28 0.018 130); /* deep sage-ink */
+  --card: oklch(0.985 0.008 86); /* near-white warm */
   --card-foreground: oklch(0.28 0.018 130);
   --popover: oklch(0.985 0.008 86);
   --popover-foreground: oklch(0.28 0.018 130);
 
   /* Sage primary */
-  --primary: oklch(0.62 0.055 140);             /* #7d9b76 */
+  --primary: oklch(0.62 0.055 140); /* #7d9b76 */
   --primary-foreground: oklch(0.985 0.008 86);
-  --secondary: oklch(0.87 0.035 135);           /* #a8c0a0 muted */
+  --secondary: oklch(0.87 0.035 135); /* #a8c0a0 muted */
   --secondary-foreground: oklch(0.28 0.018 130);
 
   /* Neutral support */
-  --muted: oklch(0.91 0.016 110);               /* #dce5d4 surface tint */
+  --muted: oklch(0.91 0.016 110); /* #dce5d4 surface tint */
   --muted-foreground: oklch(0.48 0.022 130);
   --accent: oklch(0.87 0.035 135);
   --accent-foreground: oklch(0.28 0.018 130);
@@ -109,7 +110,7 @@
   --chart-4: oklch(0.7 0.08 80);
   --chart-5: oklch(0.5 0.06 40);
 
-  --sidebar: oklch(0.93 0.018 115);             /* slightly warmer than bg */
+  --sidebar: oklch(0.93 0.018 115); /* slightly warmer than bg */
   --sidebar-foreground: oklch(0.28 0.018 130);
   --sidebar-primary: oklch(0.62 0.055 140);
   --sidebar-primary-foreground: oklch(0.985 0.008 86);
@@ -153,7 +154,8 @@
   * {
     border-color: var(--color-border);
   }
-  html, body {
+  html,
+  body {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
@@ -161,7 +163,13 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
-  h1, h2, h3, h4, h5, h6, .font-display {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }

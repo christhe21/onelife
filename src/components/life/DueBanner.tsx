@@ -19,9 +19,7 @@ export function DueBanner({ onGoTasks }: { onGoTasks: () => void }) {
   }, []);
 
   const today = todayStr();
-  const dueToday = tasks.filter(
-    (t) => !t.done && t.dueDate && t.dueDate <= today,
-  );
+  const dueToday = tasks.filter((t) => !t.done && t.dueDate && t.dueDate <= today);
 
   if (dueToday.length === 0) return null;
   if (dismissedFor === today) return null;
@@ -36,11 +34,7 @@ export function DueBanner({ onGoTasks }: { onGoTasks: () => void }) {
       <div className="flex-1">
         <p className="font-medium text-foreground">
           {dueToday.length} task{dueToday.length === 1 ? "" : "s"} need attention
-          {overdue > 0 && (
-            <span className="ml-1 text-destructive">
-              ({overdue} overdue)
-            </span>
-          )}
+          {overdue > 0 && <span className="ml-1 text-destructive">({overdue} overdue)</span>}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
           {dueToday

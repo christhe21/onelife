@@ -28,7 +28,6 @@ export function ExportImport() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
 
-
   const hasData = goals.length + tasks.length + bucketList.length > 0;
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,11 +78,21 @@ export function ExportImport() {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel>For offline / AI use</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => { downloadTemplate(); toast.success("Template downloaded"); }}>
+          <DropdownMenuItem
+            onClick={() => {
+              downloadTemplate();
+              toast.success("Template downloaded");
+            }}
+          >
             <FileJson className="mr-2 h-4 w-4" />
             Download JSON template
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { downloadSkillsReference(); toast.success("Skills reference downloaded"); }}>
+          <DropdownMenuItem
+            onClick={() => {
+              downloadSkillsReference();
+              toast.success("Skills reference downloaded");
+            }}
+          >
             <BookOpen className="mr-2 h-4 w-4" />
             Download skills reference
           </DropdownMenuItem>
@@ -125,7 +134,6 @@ export function ExportImport() {
         </AlertDialogContent>
       </AlertDialog>
 
-
       <input
         ref={inputRef}
         type="file"
@@ -139,7 +147,8 @@ export function ExportImport() {
           <AlertDialogHeader>
             <AlertDialogTitle>How should we import this file?</AlertDialogTitle>
             <AlertDialogDescription>
-              You already have goals, tasks, or bucket-list items in this session. Choose how to bring in the new data.
+              You already have goals, tasks, or bucket-list items in this session. Choose how to
+              bring in the new data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="grid gap-2 py-2 sm:grid-cols-2">
@@ -154,7 +163,8 @@ export function ExportImport() {
             >
               <div className="text-sm font-semibold">Append to existing</div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Add the imported goals, tasks, and bucket items alongside what you already have. Nothing is removed.
+                Add the imported goals, tasks, and bucket items alongside what you already have.
+                Nothing is removed.
               </p>
             </button>
             <button
@@ -177,7 +187,6 @@ export function ExportImport() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }
