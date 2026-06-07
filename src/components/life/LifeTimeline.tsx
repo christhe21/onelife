@@ -111,7 +111,7 @@ export function LifeTimeline() {
       <CardContent className="space-y-3">
         {/* Life ribbon — one row */}
         <div className="px-1 pt-2">
-          <div className="relative h-10">
+          <div ref={ribbonRef} className="relative h-10">
             {/* track */}
             <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted" />
             {/* lived portion */}
