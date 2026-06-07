@@ -363,7 +363,6 @@ function GoalCard({ goal }: { goal: Goal }) {
         </div>
       </CardHeader>
       <CardContent className="overflow-hidden px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
-        <SkillProgress value={pct} color={meta.color} size="lg" />
         <Timeline goal={goal} />
         {expanded && (
           <div className="mt-4 space-y-4">
