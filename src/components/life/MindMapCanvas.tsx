@@ -17,13 +17,15 @@ interface Node {
   stroke: string;
 }
 
-const RING = { skill: 220, goal: 380, task: 520, sub: 620 };
-// Cool-mist palette — light but with a touch more saturation for legibility
-const PALETTE = ["#dbe4ff", "#c7e3ff", "#cffafe", "#e9defc", "#d8ecff", "#dde6f0"];
-const ROOT_FILL = "#dbe4ff";
+// Bright, saturated palette
+const PALETTE = ["#A5B4FC", "#7DD3FC", "#5EEAD4", "#C4B5FD", "#FCA5A5", "#FDE68A", "#86EFAC", "#F0ABFC"];
+const ROOT_FILL = "#FCD34D";
 const PAPER = "#fafbff";
 const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
+// Layout constants for the radial non-overlap formula
+const BASE_R = [0, 260, 460, 660, 860];
+const MIN_ARC = 150; // px of arc length required per child center at any depth
 
 
 // Darken a hex color so the border reads as a deeper shade of the fill
