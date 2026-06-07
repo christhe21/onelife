@@ -316,11 +316,14 @@ export function MindMapCanvas() {
   const renderShape = (n: Node, hovered: boolean, halfW: number, halfH: number) => {
     const baseProps = {
       fill: n.fill,
-      stroke: n.stroke,
-      strokeWidth: hovered ? 2.5 : 1.5,
-      strokeOpacity: 0.95,
+      stroke: "none",
+      strokeWidth: 0,
       vectorEffect: "non-scaling-stroke" as const,
-      style: { filter: "drop-shadow(0 1px 2px rgba(15,23,42,0.08))" },
+      style: {
+        filter: hovered
+          ? "drop-shadow(0 6px 14px rgba(15,23,42,0.18))"
+          : "drop-shadow(0 2px 6px rgba(15,23,42,0.12))",
+      },
     };
     if (n.kind === "root" || n.kind === "skill") {
       // Skills are circle-like; root keeps a wider ellipse to fit the user's name
