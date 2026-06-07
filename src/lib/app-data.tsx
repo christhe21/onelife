@@ -523,12 +523,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           const delta = hoursBetween(t.startDate, t.endDate);
           const curSpent = t.spentHours ?? 0;
           const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
-          if (nowDone && !t.done) promoted = t.goalId;
+          // Promote linked goal on ANY interaction
+          promoted = t.goalId;
           if (delta > 0) {
             goalDelta = nowDone ? delta : -delta;
             goalIdForDelta = t.goalId;
           }
-          return { ...t, done: nowDone, spentHours: nextSpent };
+          // Cascade-close subtasks when task is being completed
+          const subtasks = nowDone
+            ? t.subtasks.map((s) => ({ ...s, done: true }))
+            : t.subtasks;
+          return { ...t, done: nowDone, spentHours: nextSpent, subtasks };
         })
       );
       promoteGoal(promoted);
