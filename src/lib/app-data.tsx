@@ -572,7 +572,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             const delta = hoursBetween(s.startDate, s.endDate);
             const curSpent = s.spentHours ?? 0;
             const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
-            if (nowDone) promoted = t.goalId;
+            promoted = t.goalId;
             if (delta > 0) {
               const signed = nowDone ? delta : -delta;
               taskDelta = signed;
