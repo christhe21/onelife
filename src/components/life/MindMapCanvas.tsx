@@ -189,7 +189,7 @@ export function MindMapCanvas() {
     const visit = (n: Tree) => {
       if (n.depth > 0) {
         const need = MIN_ARC / Math.max(n.sweep, 0.001);
-        if (need > ringR[n.depth] ?? 0) ringR[n.depth] = need;
+        if (need > (ringR[n.depth] ?? 0)) ringR[n.depth] = need;
       }
       n.children.forEach(visit);
     };
