@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -372,6 +372,23 @@ function WeekGrid({
   const baseHour = HOURS[0];
   const today = startOfDay(new Date());
 
+  const [nowH, setNowH] = useState(() => {
+    const d = new Date();
+    return d.getHours() + d.getMinutes() / 60;
+  });
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const d = new Date();
+      setNowH(d.getHours() + d.getMinutes() / 60);
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const lastHour = HOURS[HOURS.length - 1] + 1;
+  const showNow = nowH >= baseHour && nowH <= lastHour;
+  const nowTop = (nowH - baseHour) * HOUR_PX;
+  const nowLabel = `${String(Math.floor(nowH)).padStart(2, "0")}:${String(Math.round((nowH % 1) * 60)).padStart(2, "0")}`;
+
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[640px]">
@@ -398,7 +415,18 @@ function WeekGrid({
         </div>
         <div className="relative max-h-[65vh] overflow-y-auto">
           <div className="grid grid-cols-[48px_repeat(7,_1fr)]">
-            <div>
+            <div className="relative">
+              {showNow && (
+                <div
+                  className="pointer-events-none absolute left-0 right-0 z-30 flex items-center justify-end pr-1"
+                  style={{ top: nowTop - 6 }}
+                  aria-label={`Now ${nowLabel}`}
+                >
+                  <span className="rounded bg-destructive px-1 py-px text-[9px] font-semibold leading-none text-destructive-foreground tabular-nums">
+                    {nowLabel}
+                  </span>
+                </div>
+              )}
               {HOURS.map((h) => (
                 <div
                   key={h}
@@ -411,8 +439,18 @@ function WeekGrid({
             </div>
             {days.map((d, i) => {
               const dayEvents = events.filter((e) => sameDay(e.start, d));
+              const isCurrentDay = sameDay(d, new Date());
               return (
                 <div key={i} className="relative border-l">
+                  {isCurrentDay && showNow && (
+                    <div
+                      className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
+                      style={{ top: nowTop - 1 }}
+                    >
+                      <div className="h-px flex-1 bg-destructive" />
+                      <span className="mr-1 h-2 w-2 rounded-full bg-destructive" />
+                    </div>
+                  )}
                   {HOURS.map((h) => (
                     <div
                       key={h}
@@ -462,6 +500,24 @@ function WeekGrid({
 function DayGrid({ cursor, events }: { cursor: Date; events: Event[] }) {
   const baseHour = HOURS[0];
   const isToday = sameDay(cursor, startOfDay(new Date()));
+
+  const [nowH, setNowH] = useState(() => {
+    const d = new Date();
+    return d.getHours() + d.getMinutes() / 60;
+  });
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const d = new Date();
+      setNowH(d.getHours() + d.getMinutes() / 60);
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const lastHour = HOURS[HOURS.length - 1] + 1;
+  const showNow = isToday && nowH >= baseHour && nowH <= lastHour;
+  const nowTop = (nowH - baseHour) * HOUR_PX;
+  const nowLabel = `${String(Math.floor(nowH)).padStart(2, "0")}:${String(Math.round((nowH % 1) * 60)).padStart(2, "0")}`;
+
   return (
     <div className="relative max-h-[70vh] overflow-y-auto">
       <div className="relative">
@@ -478,50 +534,65 @@ function DayGrid({ cursor, events }: { cursor: Date; events: Event[] }) {
           </div>
         ))}
         <div className="pointer-events-none absolute inset-0 pl-12 pr-2">
-          {events.length === 0 && (
-            <div className="pointer-events-auto absolute inset-x-2 top-4 rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
-              Nothing scheduled for{" "}
-              {isToday
-                ? "today"
-                : cursor.toLocaleDateString(undefined, {
-                    weekday: "long",
-                    month: "short",
-                    day: "numeric",
-                  })}
-              .
-            </div>
-          )}
-          {events.map((e) => {
-            const startH = e.start.getHours() + e.start.getMinutes() / 60;
-            const endH = Math.max(startH + 0.25, e.end.getHours() + e.end.getMinutes() / 60);
-            const top = (startH - baseHour) * HOUR_PX;
-            const height = Math.max(28, (endH - startH) * HOUR_PX - 4);
-            return (
-              <div
-                key={e.id}
-                className={cn(
-                  "pointer-events-auto absolute left-1 right-1 rounded-md border bg-card px-2 py-1 text-xs shadow-sm",
-                  e.done && "opacity-60 line-through",
-                )}
-                style={{ top, height, borderLeft: `3px solid ${e.color}` }}
-              >
-                <div className="flex items-center gap-1.5">
-                  {e.isSub && (
-                    <Badge variant="outline" className="px-1 py-0 text-[9px]">
-                      sub
-                    </Badge>
-                  )}
-                  <span className="min-w-0 flex-1 truncate font-medium">{e.title}</span>
-                </div>
-                <div className="truncate text-[10px] text-muted-foreground">
-                  {hm(e.start)}–{hm(e.end)}
-                  {e.goalTitle ? ` · ${e.goalTitle}` : ""}
-                  {e.parentTitle ? ` · ${e.parentTitle}` : ""}
-                </div>
+          <div className="relative h-full w-full">
+            {events.length === 0 && (
+              <div className="pointer-events-auto absolute inset-x-2 top-4 rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
+                Nothing scheduled for{" "}
+                {isToday
+                  ? "today"
+                  : cursor.toLocaleDateString(undefined, {
+                      weekday: "long",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                .
               </div>
-            );
-          })}
+            )}
+            {events.map((e) => {
+              const startH = e.start.getHours() + e.start.getMinutes() / 60;
+              const endH = Math.max(startH + 0.25, e.end.getHours() + e.end.getMinutes() / 60);
+              const top = (startH - baseHour) * HOUR_PX;
+              const height = Math.max(28, (endH - startH) * HOUR_PX - 4);
+              return (
+                <div
+                  key={e.id}
+                  className={cn(
+                    "pointer-events-auto absolute left-1 right-1 rounded-md border bg-card px-2 py-1 text-xs shadow-sm",
+                    e.done && "opacity-60 line-through",
+                  )}
+                  style={{ top, height, borderLeft: `3px solid ${e.color}` }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {e.isSub && (
+                      <Badge variant="outline" className="px-1 py-0 text-[9px]">
+                        sub
+                      </Badge>
+                    )}
+                    <span className="min-w-0 flex-1 truncate font-medium">{e.title}</span>
+                  </div>
+                  <div className="truncate text-[10px] text-muted-foreground">
+                    {hm(e.start)}–{hm(e.end)}
+                    {e.goalTitle ? ` · ${e.goalTitle}` : ""}
+                    {e.parentTitle ? ` · ${e.parentTitle}` : ""}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
+        {showNow && (
+          <div
+            className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
+            style={{ top: nowTop - 1 }}
+            aria-label={`Now ${nowLabel}`}
+          >
+            <span className="ml-1 rounded bg-destructive px-1 py-px text-[9px] font-semibold leading-none text-destructive-foreground tabular-nums">
+              {nowLabel}
+            </span>
+            <div className="ml-1 h-px flex-1 bg-destructive" />
+            <span className="mr-1 h-2 w-2 rounded-full bg-destructive" />
+          </div>
+        )}
       </div>
     </div>
   );

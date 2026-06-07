@@ -521,11 +521,13 @@ function ScheduleGrid({
         </div>
       ))}
       {/* Positioned blocks */}
-      <div className="pointer-events-none absolute inset-0 pl-16 pr-2">{renderBlocks()}</div>
+      <div className="pointer-events-none absolute inset-0 pl-16 pr-2">
+        <div className="relative h-full w-full">{renderBlocks()}</div>
+      </div>
       {/* Current-time indicator */}
       {showNow && (
         <div
-          className="pointer-events-none absolute left-0 right-0 z-10 flex items-center"
+          className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
           style={{ top: nowTop - 1 }}
           aria-label={`Now ${nowLabel}`}
         >
