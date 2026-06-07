@@ -536,6 +536,7 @@ export function MindMapCanvas() {
             transform: `translate(-50%, -50%) translate(${tx}px, ${ty}px) scale(${scale})`,
             transformOrigin: "center",
             shapeRendering: "geometricPrecision",
+            overflow: "visible",
           }}
           width="1800"
           height="1800"
