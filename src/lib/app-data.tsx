@@ -93,6 +93,8 @@ export interface AppData {
   goals: Goal[];
   tasks: Task[];
   bucketList: BucketItem[];
+  skills?: Skill[];
+  settings?: Settings;
 }
 
 export const EXPORT_VERSION = 1;
@@ -209,36 +211,77 @@ function normalizeAppData(raw: any): AppData {
   if (raw.bucketList != null && !Array.isArray(raw.bucketList))
     issues.push("`bucketList` must be an array");
   if (issues.length) throw new Error(issues.join("; "));
+
+  const skills: Skill[] | undefined =
+    Array.isArray(raw.skills) && raw.skills.length
+      ? raw.skills
+          .filter((s: any) => s && typeof s.id === "string" && typeof s.label === "string")
+          .map((s: any) => ({
+            id: s.id,
+            label: s.label,
+            color: typeof s.color === "string" ? s.color : "#10b981",
+          }))
+      : undefined;
+
+  const settings: Settings | undefined =
+    raw.settings && typeof raw.settings === "object"
+      ? {
+          birthYear:
+            typeof raw.settings.birthYear === "number" ? raw.settings.birthYear : undefined,
+          userName: typeof raw.settings.userName === "string" ? raw.settings.userName : undefined,
+          onboardedAt:
+            typeof raw.settings.onboardedAt === "string" ? raw.settings.onboardedAt : undefined,
+          textScale: ["sm", "base", "lg", "xl"].includes(raw.settings.textScale)
+            ? raw.settings.textScale
+            : undefined,
+          notificationsEnabled:
+            typeof raw.settings.notificationsEnabled === "boolean"
+              ? raw.settings.notificationsEnabled
+              : undefined,
+          reminderLeadMinutes:
+            typeof raw.settings.reminderLeadMinutes === "number"
+              ? raw.settings.reminderLeadMinutes
+              : undefined,
+        }
+      : undefined;
+
   return {
     goals: Array.isArray(raw.goals) ? raw.goals.map(normalizeGoal) : [],
     tasks: Array.isArray(raw.tasks) ? raw.tasks.map(normalizeTask) : [],
     bucketList: Array.isArray(raw.bucketList) ? raw.bucketList.map(normalizeBucket) : [],
+    skills,
+    settings,
   };
 }
 
-const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user, then output a JSON file matching this shape:
+const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user, then output a JSON file matching this shape exactly:
 {
   "version": 1,
+  "skills": [{"id":"string","label":"string","color":"#HEXHEX"}],
+  "settings": {
+    "birthYear": 1990, "userName": "string", "onboardedAt": "YYYY-MM-DDTHH:mm:ss.sssZ",
+    "textScale": "sm|base|lg|xl", "notificationsEnabled": true, "reminderLeadMinutes": 15
+  },
   "goals": [{
     "id": "string", "title": "string", "description": "string",
     "skill": "life|technical|health|creative|financial|social|career|learning|<custom>",
     "startDate": "YYYY-MM-DD", "targetDate": "YYYY-MM-DD",
     "status": "not_started|in_progress|completed",
-    "currentActivity": "string", "manualProgress": 0-100,
+    "currentActivity": "string", "manualProgress": 0,
     "plannedHours": 40, "spentHours": 0,
     "subGoals": [{"id":"string","title":"string","targetDate":"YYYY-MM-DD","done":false}]
   }],
   "tasks": [{
     "id": "string", "title": "string", "dueDate": "YYYY-MM-DD",
     "priority": "low|medium|high", "done": false, "goalId": "<goal id or omit>",
-    "progress": 0-100, "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD",
+    "progress": 0, "startDate": "YYYY-MM-DDTHH:mm:ss", "endDate": "YYYY-MM-DDTHH:mm:ss",
     "evidence": "what has been done so far / links",
     "plannedHours": 4, "spentHours": 0,
-    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"plannedHours":2,"spentHours":0,"endDate":"YYYY-MM-DD"}]
+    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"plannedHours":2,"spentHours":0,"startDate":"YYYY-MM-DDTHH:mm:ss","endDate":"YYYY-MM-DDTHH:mm:ss"}]
   }],
   "bucketList": [{"id":"string","title":"string","notes":"string","targetYear":2030,"achieved":false}]
 }
-Use ISO YYYY-MM-DD dates. plannedHours = total effort estimate for the goal/task/subtask; spentHours is auto-updated when scheduled blocks are completed. Capture prior progress with progress/startDate/evidence so partially-done work is preserved.`;
+Use ISO YYYY-MM-DD dates for dates, and YYYY-MM-DDTHH:mm:ss for calendar specific times. plannedHours = total effort estimate for the goal/task/subtask; spentHours is auto-updated when scheduled blocks are completed. Capture prior progress with progress/startDate/evidence so partially-done work is preserved. Ensure calendar schedule dates (startDate, endDate) are fully populated if a task is scheduled for a specific time. Output ONLY the raw JSON without markdown codeblocks or other text.`;
 
 export const TEMPLATE_PAYLOAD = {
   version: 1,
@@ -248,9 +291,26 @@ export const TEMPLATE_PAYLOAD = {
     systemPrompt: AI_SYSTEM_PROMPT,
   },
   _schema: {
-    goal: "title, skill, startDate, targetDate, status, manualProgress (0-100), plannedHours, spentHours, subGoals[]",
+    skills: "id, label, color",
+    settings:
+      "birthYear, userName, onboardedAt, textScale, notificationsEnabled, reminderLeadMinutes",
+    goal: "title, description, skill, startDate, targetDate, status, currentActivity, manualProgress (0-100), plannedHours, spentHours, subGoals[]",
     task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, plannedHours, spentHours, subtasks[]",
-    subtask: "title, done, hoursPerWeek (auto-schedules .ics), endDate, plannedHours, spentHours",
+    subtask:
+      "title, done, hoursPerWeek (auto-schedules .ics), startDate, endDate, plannedHours, spentHours",
+    bucketList: "title, notes, targetYear, achieved",
+  },
+  skills: [
+    { id: "life", label: "Life", color: "#10b981" },
+    { id: "technical", label: "Technical", color: "#3b82f6" },
+  ],
+  settings: {
+    birthYear: 1990,
+    userName: "Alex",
+    onboardedAt: "2026-01-01T00:00:00.000Z",
+    textScale: "base",
+    notificationsEnabled: true,
+    reminderLeadMinutes: 15,
   },
   goals: [
     {
@@ -278,11 +338,13 @@ export const TEMPLATE_PAYLOAD = {
       startDate: "2026-02-01",
       targetDate: "2026-04-30",
       status: "not_started",
-      currentActivity: "",
+      currentActivity: "Planning Phase",
       manualProgress: 0,
       plannedHours: 40,
       spentHours: 0,
-      subGoals: [],
+      subGoals: [
+        { id: "sg3", title: "Complete wireframes", targetDate: "2026-02-15", done: false },
+      ],
     },
   ],
   tasks: [
@@ -294,12 +356,22 @@ export const TEMPLATE_PAYLOAD = {
       done: false,
       goalId: "g_react",
       progress: 35,
-      startDate: "2026-02-03",
+      startDate: "2026-02-03T09:00:00",
+      endDate: "2026-02-03T11:00:00",
       evidence: "Drafted hero + about copy in Notion.",
       plannedHours: 6,
       spentHours: 2,
       subtasks: [
-        { id: "st1", title: "Pick 3 projects", done: true, plannedHours: 1, spentHours: 1 },
+        {
+          id: "st1",
+          title: "Pick 3 projects",
+          done: true,
+          hoursPerWeek: 0,
+          plannedHours: 1,
+          spentHours: 1,
+          startDate: "2026-02-03T09:00:00",
+          endDate: "2026-02-03T10:00:00",
+        },
         {
           id: "st2",
           title: "Write case studies",
@@ -307,7 +379,8 @@ export const TEMPLATE_PAYLOAD = {
           hoursPerWeek: 3,
           plannedHours: 5,
           spentHours: 1,
-          endDate: "2026-02-25",
+          startDate: "2026-02-04T13:00:00",
+          endDate: "2026-02-25T17:00:00",
         },
       ],
     },
@@ -319,12 +392,23 @@ export const TEMPLATE_PAYLOAD = {
       done: true,
       goalId: "g_run5k",
       progress: 100,
-      startDate: "2026-02-04",
-      endDate: "2026-02-04",
+      startDate: "2026-02-04T07:00:00",
+      endDate: "2026-02-04T08:00:00",
       evidence: "8x400m @ 5:00/km",
       plannedHours: 1,
       spentHours: 1,
-      subtasks: [],
+      subtasks: [
+        {
+          id: "st3",
+          title: "Warmup 10 mins",
+          done: true,
+          hoursPerWeek: 0,
+          plannedHours: 0.2,
+          spentHours: 0.2,
+          startDate: "2026-02-04T07:00:00",
+          endDate: "2026-02-04T07:10:00",
+        },
+      ],
     },
   ],
   bucketList: [
@@ -679,6 +763,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setGoals(data.goals);
       setTasks(data.tasks);
       setBucketList(data.bucketList);
+      if (data.skills) setSkills(data.skills);
+      if (data.settings) setSettings(data.settings);
     },
     appendJSON: async (file) => {
       const text = await file.text();
@@ -706,6 +792,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setGoals((cur) => [...cur, ...newGoals]);
       setTasks((cur) => [...cur, ...newTasks]);
       setBucketList((cur) => [...cur, ...newBucket]);
+      if (data.skills) {
+        setSkills((cur) => {
+          const combined = [...cur];
+          data.skills!.forEach((s) => {
+            if (!combined.some((x) => x.id === s.id)) combined.push(s);
+          });
+          return combined;
+        });
+      }
+      if (data.settings) {
+        setSettings((cur) => ({ ...cur, ...data.settings }));
+      }
       return { goals: newGoals.length, tasks: newTasks.length, bucket: newBucket.length };
     },
     replaceAll: (data) => {
@@ -713,6 +811,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setGoals(norm.goals);
       setTasks(norm.tasks);
       setBucketList(norm.bucketList);
+      if (norm.skills) setSkills(norm.skills);
+      if (norm.settings) setSettings(norm.settings);
     },
     clearAll: () => {
       setGoals([]);
