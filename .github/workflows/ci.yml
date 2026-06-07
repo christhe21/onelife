@@ -1,0 +1,39 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - stage
+      - prod
+  push:
+    branches:
+      - dev
+      - stage
+      - prod
+
+jobs:
+  build-and-test:
+    name: Build, Lint, and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Run Linter
+        run: bun run lint
+
+      - name: Run Tests
+        run: bun run test
+
+      - name: Build Project
+        run: bun run build
