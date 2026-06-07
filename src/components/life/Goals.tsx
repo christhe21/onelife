@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, Pencil } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -249,29 +250,43 @@ function Timeline({ goal }: { goal: Goal }) {
               className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${pct}%` }}
             >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenSubId((cur) => (cur === s.id ? null : s.id));
+              <Popover
+                open={isOpen}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setOpenSubId(s.id);
+                  } else {
+                    if (openSubId === s.id) setOpenSubId(null);
+                  }
                 }}
-                className="block h-3.5 w-3.5 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
-                style={{
-                  backgroundColor: s.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
-                }}
-                aria-label={`${s.title} – ${s.targetDate}`}
-              />
-              {isOpen && (
-                <div
-                  role="tooltip"
-                  className="pointer-events-none absolute left-1/2 z-30 mt-2 w-44 -translate-x-1/2 rounded-md border bg-popover px-2.5 py-1.5 text-[11px] text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+              >
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenSubId((cur) => (cur === s.id ? null : s.id));
+                    }}
+                    className="block h-3.5 w-3.5 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
+                    style={{
+                      backgroundColor: s.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
+                    }}
+                    aria-label={`${s.title} – ${s.targetDate}`}
+                  />
+                </PopoverTrigger>
+                <PopoverContent
+                  side="bottom"
+                  align="center"
+                  sideOffset={4}
+                  className="w-44 px-2.5 py-1.5 text-[11px] shadow-md pointer-events-none"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
                 >
                   <div className="font-medium leading-tight">{s.title}</div>
                   <div className="mt-0.5 text-[10px] text-muted-foreground">
                     {s.targetDate} · {s.done ? "Done" : "Open"}
                   </div>
-                </div>
-              )}
+                </PopoverContent>
+              </Popover>
             </div>
           );
         })}
