@@ -489,8 +489,8 @@ export function MindMapCanvas() {
 
   return (
     <div className={containerCls}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1">
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={collapseAll}>
             <ChevronsDownUp className="mr-1 h-3.5 w-3.5" />
             Collapse
