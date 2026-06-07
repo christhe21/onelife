@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,11 +166,34 @@ function Timeline({ goal }: { goal: Goal }) {
   const overdue = daysLeft < 0;
   const dueSoon = daysLeft >= 0 && daysLeft <= 7;
 
-  const trackColor = overdue
-    ? "linear-gradient(90deg, oklch(0.62 0.22 25), oklch(0.72 0.18 25))"
-    : dueSoon
-      ? "linear-gradient(90deg, oklch(0.78 0.16 75), oklch(0.86 0.14 85))"
-      : "linear-gradient(90deg, oklch(0.62 0.12 165), oklch(0.78 0.13 155))";
+  // Status drives the primary fill color
+  const trackColor =
+    goal.status === "not_started"
+      ? "linear-gradient(90deg, oklch(0.78 0.01 250), oklch(0.85 0.01 250))"
+      : goal.status === "completed"
+        ? "linear-gradient(90deg, oklch(0.6 0.14 150), oklch(0.72 0.14 150))"
+        : "linear-gradient(90deg, oklch(0.7 0.18 150), oklch(0.82 0.16 150))";
+  const showGlow = goal.status !== "not_started";
+
+  const [openSubId, setOpenSubId] = useState<string | null>(null);
+  // auto-dismiss after 3.5s
+  useEffect(() => {
+    if (!openSubId) return;
+    const id = setTimeout(() => setOpenSubId(null), 3500);
+    return () => clearTimeout(id);
+  }, [openSubId]);
+  // outside click dismiss
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!openSubId) return;
+    const onDown = (e: MouseEvent) => {
+      if (trackRef.current && !trackRef.current.contains(e.target as Node)) setOpenSubId(null);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [openSubId]);
+
+  const fillPct = goal.status === "completed" ? 100 : nowPct;
 
   return (
     <div className="mt-4">
@@ -180,28 +203,30 @@ function Timeline({ goal }: { goal: Goal }) {
         </span>
         <span
           className={
-            overdue
+            overdue && goal.status !== "completed"
               ? "rounded-full bg-destructive/10 px-2 py-0.5 font-medium text-destructive"
-              : dueSoon
+              : dueSoon && goal.status !== "completed"
                 ? "rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-700 dark:text-amber-400"
                 : "rounded-full bg-muted px-2 py-0.5 font-medium text-muted-foreground"
           }
         >
-          {overdue
-            ? `${Math.abs(daysLeft)}d overdue`
-            : daysLeft === 0
-              ? "Due today"
-              : `${daysLeft}d left · ${Math.round(nowPct)}% elapsed`}
+          {goal.status === "completed"
+            ? "Completed"
+            : overdue
+              ? `${Math.abs(daysLeft)}d overdue`
+              : daysLeft === 0
+                ? "Due today"
+                : `${daysLeft}d left · ${Math.round(nowPct)}% elapsed`}
         </span>
       </div>
 
-      <div className="relative h-3 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50">
+      <div ref={trackRef} className="relative h-4 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50">
         <div
           className="h-full rounded-full transition-[width] duration-700 ease-out"
           style={{
-            width: `${nowPct}%`,
+            width: `${fillPct}%`,
             background: trackColor,
-            boxShadow: "0 0 10px -2px currentColor",
+            boxShadow: showGlow ? "0 0 10px -2px currentColor" : "none",
           }}
         />
 
@@ -210,33 +235,54 @@ function Timeline({ goal }: { goal: Goal }) {
           if (!s.targetDate) return null;
           const t = new Date(s.targetDate).getTime();
           const pct = Math.min(100, Math.max(0, ((t - start) / span) * 100));
+          const isOpen = openSubId === s.id;
           return (
             <div
               key={s.id}
-              className="group absolute top-1/2 z-10 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
-              style={{
-                left: `${pct}%`,
-                backgroundColor: s.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
-              }}
-              title={`${s.title} – ${s.targetDate}`}
-            />
+              className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${pct}%` }}
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenSubId((cur) => (cur === s.id ? null : s.id));
+                }}
+                className="block h-3.5 w-3.5 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
+                style={{
+                  backgroundColor: s.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
+                }}
+                aria-label={`${s.title} – ${s.targetDate}`}
+              />
+              {isOpen && (
+                <div
+                  role="tooltip"
+                  className="pointer-events-none absolute left-1/2 z-30 mt-2 w-44 -translate-x-1/2 rounded-md border bg-popover px-2.5 py-1.5 text-[11px] text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+                >
+                  <div className="font-medium leading-tight">{s.title}</div>
+                  <div className="mt-0.5 text-[10px] text-muted-foreground">
+                    {s.targetDate} · {s.done ? "Done" : "Open"}
+                  </div>
+                </div>
+              )}
+            </div>
           );
         })}
 
         {/* today marker */}
         <div
-          className="absolute -top-1 z-20 flex h-5 -translate-x-1/2 flex-col items-center"
+          className="absolute -top-1 z-20 flex h-6 -translate-x-1/2 flex-col items-center"
           style={{ left: `${nowPct}%` }}
           title="Today"
         >
-          <div className="h-5 w-0.5 rounded-full bg-foreground" />
+          <div className="h-6 w-0.5 rounded-full bg-foreground" />
           <div className="absolute -top-1 h-2 w-2 rounded-full bg-foreground ring-2 ring-background" />
         </div>
       </div>
 
-      <div className="mt-1.5 flex justify-between text-[11px] text-muted-foreground">
+      <div className="mt-1.5 flex justify-between text-[11px] text-foreground/70">
         <span>{goal.startDate}</span>
-        <span className="tabular-nums">{totalDays}d span</span>
+        <span className="tabular-nums text-muted-foreground">{totalDays}d span</span>
         <span>{goal.targetDate}</span>
       </div>
     </div>
@@ -317,7 +363,6 @@ function GoalCard({ goal }: { goal: Goal }) {
         </div>
       </CardHeader>
       <CardContent className="overflow-hidden px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
-        <SkillProgress value={pct} color={meta.color} size="lg" />
         <Timeline goal={goal} />
         {expanded && (
           <div className="mt-4 space-y-4">

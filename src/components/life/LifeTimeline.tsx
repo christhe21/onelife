@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,17 @@ export function LifeTimeline() {
   const currentAge = birth ? now.getFullYear() - birth : 0;
   const currentDecade = Math.floor(currentAge / 10);
   const [selectedDecade, setSelectedDecade] = useState<number>(currentDecade);
+  const [openDot, setOpenDot] = useState<number | null>(null);
+  const ribbonRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (openDot === null) return;
+    const id = setTimeout(() => setOpenDot(null), 3500);
+    const onDown = (e: MouseEvent) => {
+      if (ribbonRef.current && !ribbonRef.current.contains(e.target as Node)) setOpenDot(null);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => { clearTimeout(id); window.removeEventListener("mousedown", onDown); };
+  }, [openDot]);
 
   const skillColor = (id: string) => skills.find((s) => s.id === id)?.color ?? "#94a3b8";
   
@@ -100,7 +111,7 @@ export function LifeTimeline() {
       <CardContent className="space-y-3">
         {/* Life ribbon — one row */}
         <div className="px-1 pt-2">
-          <div className="relative h-10">
+          <div ref={ribbonRef} className="relative h-10">
             {/* track */}
             <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-muted" />
             {/* lived portion */}
@@ -144,13 +155,30 @@ export function LifeTimeline() {
             {/* goal dots */}
             {dots.map((d, i) => {
               const left = (d.age / LIFE_SPAN) * 100;
+              const isOpen = openDot === i;
               return (
                 <span
                   key={i}
-                  title={`${d.title} · age ${d.age}`}
-                  className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
-                  style={{ left: `${left}%`, backgroundColor: d.color }}
-                />
+                  className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${left}%` }}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenDot((cur) => (cur === i ? null : i));
+                    }}
+                    className="block h-2.5 w-2.5 rounded-full ring-2 ring-background transition-transform hover:scale-125"
+                    style={{ backgroundColor: d.color }}
+                    aria-label={`${d.title} · age ${d.age}`}
+                  />
+                  {isOpen && (
+                    <div className="pointer-events-none absolute left-1/2 z-30 mt-2 w-40 -translate-x-1/2 rounded-md border bg-popover px-2.5 py-1.5 text-[11px] text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+                      <div className="font-medium leading-tight">{d.title}</div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">age {d.age}</div>
+                    </div>
+                  )}
+                </span>
               );
             })}
             {/* you-are-here marker */}

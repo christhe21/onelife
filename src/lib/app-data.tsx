@@ -480,16 +480,29 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         )
       ),
     toggleSubGoal: (goalId, subId) => {
+      let cascade = false;
       setGoals((cur) =>
         cur.map((g) => {
           if (g.id !== goalId) return g;
           const subGoals = g.subGoals.map((s) => (s.id === subId ? { ...s, done: !s.done } : s));
           const wasCompleting = subGoals.find((s) => s.id === subId)?.done;
+          cascade = !!wasCompleting;
           const status: GoalStatus =
             g.status === "not_started" && wasCompleting ? "in_progress" : g.status;
           return { ...g, subGoals, status };
         })
       );
+      // Cascade-close: when a milestone closes, mark every open task (and its subtasks)
+      // under this goal as done.
+      if (cascade) {
+        setTasks((cur) =>
+          cur.map((t) =>
+            t.goalId === goalId
+              ? { ...t, done: true, subtasks: t.subtasks.map((s) => ({ ...s, done: true })) }
+              : t,
+          ),
+        );
+      }
     },
     deleteSubGoal: (goalId, subId) =>
       setGoals((cur) =>
@@ -510,12 +523,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           const delta = hoursBetween(t.startDate, t.endDate);
           const curSpent = t.spentHours ?? 0;
           const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
-          if (nowDone && !t.done) promoted = t.goalId;
+          // Promote linked goal on ANY interaction
+          promoted = t.goalId;
           if (delta > 0) {
             goalDelta = nowDone ? delta : -delta;
             goalIdForDelta = t.goalId;
           }
-          return { ...t, done: nowDone, spentHours: nextSpent };
+          // Cascade-close subtasks when task is being completed
+          const subtasks = nowDone
+            ? t.subtasks.map((s) => ({ ...s, done: true }))
+            : t.subtasks;
+          return { ...t, done: nowDone, spentHours: nextSpent, subtasks };
         })
       );
       promoteGoal(promoted);
@@ -554,7 +572,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             const delta = hoursBetween(s.startDate, s.endDate);
             const curSpent = s.spentHours ?? 0;
             const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
-            if (nowDone) promoted = t.goalId;
+            promoted = t.goalId;
             if (delta > 0) {
               const signed = nowDone ? delta : -delta;
               taskDelta = signed;
