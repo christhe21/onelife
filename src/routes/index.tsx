@@ -58,7 +58,7 @@ function Shell() {
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
       {tab === "today" && (
-        <Today onGoTasks={() => setTab("tasks")} onGoGoals={() => setTab("goals")} />
+        <Today onGoTasks={() => setTab("tasks")} onGoGoals={() => setTab("goals")} onGoCalendar={() => setTab("calendar")} />
       )}
       {tab === "calendar" && <CalendarView />}
       {tab === "overview" && <Overview />}
