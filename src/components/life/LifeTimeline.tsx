@@ -144,13 +144,30 @@ export function LifeTimeline() {
             {/* goal dots */}
             {dots.map((d, i) => {
               const left = (d.age / LIFE_SPAN) * 100;
+              const isOpen = openDot === i;
               return (
                 <span
                   key={i}
-                  title={`${d.title} · age ${d.age}`}
-                  className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2 ring-background"
-                  style={{ left: `${left}%`, backgroundColor: d.color }}
-                />
+                  className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${left}%` }}
+                >
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenDot((cur) => (cur === i ? null : i));
+                    }}
+                    className="block h-2.5 w-2.5 rounded-full ring-2 ring-background transition-transform hover:scale-125"
+                    style={{ backgroundColor: d.color }}
+                    aria-label={`${d.title} · age ${d.age}`}
+                  />
+                  {isOpen && (
+                    <div className="pointer-events-none absolute left-1/2 z-30 mt-2 w-40 -translate-x-1/2 rounded-md border bg-popover px-2.5 py-1.5 text-[11px] text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95">
+                      <div className="font-medium leading-tight">{d.title}</div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">age {d.age}</div>
+                    </div>
+                  )}
+                </span>
               );
             })}
             {/* you-are-here marker */}
