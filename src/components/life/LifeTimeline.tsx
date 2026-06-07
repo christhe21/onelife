@@ -17,6 +17,17 @@ export function LifeTimeline() {
   const currentAge = birth ? now.getFullYear() - birth : 0;
   const currentDecade = Math.floor(currentAge / 10);
   const [selectedDecade, setSelectedDecade] = useState<number>(currentDecade);
+  const [openDot, setOpenDot] = useState<number | null>(null);
+  const ribbonRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (openDot === null) return;
+    const id = setTimeout(() => setOpenDot(null), 3500);
+    const onDown = (e: MouseEvent) => {
+      if (ribbonRef.current && !ribbonRef.current.contains(e.target as Node)) setOpenDot(null);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => { clearTimeout(id); window.removeEventListener("mousedown", onDown); };
+  }, [openDot]);
 
   const skillColor = (id: string) => skills.find((s) => s.id === id)?.color ?? "#94a3b8";
   
