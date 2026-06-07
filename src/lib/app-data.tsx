@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 export interface Skill {
@@ -281,7 +282,7 @@ const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview th
   }],
   "bucketList": [{"id":"string","title":"string","notes":"string","targetYear":2030,"achieved":false}]
 }
-Use ISO YYYY-MM-DD dates for dates, and YYYY-MM-DDTHH:mm:ss for calendar specific times. plannedHours = total effort estimate for the goal/task/subtask; spentHours is auto-updated when scheduled blocks are completed. Capture prior progress with progress/startDate/evidence so partially-done work is preserved. Ensure calendar schedule dates (startDate, endDate) are fully populated if a task is scheduled for a specific time. Output ONLY the raw JSON without markdown codeblocks or other text.`;
+Use ISO YYYY-MM-DD dates for dates, and YYYY-MM-DDTHH:mm:ss for calendar specific times. plannedHours = total effort estimate for the goal/task/subtask; spentHours is auto-updated when scheduled blocks are completed. Capture prior progress with progress/startDate/evidence so partially-done work is preserved. Ensure calendar schedule dates (startDate, endDate) are fully populated if a task is scheduled for a specific time. For subtasks, startDate and endDate must always be on the same calendar day. hoursPerWeek defines recurrence, not the date range. Output ONLY the raw JSON without markdown codeblocks or other text.`;
 
 export const TEMPLATE_PAYLOAD = {
   version: 1,
@@ -760,6 +761,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         throw new Error("File is not valid JSON");
       }
       const data = normalizeAppData(parsed);
+      let dateCorrected = false;
+      data.tasks.forEach((t) => {
+        t.subtasks.forEach((s) => {
+          if (s.startDate && s.endDate && s.startDate.slice(0, 10) !== s.endDate.slice(0, 10)) {
+            dateCorrected = true;
+            s.endDate = s.startDate.slice(0, 11) + s.endDate.slice(11);
+          }
+        });
+      });
+      if (dateCorrected) {
+        toast.warning("Some subtasks spanning multiple days were auto-corrected to same-day.");
+      }
       setGoals(data.goals);
       setTasks(data.tasks);
       setBucketList(data.bucketList);
@@ -775,6 +788,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         throw new Error("File is not valid JSON");
       }
       const data = normalizeAppData(parsed);
+      let dateCorrected = false;
+      data.tasks.forEach((t) => {
+        t.subtasks.forEach((s) => {
+          if (s.startDate && s.endDate && s.startDate.slice(0, 10) !== s.endDate.slice(0, 10)) {
+            dateCorrected = true;
+            s.endDate = s.startDate.slice(0, 11) + s.endDate.slice(11);
+          }
+        });
+      });
+      if (dateCorrected) {
+        toast.warning("Some subtasks spanning multiple days were auto-corrected to same-day.");
+      }
       // Remap ids so we never collide with existing data, and rewire goalId references
       const goalIdMap = new Map<string, string>();
       const newGoals = data.goals.map((g) => {

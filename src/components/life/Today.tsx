@@ -545,7 +545,8 @@ function ScheduleGrid({
     return items.map((it, idx) => {
       const baseHour = HOURS[0];
       const top = (it.start - baseHour) * HOUR_PX;
-      const height = Math.max(18, it.durH * HOUR_PX - 2);
+      const maxDurH = Math.min(it.durH, 24 - it.start);
+      const height = Math.max(18, maxDurH * HOUR_PX - 2);
       const compact = height < 36;
       const g = goalOf(it.task.goalId);
       const sk = skillOf(g);
