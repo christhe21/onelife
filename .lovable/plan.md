@@ -1,100 +1,46 @@
-## Goal
+## 1. Mindmap (`src/components/life/MindMapCanvas.tsx`)
 
-Three connected fixes in the Today view and data model:
+- **Remove borders**: drop `stroke` from every shape (set `strokeWidth: 0`); rely on a soft drop-shadow for separation. Hover state becomes a slight scale/shadow bump instead of a thicker stroke.
+- **Brighter palette**: swap the cool-mist palette for a brighter, more saturated set, e.g.
+  `#A5B4FC` (indigo), `#7DD3FC` (sky), `#5EEAD4` (teal), `#C4B5FD` (violet), `#FCA5A5` (rose), `#FDE68A` (amber), `#86EFAC` (green), `#F0ABFC` (fuchsia). Root gets a stronger tint.
+- **Non-overlap layout via a deterministic formula**: replace the current `RING.*` constants and per-level "sector half" math with a per-node radius computed from the actual subtree size. For every node:
+  1. Compute its angular footprint: `leafCount(node)` recursively (subtask=1; collapsed=1).
+  2. Allocate angles proportionally to leaf count (Reingold–Tilford-style radial layout). For each parent with subtree size `T`, each child `c` gets sweep `2π * leafCount(c)/T` (or sector size at deeper levels).
+  3. Ring radius per depth grows with the max node box at that depth:
+     `R(d) = R(d-1) + maxHalfH(d-1) + maxHalfH(d) + GAP`, where `GAP = 60`.
+  4. Tangential spacing constraint: required arc length per child = `2 * halfW(c) + GAP`. If `R(d) * sweep < required`, push the ring outward by `required / sweep` (so siblings never overlap even when many short children share a small sector).
+  This guarantees no two siblings collide at the same depth, and no parent collides with its children.
+- Keep drag-to-rearrange, but the auto layout (seed positions) becomes the formula above instead of the current fixed `RING`.
 
-1. Make the **Add to schedule** dialog truly mobile-friendly (no horizontal overflow, no zoom-in on iOS time inputs).
-2. Track **estimated hours** on tasks and sub-tasks (and surface them in the JSON template), then automatically decrement remaining hours when a scheduled block is marked done.
-3. Keep scheduled blocks visually **inside the hour cell** they belong to, so a 9:00 block never bleeds into 10:00 or the time-gutter label.
+## 2. Goals section (`src/components/life/Goals.tsx`, `src/lib/app-data.tsx`)
 
----
+- **Remove the milestone progress bar** (`SkillProgress` line `<SkillProgress value={pct} … />` in `GoalCard`). Keep only the `Timeline` component beneath the header. Milestone count badge stays in the header chip row.
+- **UI specialist sanity check on the timeline**: keep the horizontal track + dots + "today" pin (that pattern is the conventional best fit for a date-bounded goal with milestones — superior to a Gantt for a card). Tighten spacing now that the bar is gone: increase track height from `h-3` to `h-4`, give the start/end date labels a bit more contrast, and label dots with a small tooltip on hover (lead-in to item 3).
+- **Cascading close** in `app-data.tsx`:
+  - `toggleSubGoal`: when a sub-goal flips to `done: true`, also mark every task with `goalId == goal.id` that is tagged to this milestone as `done`, and all of their subtasks `done`. (Today tasks are linked to a goal, not directly to a sub-goal — so the scope is "all tasks under this goal whose `dueDate <= subGoal.targetDate` and still open". We'll add an explicit `subGoalId?: string` field to `Task` so the cascade is precise; existing tasks keep working because the field is optional.)
+  - `toggleTask`: when a task flips to `done: true`, set every subtask to `done: true` in the same update. When it flips back to `done: false`, leave subtasks alone (only close cascades, never auto-reopen).
+  - Hours-spent accumulation that already runs on `toggleTask` / `toggleSubtask` keeps working; cascaded completions also bump `spentHours` once per item.
 
-## 1. Mobile Add-to-Schedule dialog (`src/components/life/Today.tsx`)
+## 3. In-progress promotion + timeline color + milestone popover
 
-Symptom: dialog content overflows horizontally, native `<input type="time">` triggers iOS zoom, footer buttons wrap awkwardly.
-
-Changes inside `AddToScheduleDialog`:
-
-- `DialogContent`: switch to `w-[calc(100vw-1rem)] max-w-md max-h-[85dvh] overflow-y-auto p-4 sm:p-6` and add `overflow-x-hidden`. Force every child container to `min-w-0` so long task titles can't push width out.
-- Search results list: replace `truncate` on the row with `min-w-0` + `truncate`, and **drop** the right-side `goalTitle` chip on mobile (`hidden sm:inline` already exists — but the row itself currently has no `min-w-0`).
-- Time inputs: wrap in a 2-column grid that becomes single column under 360px (`grid-cols-1 xs:grid-cols-2`), bump the input `text-base` (16px) so iOS Safari does not zoom, and add an inline **Duration** read-out ("1h 30m") so the user sees the planned hours immediately.
-- Add a small **"Estimated hours"** number input (optional, defaults to the from/till span). Saved into the new `plannedHours` field (see §2) when the selected item has no estimate yet.
-- Footer: stack vertically on mobile (`flex-col-reverse sm:flex-row`), each button `w-full sm:w-auto`, remove the conflicting `gap-2 sm:gap-0`.
-
-No new dialog file — keep edits inside `Today.tsx` so `CalendarView` keeps importing `AddToScheduleDialog` unchanged.
-
----
-
-## 2. Planned vs. spent hours across the data model
-
-### 2a. Type & normalizer changes (`src/lib/app-data.tsx`)
-
-Add two optional numeric fields, both in hours:
-
-- `plannedHours` — total estimate set by the user.
-- `spentHours` — accumulated from completed scheduled blocks (auto-managed).
-
-Locations:
-
-- `Goal` interface — add `plannedHours?`, `spentHours?`.
-- `Task` interface — add `plannedHours?`, `spentHours?`.
-- `SubTask` interface — add `plannedHours?`, `spentHours?` (keep existing `hoursPerWeek`).
-
-Update `normalizeGoal`, `normalizeTask`, `normalizeSubTask` to parse them (`typeof === "number" && raw >= 0`).
-
-### 2b. Auto-deduct on completion
-
-Inside `toggleTask` and `toggleSubtask` (in `app-data.tsx`):
-
-- When toggling from `done:false → done:true` **and** the item has both `startDate` + `endDate`, compute `hours = (end - start) / 3_600_000` and set `spentHours = (spentHours ?? 0) + hours`.
-- When toggling back `true → false`, subtract the same amount (clamped to 0).
-- Roll the same delta up to the parent goal's `spentHours` when the task/subtask has a `goalId` chain.
-
-`remainingHours = max(0, plannedHours - spentHours)` is derived in the UI, not stored.
-
-### 2c. JSON template / AI prompt (`src/lib/app-data.tsx`)
-
-Update `AI_SYSTEM_PROMPT`, `_schema`, and the sample `TEMPLATE_PAYLOAD`:
-
-- Add `"plannedHours": number` (and optional `"spentHours": number`) to the goal, task, and subtask shapes in the prompt.
-- Add the same keys to the example records so a downloaded template demonstrates them.
-
-### 2d. Surface hours in the UI
-
-- **Add-to-schedule dialog**: show `Remaining: 3h 30m / 10h` chip when the selected item has `plannedHours`. Lets the user write/update `plannedHours` inline.
-- **Schedule block** (Today's schedule card): below the time row, append `· {remaining}h left` when applicable.
-- **Focus list rows**: small muted suffix `· {remaining}h` when planned hours exist.
-- No new component files — small inline additions in `Today.tsx`.
-
-Out of scope for this pass: editing planned hours from the Tasks tab UI (still editable via JSON import). Can follow up if requested.
-
----
-
-## 3. Schedule blocks staying inside their hour cell (`src/components/life/Today.tsx`)
-
-Current `Schedule` renders hour rows with `HOUR_PX = 56` and overlays absolutely-positioned blocks using `pointer-events-none absolute inset-0 pl-12 pr-2`. Two real issues:
-
-- Blocks use `Math.max(28, durH * HOUR_PX - 4)` — a 15-min block (`durH = 0.25`) becomes 28px tall but its visual height is forced to ~half an hour, spilling into the next row.
-- The block sits at `top = (start - 6) * HOUR_PX` but the hour label inside the row sits at `pt-1` with `text-[10px]`. The block's `left-1` slightly overlaps the gutter on narrow viewports because the wrapper's `pl-12` matches the gutter exactly with no breathing room.
-
-Fixes:
-
-- Replace the min-height clamp with `height = durH * HOUR_PX - 2` and instead give the block `min-h-0` + `overflow-hidden`; for sub-30-min blocks, collapse to a single-line variant (`py-0.5`, hide the secondary meta row) so it physically fits within its duration.
-- Bump wrapper padding to `pl-14 pr-3` and align the gutter label container to `w-14` so the block's `left-1 right-1` always sits inside the content column with a 1px gap from the gutter line.
-- Add a thin left border using the skill colour as today, but render it `inset-y-0` flush with the block — no change, just confirming the block no longer exceeds its row.
-- Add a top `1px` border using `border-t border-border/40` on each block so the top edge visually snaps to the hour grid line.
-
-No HOUR_PX change (keeps drag-drop math intact). Mirror the same min-height removal in `CalendarView`'s `WeekGrid` and `DayGrid` so the calendar matches.
-
----
+- **Auto-promote** in `app-data.tsx`:
+  - `toggleTask` and `toggleSubtask`: if the parent goal's `status === "not_started"`, set it to `"in_progress"` the first time *any* task or subtask under it is toggled (done or in-flight). The existing `promoteGoal` helper already exists for the "first completion" case — broaden it to also fire when an item is first checked or when a scheduled block is created.
+  - Same when a sub-goal is toggled.
+- **Timeline color reflects status** (`Goals.tsx` `Timeline`):
+  - `not_started` → grey track + grey fill (`bg-muted` / `oklch(0.75 0.02 250)`), no glow.
+  - `in_progress` → bright green gradient (`oklch(0.7 0.18 150) → oklch(0.82 0.16 150)`) with the existing glow. Overrides "due soon / overdue" tinting only when status is `not_started`; if `in_progress` we keep green but layer the overdue/due-soon pill on top.
+  - `completed` → solid muted green, 100% fill.
+- **Milestone dot popover**: convert each dot in `Timeline` from a bare `<div title>` into a Radix Popover (or a controlled lightweight tooltip) that opens on click, showing `{title} · {targetDate} · {done ? "Done" : "Open"}`. Auto-dismiss after 3.5s via `setTimeout`, and also dismiss on outside click (Popover handles outside-click natively). Same treatment for the "you are here" / decade dots in `LifeTimeline.tsx` so milestones in the life canvas behave identically.
 
 ## Technical notes
 
-- No new dependencies, no new files.
-- Backward compatible: missing `plannedHours` / `spentHours` are treated as undefined; old exports continue to import cleanly.
-- All colours via existing skill tokens / semantic tokens.
+- New field: `Task.subGoalId?: string` (optional, normalized in `normalizeTask`, included in `TEMPLATE_PAYLOAD` and `AI_SYSTEM_PROMPT`). Goals UI gets a small "milestone" select on the task quick-add so the cascade has something to bite on; absent that, the cascade falls back to all open tasks under the goal.
+- Mindmap layout formula is pure (no state); seeds are recomputed in the existing `useMemo`. Stored user-dragged positions in `localStorage` still win over computed seeds.
+- No backend / data-model migrations beyond the optional `subGoalId` field; existing saved JSON keeps loading.
 
-## Out of scope
+## Files touched
 
-- Editing `plannedHours` from a dedicated Tasks tab form (only the inline dialog field this pass).
-- Per-week burn-down charts for hours.
-- Showing spent hours in the Overview / Dashboard cards.
+- `src/components/life/MindMapCanvas.tsx` — borders, palette, radial layout formula.
+- `src/components/life/Goals.tsx` — remove progress bar, status-driven timeline color, milestone popover, optional milestone select on task add.
+- `src/components/life/LifeTimeline.tsx` — dot popover parity.
+- `src/lib/app-data.tsx` — cascading close in `toggleSubGoal` / `toggleTask`, broader auto-promotion in `toggleTask` / `toggleSubtask`, `Task.subGoalId` field + normalizer + template/system-prompt updates.
