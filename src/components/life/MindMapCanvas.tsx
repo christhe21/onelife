@@ -103,82 +103,121 @@ export function MindMapCanvas() {
   };
   const collapseAll = () => setOpen(new Set<string>(["root"]));
 
-  // Seed positions (radial) + node metadata
+  // Seed positions via deterministic radial layout (no-overlap formula)
   const { nodes, links, seeds } = useMemo(() => {
     const nodes: Node[] = [];
     const links: { from: string; to: string; depth: number; curl: number }[] = [];
     const seeds: Record<string, { x: number; y: number }> = {};
 
+    type Tree = {
+      id: string; kind: Kind; label: string; parent?: string;
+      childCount: number; expanded: boolean; fill: string;
+      children: Tree[]; depth: number;
+      midAngle: number; sweep: number; leaves: number;
+    };
+
     const activeSkills = skills.filter((s) => goals.some((g) => g.skill === s.id));
     const rootExpanded = open.has("root");
     const rootLabel = settings.userName?.trim() ? settings.userName.trim().toUpperCase() : "MY LIFE";
-    seeds["root"] = { x: 0, y: 0 };
-    nodes.push({
-      id: "root", label: rootLabel, r: 60, kind: "root",
-      childCount: activeSkills.length, expanded: rootExpanded,
-      fill: ROOT_FILL, stroke: darken(ROOT_FILL),
+
+    const mk = (
+      id: string, kind: Kind, label: string, fill: string,
+      expanded: boolean, childCount: number, parent?: string,
+    ): Tree => ({
+      id, kind, label, parent, childCount, expanded, fill,
+      children: [], depth: 0, midAngle: 0, sweep: 0, leaves: 1,
     });
-    if (!rootExpanded) return { nodes, links, seeds };
 
-    const skillCount = Math.max(activeSkills.length, 1);
-    activeSkills.forEach((sk, i) => {
-      const a = (i / skillCount) * Math.PI * 2 - Math.PI / 2;
-      seeds[`s_${sk.id}`] = { x: Math.cos(a) * RING.skill, y: Math.sin(a) * RING.skill };
-      const skillGoals = goals.filter((g) => g.skill === sk.id);
-      const skillExpanded = open.has(`s_${sk.id}`);
-      const skFill = PALETTE[i % PALETTE.length];
-      nodes.push({
-        id: `s_${sk.id}`, label: sk.label, r: 44, kind: "skill", parent: "root",
-        childCount: skillGoals.length, expanded: skillExpanded,
-        fill: skFill, stroke: darken(skFill),
-      });
-      links.push({ from: "root", to: `s_${sk.id}`, depth: 1, curl: (i % 2 === 0 ? 1 : -1) });
-
-      if (!skillExpanded) return;
-      const sectorHalf = Math.PI / skillCount;
-      skillGoals.forEach((g, gi) => {
-        const span = Math.max(skillGoals.length - 1, 1);
-        const ga = a + ((gi / span) - 0.5) * sectorHalf * 0.95;
-        seeds[`g_${g.id}`] = { x: Math.cos(ga) * RING.goal, y: Math.sin(ga) * RING.goal };
-        const gTasks = tasks.filter((t) => t.goalId === g.id);
-        const goalExpanded = open.has(`g_${g.id}`);
-        nodes.push({
-          id: `g_${g.id}`, label: g.title, r: 36, kind: "goal", parent: `s_${sk.id}`,
-          childCount: gTasks.length, expanded: goalExpanded,
-          fill: PALETTE[(i + 2) % PALETTE.length], stroke: darken(PALETTE[(i + 2) % PALETTE.length]),
-        });
-        links.push({ from: `s_${sk.id}`, to: `g_${g.id}`, depth: 2, curl: (gi % 2 === 0 ? 1 : -1) });
-
-        if (!goalExpanded) return;
-        const tSpan = Math.max(gTasks.length - 1, 1);
-        const tSectorHalf = sectorHalf / Math.max(skillGoals.length, 1);
-        gTasks.forEach((t, ti) => {
-          const ta = ga + ((ti / tSpan) - 0.5) * tSectorHalf * 0.95;
-          seeds[`t_${t.id}`] = { x: Math.cos(ta) * RING.task, y: Math.sin(ta) * RING.task };
-          const sub = t.subtasks ?? [];
-          const taskExpanded = open.has(`t_${t.id}`);
-          nodes.push({
-            id: `t_${t.id}`, label: t.title, r: 28, kind: "task", parent: `g_${g.id}`,
-            childCount: sub.length, expanded: taskExpanded,
-            fill: PALETTE[(i + 4) % PALETTE.length], stroke: darken(PALETTE[(i + 4) % PALETTE.length]),
-          });
-          links.push({ from: `g_${g.id}`, to: `t_${t.id}`, depth: 3, curl: (ti % 2 === 0 ? 1 : -1) });
-
-          if (!taskExpanded) return;
-          const sSpan = Math.max(sub.length - 1, 1);
-          sub.forEach((s, si) => {
-            const sa = ta + ((si / sSpan) - 0.5) * (tSectorHalf / Math.max(gTasks.length, 1)) * 0.95;
-            seeds[`st_${s.id}`] = { x: Math.cos(sa) * RING.sub, y: Math.sin(sa) * RING.sub };
-            nodes.push({
-              id: `st_${s.id}`, label: s.title, r: 22, kind: "subtask", parent: `t_${t.id}`,
-              childCount: 0, expanded: true,
-              fill: PALETTE[(i + 3) % PALETTE.length], stroke: darken(PALETTE[(i + 3) % PALETTE.length]),
+    const root = mk("root", "root", rootLabel, ROOT_FILL, rootExpanded, activeSkills.length);
+    if (rootExpanded) {
+      activeSkills.forEach((sk, i) => {
+        const skFill = PALETTE[i % PALETTE.length];
+        const skillGoals = goals.filter((g) => g.skill === sk.id);
+        const skillExpanded = open.has(`s_${sk.id}`);
+        const skNode = mk(`s_${sk.id}`, "skill", sk.label, skFill, skillExpanded, skillGoals.length, "root");
+        root.children.push(skNode);
+        if (!skillExpanded) return;
+        skillGoals.forEach((g, gi) => {
+          const gFill = PALETTE[(i + 2) % PALETTE.length];
+          const gTasks = tasks.filter((t) => t.goalId === g.id);
+          const goalExpanded = open.has(`g_${g.id}`);
+          const gNode = mk(`g_${g.id}`, "goal", g.title, gFill, goalExpanded, gTasks.length, `s_${sk.id}`);
+          skNode.children.push(gNode);
+          if (!goalExpanded) return;
+          gTasks.forEach((t, ti) => {
+            const tFill = PALETTE[(i + 4) % PALETTE.length];
+            const sub = t.subtasks ?? [];
+            const taskExpanded = open.has(`t_${t.id}`);
+            const tNode = mk(`t_${t.id}`, "task", t.title, tFill, taskExpanded, sub.length, `g_${g.id}`);
+            gNode.children.push(tNode);
+            if (!taskExpanded) return;
+            sub.forEach((s) => {
+              const sFill = PALETTE[(i + 3) % PALETTE.length];
+              tNode.children.push(mk(`st_${s.id}`, "subtask", s.title, sFill, true, 0, `t_${t.id}`));
             });
-            links.push({ from: `t_${t.id}`, to: `st_${s.id}`, depth: 4, curl: (si % 2 === 0 ? 1 : -1) });
           });
         });
       });
-    });
+    }
+
+    // leaves count (collapsed = 1)
+    const countLeaves = (n: Tree): number => {
+      if (!n.expanded || n.children.length === 0) { n.leaves = 1; return 1; }
+      n.leaves = n.children.reduce((s, c) => s + countLeaves(c), 0);
+      return n.leaves;
+    };
+    countLeaves(root);
+
+    // assign angle ranges starting at -π .. π
+    const assign = (n: Tree, a0: number, a1: number, depth: number) => {
+      n.depth = depth;
+      n.midAngle = (a0 + a1) / 2;
+      n.sweep = a1 - a0;
+      if (!n.expanded || n.children.length === 0) return;
+      const total = n.children.reduce((s, c) => s + c.leaves, 0) || 1;
+      let a = a0;
+      for (const c of n.children) {
+        const sp = (a1 - a0) * (c.leaves / total);
+        assign(c, a, a + sp, depth + 1);
+        a += sp;
+      }
+    };
+    assign(root, -Math.PI, Math.PI, 0);
+
+    // determine per-depth radius: ensure arc length per child >= MIN_ARC
+    const ringR = [...BASE_R];
+    const visit = (n: Tree) => {
+      if (n.depth > 0) {
+        const need = MIN_ARC / Math.max(n.sweep, 0.001);
+        if (need > ringR[n.depth] ?? 0) ringR[n.depth] = need;
+      }
+      n.children.forEach(visit);
+    };
+    visit(root);
+    for (let d = 1; d < ringR.length; d++) {
+      const min = (ringR[d - 1] ?? 0) + 160;
+      if ((ringR[d] ?? 0) < min) ringR[d] = min;
+    }
+
+    // emit nodes + links + seed positions
+    const emit = (n: Tree) => {
+      if (n.depth === 0) {
+        seeds[n.id] = { x: 0, y: 0 };
+      } else {
+        const R = ringR[n.depth] ?? BASE_R[BASE_R.length - 1];
+        seeds[n.id] = { x: R * Math.cos(n.midAngle), y: R * Math.sin(n.midAngle) };
+      }
+      nodes.push({
+        id: n.id, label: n.label, r: 40, kind: n.kind, parent: n.parent,
+        childCount: n.childCount, expanded: n.expanded,
+        fill: n.fill, stroke: n.fill,
+      });
+      n.children.forEach((c, idx) => {
+        links.push({ from: n.id, to: c.id, depth: n.depth + 1, curl: idx % 2 === 0 ? 1 : -1 });
+        emit(c);
+      });
+    };
+    emit(root);
 
     return { nodes, links, seeds };
   }, [skills, goals, tasks, open, settings.userName]);
