@@ -43,7 +43,7 @@ const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
 // Layout constants for the radial non-overlap formula
 const BASE_R = [0, 260, 460, 660, 860];
-const MIN_ARC = 150; // px of arc length required per child center at any depth
+const MIN_ARC = 100; // px of arc length required per child center at any depth
 
 // Darken a hex color so the border reads as a deeper shade of the fill
 function darken(hex: string, amount = 0.4): string {
@@ -280,7 +280,9 @@ export function MindMapCanvas() {
     visit(root);
     for (let d = 1; d < ringR.length; d++) {
       const min = (ringR[d - 1] ?? 0) + 160;
+      const max = (ringR[d - 1] ?? 0) + 350;
       if ((ringR[d] ?? 0) < min) ringR[d] = min;
+      if ((ringR[d] ?? 0) > max) ringR[d] = max;
     }
 
     // emit nodes + links + seed positions
@@ -312,7 +314,36 @@ export function MindMapCanvas() {
     return { nodes, links, seeds };
   }, [skills, goals, tasks, open, settings.userName]);
 
-  const pos = (id: string) => positions[id] ?? seeds[id] ?? { x: 0, y: 0 };
+  const parentMap = useMemo(() => {
+    const map = new Map<string, string | null>();
+    for (const n of nodes) {
+      map.set(n.id, n.parent ?? null);
+    }
+    return map;
+  }, [nodes]);
+
+  const pos = (id: string) => {
+    if (positions[id]) return positions[id];
+
+    // Node isn't manually positioned. Traverse up to find the nearest ancestor
+    // that has been manually positioned to apply its relative drag offset.
+    let curr = parentMap.get(id);
+    let offset = { x: 0, y: 0 };
+
+    while (curr) {
+      if (positions[curr] && seeds[curr]) {
+        offset = {
+          x: positions[curr].x - seeds[curr].x,
+          y: positions[curr].y - seeds[curr].y,
+        };
+        break;
+      }
+      curr = parentMap.get(curr);
+    }
+
+    const base = seeds[id] ?? { x: 0, y: 0 };
+    return { x: base.x + offset.x, y: base.y + offset.y };
+  };
 
   const persist = (next: Record<string, { x: number; y: number }>) => {
     setPositions(next);
@@ -489,8 +520,8 @@ export function MindMapCanvas() {
 
   return (
     <div className={containerCls}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1">
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={collapseAll}>
             <ChevronsDownUp className="mr-1 h-3.5 w-3.5" />
             Collapse
