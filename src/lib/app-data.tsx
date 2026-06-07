@@ -480,16 +480,29 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         )
       ),
     toggleSubGoal: (goalId, subId) => {
+      let cascade = false;
       setGoals((cur) =>
         cur.map((g) => {
           if (g.id !== goalId) return g;
           const subGoals = g.subGoals.map((s) => (s.id === subId ? { ...s, done: !s.done } : s));
           const wasCompleting = subGoals.find((s) => s.id === subId)?.done;
+          cascade = !!wasCompleting;
           const status: GoalStatus =
             g.status === "not_started" && wasCompleting ? "in_progress" : g.status;
           return { ...g, subGoals, status };
         })
       );
+      // Cascade-close: when a milestone closes, mark every open task (and its subtasks)
+      // under this goal as done.
+      if (cascade) {
+        setTasks((cur) =>
+          cur.map((t) =>
+            t.goalId === goalId
+              ? { ...t, done: true, subtasks: t.subtasks.map((s) => ({ ...s, done: true })) }
+              : t,
+          ),
+        );
+      }
     },
     deleteSubGoal: (goalId, subId) =>
       setGoals((cur) =>
