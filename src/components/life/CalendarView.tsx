@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Plus, CalendarDays } from "lucide-react";
 import { useAppData, type Task, type SubTask } from "@/lib/app-data";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { AddToScheduleDialog } from "@/components/life/Today";
+import { AddToScheduleDialog } from "@/components/life/AddToScheduleDialog";
 
 type ViewMode = "month" | "week" | "day";
 
