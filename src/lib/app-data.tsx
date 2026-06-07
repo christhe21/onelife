@@ -243,7 +243,10 @@ Use ISO YYYY-MM-DD dates. plannedHours = total effort estimate for the goal/task
 export const TEMPLATE_PAYLOAD = {
   version: 1,
   exportedAt: "2026-01-01T00:00:00.000Z",
-  _ai: { instructions: "Copy systemPrompt into an LLM, get JSON back, import it.", systemPrompt: AI_SYSTEM_PROMPT },
+  _ai: {
+    instructions: "Copy systemPrompt into an LLM, get JSON back, import it.",
+    systemPrompt: AI_SYSTEM_PROMPT,
+  },
   _schema: {
     goal: "title, skill, startDate, targetDate, status, manualProgress (0-100), plannedHours, spentHours, subGoals[]",
     task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, plannedHours, spentHours, subtasks[]",
@@ -297,7 +300,15 @@ export const TEMPLATE_PAYLOAD = {
       spentHours: 2,
       subtasks: [
         { id: "st1", title: "Pick 3 projects", done: true, plannedHours: 1, spentHours: 1 },
-        { id: "st2", title: "Write case studies", done: false, hoursPerWeek: 3, plannedHours: 5, spentHours: 1, endDate: "2026-02-25" },
+        {
+          id: "st2",
+          title: "Write case studies",
+          done: false,
+          hoursPerWeek: 3,
+          plannedHours: 5,
+          spentHours: 1,
+          endDate: "2026-02-25",
+        },
       ],
     },
     {
@@ -317,7 +328,13 @@ export const TEMPLATE_PAYLOAD = {
     },
   ],
   bucketList: [
-    { id: "b1", title: "See the northern lights", notes: "Iceland or Tromsø", targetYear: 2028, achieved: false },
+    {
+      id: "b1",
+      title: "See the northern lights",
+      notes: "Iceland or Tromsø",
+      targetYear: 2028,
+      achieved: false,
+    },
   ],
 };
 
@@ -327,7 +344,11 @@ export function downloadTemplate() {
 
 export function downloadSkillsReference() {
   downloadJSON(
-    { skills: SKILLS.map((s) => ({ id: s.id, label: s.label })), statuses: STATUSES, taskPriorities: PRIORITIES },
+    {
+      skills: SKILLS.map((s) => ({ id: s.id, label: s.label })),
+      statuses: STATUSES,
+      taskPriorities: PRIORITIES,
+    },
     "life-manager-skills-reference.json",
   );
 }
@@ -379,28 +400,53 @@ interface Stored extends AppData {
 }
 
 function loadInitial(): Stored {
-  const empty: Stored = { goals: [], tasks: [], bucketList: [], skills: DEFAULT_SKILLS, settings: {} };
+  const empty: Stored = {
+    goals: [],
+    tasks: [],
+    bucketList: [],
+    skills: DEFAULT_SKILLS,
+    settings: {},
+  };
   if (typeof window === "undefined") return empty;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return empty;
     const parsed = JSON.parse(raw);
     const data = normalizeAppData(parsed);
-    const skills: Skill[] = Array.isArray(parsed?.skills) && parsed.skills.length
-      ? parsed.skills
-          .filter((s: any) => s && typeof s.id === "string" && typeof s.label === "string")
-          .map((s: any) => ({ id: s.id, label: s.label, color: typeof s.color === "string" ? s.color : "#10b981" }))
-      : DEFAULT_SKILLS;
-    const settings: Settings = parsed?.settings && typeof parsed.settings === "object"
-      ? {
-          birthYear: typeof parsed.settings.birthYear === "number" ? parsed.settings.birthYear : undefined,
-          userName: typeof parsed.settings.userName === "string" ? parsed.settings.userName : undefined,
-          onboardedAt: typeof parsed.settings.onboardedAt === "string" ? parsed.settings.onboardedAt : undefined,
-          textScale: ["sm","base","lg","xl"].includes(parsed.settings.textScale) ? parsed.settings.textScale : undefined,
-          notificationsEnabled: typeof parsed.settings.notificationsEnabled === "boolean" ? parsed.settings.notificationsEnabled : undefined,
-          reminderLeadMinutes: typeof parsed.settings.reminderLeadMinutes === "number" ? parsed.settings.reminderLeadMinutes : undefined,
-        }
-      : {};
+    const skills: Skill[] =
+      Array.isArray(parsed?.skills) && parsed.skills.length
+        ? parsed.skills
+            .filter((s: any) => s && typeof s.id === "string" && typeof s.label === "string")
+            .map((s: any) => ({
+              id: s.id,
+              label: s.label,
+              color: typeof s.color === "string" ? s.color : "#10b981",
+            }))
+        : DEFAULT_SKILLS;
+    const settings: Settings =
+      parsed?.settings && typeof parsed.settings === "object"
+        ? {
+            birthYear:
+              typeof parsed.settings.birthYear === "number" ? parsed.settings.birthYear : undefined,
+            userName:
+              typeof parsed.settings.userName === "string" ? parsed.settings.userName : undefined,
+            onboardedAt:
+              typeof parsed.settings.onboardedAt === "string"
+                ? parsed.settings.onboardedAt
+                : undefined,
+            textScale: ["sm", "base", "lg", "xl"].includes(parsed.settings.textScale)
+              ? parsed.settings.textScale
+              : undefined,
+            notificationsEnabled:
+              typeof parsed.settings.notificationsEnabled === "boolean"
+                ? parsed.settings.notificationsEnabled
+                : undefined,
+            reminderLeadMinutes:
+              typeof parsed.settings.reminderLeadMinutes === "number"
+                ? parsed.settings.reminderLeadMinutes
+                : undefined,
+          }
+        : {};
     return { ...data, skills, settings };
   } catch {
     return empty;
@@ -425,7 +471,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           STORAGE_KEY,
           JSON.stringify({ version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings }),
         );
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }, 200);
     return () => clearTimeout(t);
   }, [goals, tasks, bucketList, skills, settings]);
@@ -434,15 +482,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const promoteGoal = (goalId?: string) => {
     if (!goalId) return;
     setGoals((cur) =>
-      cur.map((g) => (g.id === goalId && g.status === "not_started" ? { ...g, status: "in_progress" } : g))
+      cur.map((g) =>
+        g.id === goalId && g.status === "not_started" ? { ...g, status: "in_progress" } : g,
+      ),
     );
   };
 
   const bumpGoalSpent = (goalId: string, delta: number) => {
     setGoals((cur) =>
       cur.map((g) =>
-        g.id === goalId ? { ...g, spentHours: Math.max(0, (g.spentHours ?? 0) + delta) } : g
-      )
+        g.id === goalId ? { ...g, spentHours: Math.max(0, (g.spentHours ?? 0) + delta) } : g,
+      ),
     );
   };
 
@@ -461,7 +511,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         if (cur.some((x) => x.id === id)) return cur;
         return [...cur, { id, label: s.label, color: s.color }];
       }),
-    updateSkill: (id, patch) => setSkills((cur) => cur.map((s) => (s.id === id ? { ...s, ...patch } : s))),
+    updateSkill: (id, patch) =>
+      setSkills((cur) => cur.map((s) => (s.id === id ? { ...s, ...patch } : s))),
     deleteSkill: (id) => setSkills((cur) => cur.filter((s) => s.id !== id)),
 
     addGoal: (g) => {
@@ -469,15 +520,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setGoals((cur) => [...cur, { ...g, id, subGoals: [] }]);
       return id;
     },
-    updateGoal: (id, patch) => setGoals((cur) => cur.map((g) => (g.id === id ? { ...g, ...patch } : g))),
+    updateGoal: (id, patch) =>
+      setGoals((cur) => cur.map((g) => (g.id === id ? { ...g, ...patch } : g))),
     deleteGoal: (id) => setGoals((cur) => cur.filter((g) => g.id !== id)),
     addSubGoal: (goalId, title, targetDate) =>
       setGoals((cur) =>
         cur.map((g) =>
           g.id === goalId
             ? { ...g, subGoals: [...g.subGoals, { id: uid(), title, targetDate, done: false }] }
-            : g
-        )
+            : g,
+        ),
       ),
     toggleSubGoal: (goalId, subId) => {
       let cascade = false;
@@ -490,7 +542,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           const status: GoalStatus =
             g.status === "not_started" && wasCompleting ? "in_progress" : g.status;
           return { ...g, subGoals, status };
-        })
+        }),
       );
       // Cascade-close: when a milestone closes, mark every open task (and its subtasks)
       // under this goal as done.
@@ -506,12 +558,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     deleteSubGoal: (goalId, subId) =>
       setGoals((cur) =>
-        cur.map((g) => (g.id === goalId ? { ...g, subGoals: g.subGoals.filter((s) => s.id !== subId) } : g))
+        cur.map((g) =>
+          g.id === goalId ? { ...g, subGoals: g.subGoals.filter((s) => s.id !== subId) } : g,
+        ),
       ),
 
     addTask: (t) =>
       setTasks((cur) => [...cur, { ...t, id: uid(), done: false, subtasks: t.subtasks ?? [] }]),
-    updateTask: (id, patch) => setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t))),
+    updateTask: (id, patch) =>
+      setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t))),
     toggleTask: (id) => {
       let promoted: string | undefined;
       let goalDelta = 0;
@@ -530,11 +585,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             goalIdForDelta = t.goalId;
           }
           // Cascade-close subtasks when task is being completed
-          const subtasks = nowDone
-            ? t.subtasks.map((s) => ({ ...s, done: true }))
-            : t.subtasks;
+          const subtasks = nowDone ? t.subtasks.map((s) => ({ ...s, done: true })) : t.subtasks;
           return { ...t, done: nowDone, spentHours: nextSpent, subtasks };
-        })
+        }),
       );
       promoteGoal(promoted);
       if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
@@ -546,16 +599,16 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         cur.map((t) =>
           t.id === taskId
             ? { ...t, subtasks: [...t.subtasks, { ...st, id: uid(), done: false }] }
-            : t
-        )
+            : t,
+        ),
       ),
     updateSubtask: (taskId, subId, patch) =>
       setTasks((cur) =>
         cur.map((t) =>
           t.id === taskId
             ? { ...t, subtasks: t.subtasks.map((s) => (s.id === subId ? { ...s, ...patch } : s)) }
-            : t
-        )
+            : t,
+        ),
       ),
     toggleSubtask: (taskId, subId) => {
       let promoted: string | undefined;
@@ -583,30 +636,45 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             return { ...s, done: nowDone, spentHours: nextSpent };
           });
           return { ...t, subtasks, spentHours: taskDelta !== 0 ? nextTaskSpent : t.spentHours };
-        })
+        }),
       );
       promoteGoal(promoted);
       if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteSubtask: (taskId, subId) =>
       setTasks((cur) =>
-        cur.map((t) => (t.id === taskId ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subId) } : t))
+        cur.map((t) =>
+          t.id === taskId ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subId) } : t,
+        ),
       ),
 
     addBucket: (b) => setBucketList((cur) => [...cur, { ...b, id: uid(), achieved: false }]),
-    updateBucket: (id, patch) => setBucketList((cur) => cur.map((b) => (b.id === id ? { ...b, ...patch } : b))),
+    updateBucket: (id, patch) =>
+      setBucketList((cur) => cur.map((b) => (b.id === id ? { ...b, ...patch } : b))),
     toggleBucket: (id) =>
       setBucketList((cur) => cur.map((b) => (b.id === id ? { ...b, achieved: !b.achieved } : b))),
     deleteBucket: (id) => setBucketList((cur) => cur.filter((b) => b.id !== id)),
 
     exportJSON: () => {
-      const payload = { version: EXPORT_VERSION, exportedAt: new Date().toISOString(), goals, tasks, bucketList, skills, settings };
+      const payload = {
+        version: EXPORT_VERSION,
+        exportedAt: new Date().toISOString(),
+        goals,
+        tasks,
+        bucketList,
+        skills,
+        settings,
+      };
       downloadJSON(payload, `life-manager-${new Date().toISOString().slice(0, 10)}.json`);
     },
     importJSON: async (file) => {
       const text = await file.text();
       let parsed: unknown;
-      try { parsed = JSON.parse(text); } catch { throw new Error("File is not valid JSON"); }
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error("File is not valid JSON");
+      }
       const data = normalizeAppData(parsed);
       setGoals(data.goals);
       setTasks(data.tasks);
@@ -615,7 +683,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     appendJSON: async (file) => {
       const text = await file.text();
       let parsed: unknown;
-      try { parsed = JSON.parse(text); } catch { throw new Error("File is not valid JSON"); }
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error("File is not valid JSON");
+      }
       const data = normalizeAppData(parsed);
       // Remap ids so we never collide with existing data, and rewire goalId references
       const goalIdMap = new Map<string, string>();
@@ -627,7 +699,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const newTasks = data.tasks.map((t) => ({
         ...t,
         id: uid(),
-        goalId: t.goalId ? goalIdMap.get(t.goalId) ?? undefined : undefined,
+        goalId: t.goalId ? (goalIdMap.get(t.goalId) ?? undefined) : undefined,
         subtasks: t.subtasks.map((s) => ({ ...s, id: uid() })),
       }));
       const newBucket = data.bucketList.map((b) => ({ ...b, id: uid() }));
@@ -648,7 +720,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList([]);
       setSkills(DEFAULT_SKILLS);
       setSettings({});
-      try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
     },
   };
 

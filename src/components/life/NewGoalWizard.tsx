@@ -5,12 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -31,7 +26,10 @@ function addDays(base: Date, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-interface MilestoneDraft { title: string; date: string }
+interface MilestoneDraft {
+  title: string;
+  date: string;
+}
 interface TaskDraft {
   title: string;
   due: string;
@@ -61,10 +59,11 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
 
   const stepIdx = STEPS.indexOf(step);
   const stepTemplates = useMemo(
-    () => TEMPLATES.filter((t) => {
-      const lbl = (skills.find((s) => s.id === skill)?.label ?? "").toLowerCase();
-      return t.skill === skill || t.category.toLowerCase() === lbl;
-    }),
+    () =>
+      TEMPLATES.filter((t) => {
+        const lbl = (skills.find((s) => s.id === skill)?.label ?? "").toLowerCase();
+        return t.skill === skill || t.category.toLowerCase() === lbl;
+      }),
     [skill, skills],
   );
 
@@ -92,7 +91,9 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     if (createdGoalId) return createdGoalId;
     const id = addGoal({
       title: title.trim() || "Untitled goal",
-      description: description.trim() || (template ? `${template.description}\n\nWhy: ${template.rationale}` : ""),
+      description:
+        description.trim() ||
+        (template ? `${template.description}\n\nWhy: ${template.rationale}` : ""),
       skill: skill || "life",
       startDate: today,
       targetDate,
@@ -119,7 +120,12 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     if (t) {
       if (!title.trim()) setTitle(t.title);
       setTargetDate(addDays(new Date(today), t.durationDays));
-      setMilestones(t.subGoals.map((sg) => ({ title: sg.title, date: addDays(new Date(today), sg.offsetDays) })));
+      setMilestones(
+        t.subGoals.map((sg) => ({
+          title: sg.title,
+          date: addDays(new Date(today), sg.offsetDays),
+        })),
+      );
       setTasks(
         t.tasks.map((task) => ({
           title: task.title,
@@ -134,7 +140,9 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
 
   const saveMilestones = () => {
     const id = commitGoal();
-    milestones.filter((m) => m.title.trim()).forEach((m) => addSubGoal(id, m.title.trim(), m.date || undefined));
+    milestones
+      .filter((m) => m.title.trim())
+      .forEach((m) => addSubGoal(id, m.title.trim(), m.date || undefined));
     setMilestones([]); // clear so back/forward doesn't double-add
     setStep("tasks");
   };
@@ -168,7 +176,6 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
               endDate: st.endDate,
             })),
         });
-        
       });
     setStep("done");
   };
@@ -182,7 +189,10 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     handleOpenChange(false);
   };
 
-  const totalSubtasks = tasks.reduce((a, t) => a + t.subtasks.filter((s) => s.title.trim()).length, 0);
+  const totalSubtasks = tasks.reduce(
+    (a, t) => a + t.subtasks.filter((s) => s.title.trim()).length,
+    0,
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -204,7 +214,12 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
               ))}
             </div>
             {step !== "done" && (
-              <Button variant="ghost" size="sm" onClick={skipToDone} className="text-xs text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={skipToDone}
+                className="text-xs text-muted-foreground"
+              >
                 Skip <X className="ml-1 h-3 w-3" />
               </Button>
             )}
@@ -220,27 +235,45 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
               </div>
               <div>
                 <Label className="text-xs">Title</Label>
-                <Input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Run a 5K under 25 minutes" />
+                <Input
+                  autoFocus
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="e.g. Run a 5K under 25 minutes"
+                />
               </div>
               <div>
                 <Label className="text-xs">Description (optional)</Label>
-                <Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Why does this matter?" />
+                <Textarea
+                  rows={2}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Why does this matter?"
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Life area</Label>
                   <Select value={skill} onValueChange={setSkill}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       {(skills.length ? skills : DEFAULT_SKILLS).map((s) => (
-                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-xs">Target date</Label>
-                  <Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
+                  <Input
+                    type="date"
+                    value={targetDate}
+                    onChange={(e) => setTargetDate(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -250,7 +283,9 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
             <div className="space-y-3">
               <div>
                 <h2 className="font-display text-lg font-semibold">Start from a template?</h2>
-                <p className="text-xs text-muted-foreground">Pre-fill milestones and tasks, or skip to add your own.</p>
+                <p className="text-xs text-muted-foreground">
+                  Pre-fill milestones and tasks, or skip to add your own.
+                </p>
               </div>
               <div className="space-y-2">
                 {stepTemplates.map((t) => (
@@ -262,10 +297,14 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-semibold">{t.title}</span>
-                      <Badge variant="secondary" className="text-[10px]">{Math.round(t.durationDays / 7)}w</Badge>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {Math.round(t.durationDays / 7)}w
+                      </Badge>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
-                    <p className="mt-1 text-[11px] italic text-muted-foreground/80">{t.rationale}</p>
+                    <p className="mt-1 text-[11px] italic text-muted-foreground/80">
+                      {t.rationale}
+                    </p>
                   </button>
                 ))}
                 <button
@@ -283,28 +322,50 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
             <div className="space-y-4">
               <div>
                 <h2 className="font-display text-lg font-semibold">Add milestones</h2>
-                <p className="text-xs text-muted-foreground">Break the goal into checkpoints. Skip to add later.</p>
+                <p className="text-xs text-muted-foreground">
+                  Break the goal into checkpoints. Skip to add later.
+                </p>
               </div>
               <div className="space-y-3">
                 {milestones.map((m, i) => (
-                  <div key={i} className="flex flex-col gap-2 rounded-xl border bg-card/50 p-3 sm:flex-row sm:items-center">
+                  <div
+                    key={i}
+                    className="flex flex-col gap-2 rounded-xl border bg-card/50 p-3 sm:flex-row sm:items-center"
+                  >
                     <Input
                       placeholder={`Milestone ${i + 1}`}
                       value={m.title}
-                      onChange={(e) => setMilestones((cur) => cur.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
+                      onChange={(e) =>
+                        setMilestones((cur) =>
+                          cur.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)),
+                        )
+                      }
                     />
                     <Input
                       type="date"
                       className="sm:w-44"
                       value={m.date}
-                      onChange={(e) => setMilestones((cur) => cur.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)))}
+                      onChange={(e) =>
+                        setMilestones((cur) =>
+                          cur.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)),
+                        )
+                      }
                     />
-                    <Button variant="ghost" size="icon" className="self-end sm:self-auto" onClick={() => setMilestones((cur) => cur.filter((_, j) => j !== i))}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="self-end sm:self-auto"
+                      onClick={() => setMilestones((cur) => cur.filter((_, j) => j !== i))}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => setMilestones((cur) => [...cur, { title: "", date: targetDate }])}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMilestones((cur) => [...cur, { title: "", date: targetDate }])}
+                >
                   <Plus className="mr-1 h-3.5 w-3.5" /> Add milestone
                 </Button>
               </div>
@@ -315,41 +376,80 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
             <div className="space-y-4">
               <div>
                 <h2 className="font-display text-lg font-semibold">Add starter tasks</h2>
-                <p className="text-xs text-muted-foreground">Concrete next actions. Skip to add later.</p>
+                <p className="text-xs text-muted-foreground">
+                  Concrete next actions. Skip to add later.
+                </p>
               </div>
               <div className="space-y-3">
                 {tasks.map((t, i) => (
-                  <div key={i} className="flex flex-col gap-2 rounded-xl border bg-card/50 p-3 sm:flex-row sm:items-center">
+                  <div
+                    key={i}
+                    className="flex flex-col gap-2 rounded-xl border bg-card/50 p-3 sm:flex-row sm:items-center"
+                  >
                     <Input
                       placeholder={`Task ${i + 1}`}
                       value={t.title}
-                      onChange={(e) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))}
+                      onChange={(e) =>
+                        setTasks((cur) =>
+                          cur.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)),
+                        )
+                      }
                     />
                     <div className="flex gap-2">
                       <Input
                         type="date"
                         className="w-full sm:w-40"
                         value={t.due}
-                        onChange={(e) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, due: e.target.value } : x)))}
+                        onChange={(e) =>
+                          setTasks((cur) =>
+                            cur.map((x, j) => (j === i ? { ...x, due: e.target.value } : x)),
+                          )
+                        }
                       />
                       <Select
                         value={t.priority}
-                        onValueChange={(v) => setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, priority: v as TaskDraft["priority"] } : x)))}
+                        onValueChange={(v) =>
+                          setTasks((cur) =>
+                            cur.map((x, j) =>
+                              j === i ? { ...x, priority: v as TaskDraft["priority"] } : x,
+                            ),
+                          )
+                        }
                       >
-                        <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-28">
+                          <SelectValue />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="low">Low</SelectItem>
                           <SelectItem value="medium">Medium</SelectItem>
                           <SelectItem value="high">High</SelectItem>
                         </SelectContent>
                       </Select>
-                      <Button variant="ghost" size="icon" onClick={() => setTasks((cur) => cur.filter((_, j) => j !== i))}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setTasks((cur) => cur.filter((_, j) => j !== i))}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={() => setTasks((cur) => [...cur, { title: "", due: addDays(new Date(today), 7), priority: "medium", subtasks: [] }])}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setTasks((cur) => [
+                      ...cur,
+                      {
+                        title: "",
+                        due: addDays(new Date(today), 7),
+                        priority: "medium",
+                        subtasks: [],
+                      },
+                    ])
+                  }
+                >
                   <Plus className="mr-1 h-3.5 w-3.5" /> Add task
                 </Button>
               </div>
@@ -360,7 +460,9 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
             <div className="space-y-4">
               <div>
                 <h2 className="font-display text-lg font-semibold">Sub-tasks (optional)</h2>
-                <p className="text-xs text-muted-foreground">Break any task into smaller steps. Skip if not needed.</p>
+                <p className="text-xs text-muted-foreground">
+                  Break any task into smaller steps. Skip if not needed.
+                </p>
               </div>
               {tasks.filter((t) => t.title.trim()).length === 0 ? (
                 <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
@@ -383,7 +485,12 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                                   setTasks((cur) =>
                                     cur.map((x, j) =>
                                       j === ti
-                                        ? { ...x, subtasks: x.subtasks.map((s, k) => (k === si ? { ...s, title: e.target.value } : s)) }
+                                        ? {
+                                            ...x,
+                                            subtasks: x.subtasks.map((s, k) =>
+                                              k === si ? { ...s, title: e.target.value } : s,
+                                            ),
+                                          }
                                         : x,
                                     ),
                                   )
@@ -395,7 +502,9 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                                 onClick={() =>
                                   setTasks((cur) =>
                                     cur.map((x, j) =>
-                                      j === ti ? { ...x, subtasks: x.subtasks.filter((_, k) => k !== si) } : x,
+                                      j === ti
+                                        ? { ...x, subtasks: x.subtasks.filter((_, k) => k !== si) }
+                                        : x,
                                     ),
                                   )
                                 }

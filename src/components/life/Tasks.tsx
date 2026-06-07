@@ -1,6 +1,14 @@
 import { useState } from "react";
 import {
-  Plus, Trash2, Pencil, MoreHorizontal, Download, Calendar, Flag, Link2, ChevronDown,
+  Plus,
+  Trash2,
+  Pencil,
+  MoreHorizontal,
+  Download,
+  Calendar,
+  Flag,
+  Link2,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,14 +17,21 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Popover, PopoverContent, PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAppData, type Task } from "@/lib/app-data";
 import { downloadICS } from "@/lib/calendar-export";
 
@@ -59,21 +74,35 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Edit task</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Edit task</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div>
             <Label>Title</Label>
-            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <Input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Due</Label>
-              <Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+              <Input
+                type="date"
+                value={form.dueDate}
+                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+              />
             </div>
             <div>
               <Label>Priority</Label>
-              <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as Task["priority"] })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.priority}
+                onValueChange={(v) => setForm({ ...form, priority: v as Task["priority"] })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
@@ -83,21 +112,33 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
             </div>
             <div>
               <Label>Started</Label>
-              <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+              <Input
+                type="date"
+                value={form.startDate}
+                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+              />
             </div>
             <div>
               <Label>Completed</Label>
-              <Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+              <Input
+                type="date"
+                value={form.endDate}
+                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+              />
             </div>
           </div>
           <div>
             <Label>Linked goal</Label>
             <Select value={form.goalId} onValueChange={(v) => setForm({ ...form, goalId: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No goal</SelectItem>
                 {goals.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.title}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -105,7 +146,9 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
           <div>
             <Label>Progress ({form.progress}%)</Label>
             <Input
-              type="range" min={0} max={100}
+              type="range"
+              min={0}
+              max={100}
               value={form.progress}
               onChange={(e) => setForm({ ...form, progress: Number(e.target.value) })}
             />
@@ -120,7 +163,9 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
             />
           </div>
         </div>
-        <DialogFooter><Button onClick={save}>Save</Button></DialogFooter>
+        <DialogFooter>
+          <Button onClick={save}>Save</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -133,7 +178,8 @@ function SubtasksPanel({ task }: { task: Task }) {
 
   const toggleSched = (id: string) => {
     const n = new Set(schedFor);
-    if (n.has(id)) n.delete(id); else n.add(id);
+    if (n.has(id)) n.delete(id);
+    else n.add(id);
     setSchedFor(n);
   };
 
@@ -169,14 +215,22 @@ function SubtasksPanel({ task }: { task: Task }) {
                 >
                   <Calendar className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => deleteSubtask(task.id, s.id)}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={() => deleteSubtask(task.id, s.id)}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </div>
               {open && (
                 <div className="mt-1.5 flex items-center gap-2 pl-7">
                   <Input
-                    type="number" step="0.5" min="0" placeholder="h/wk"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    placeholder="h/wk"
                     value={s.hoursPerWeek ?? ""}
                     onChange={(e) =>
                       updateSubtask(task.id, s.id, {
@@ -188,7 +242,9 @@ function SubtasksPanel({ task }: { task: Task }) {
                   <Input
                     type="date"
                     value={s.endDate ?? ""}
-                    onChange={(e) => updateSubtask(task.id, s.id, { endDate: e.target.value || undefined })}
+                    onChange={(e) =>
+                      updateSubtask(task.id, s.id, { endDate: e.target.value || undefined })
+                    }
                     className="h-7 flex-1 text-xs"
                   />
                 </div>
@@ -205,7 +261,9 @@ function SubtasksPanel({ task }: { task: Task }) {
           onKeyDown={(e) => e.key === "Enter" && add()}
           className="h-8 flex-1 text-sm"
         />
-        <Button size="sm" onClick={add}><Plus className="h-3.5 w-3.5" /></Button>
+        <Button size="sm" onClick={add}>
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
       </div>
     </div>
   );
@@ -244,7 +302,8 @@ function AddTaskBar() {
       <Popover>
         <PopoverTrigger asChild>
           <Button size="sm" variant="outline" className="h-9 shrink-0">
-            <ChevronDown className="mr-1 h-3.5 w-3.5" />Details
+            <ChevronDown className="mr-1 h-3.5 w-3.5" />
+            Details
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" className="w-64 space-y-2">
@@ -255,7 +314,9 @@ function AddTaskBar() {
           <div>
             <Label className="text-xs">Priority</Label>
             <Select value={priority} onValueChange={(v) => setPriority(v as Task["priority"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">Low</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
@@ -266,11 +327,15 @@ function AddTaskBar() {
           <div>
             <Label className="text-xs">Goal</Label>
             <Select value={goalId} onValueChange={setGoalId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">No goal</SelectItem>
                 {goals.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>{g.title}</SelectItem>
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.title}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -309,23 +374,31 @@ function TaskRow({ task }: { task: Task }) {
             onClick={() => setOpen((o) => !o)}
             className="min-w-0 flex-1 text-left"
           >
-            <div className={`truncate text-sm font-medium leading-snug ${task.done ? "line-through text-muted-foreground" : ""}`}>
+            <div
+              className={`truncate text-sm font-medium leading-snug ${task.done ? "line-through text-muted-foreground" : ""}`}
+            >
               {task.title}
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
               {task.dueDate && (
-                <span className={`inline-flex items-center gap-1 ${overdue ? "font-medium text-red-600" : ""}`}>
+                <span
+                  className={`inline-flex items-center gap-1 ${overdue ? "font-medium text-red-600" : ""}`}
+                >
                   <Calendar className="h-3 w-3" />
-                  {task.dueDate}{overdue ? " · overdue" : ""}
+                  {task.dueDate}
+                  {overdue ? " · overdue" : ""}
                 </span>
               )}
               {goal && (
                 <span className="inline-flex items-center gap-1 truncate">
-                  <Link2 className="h-3 w-3" />{goal.title}
+                  <Link2 className="h-3 w-3" />
+                  {goal.title}
                 </span>
               )}
               {task.subtasks.length > 0 && (
-                <span>{subDone}/{task.subtasks.length} sub</span>
+                <span>
+                  {subDone}/{task.subtasks.length} sub
+                </span>
               )}
               {hasProgress && <span>{task.progress}%</span>}
             </div>
@@ -394,7 +467,8 @@ export function Tasks() {
           20-min focus blocks. Sub-tasks with h/wk auto-schedule until end date.
         </p>
         <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={exportSchedule}>
-          <Download className="mr-1 h-3.5 w-3.5" />.ics
+          <Download className="mr-1 h-3.5 w-3.5" />
+          .ics
         </Button>
       </div>
 
@@ -403,12 +477,16 @@ export function Tasks() {
       </div>
 
       {sorted.length === 0 ? (
-        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
-          No tasks yet.
-        </CardContent></Card>
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            No tasks yet.
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-2.5">
-          {sorted.map((t) => <TaskRow key={t.id} task={t} />)}
+          {sorted.map((t) => (
+            <TaskRow key={t.id} task={t} />
+          ))}
         </div>
       )}
     </div>

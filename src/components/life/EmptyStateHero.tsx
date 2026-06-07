@@ -33,8 +33,7 @@ export function EmptyStateHero() {
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+            backgroundImage: "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
             backgroundSize: "14px 14px",
           }}
         />
@@ -46,12 +45,11 @@ export function EmptyStateHero() {
           {greeting}
         </div>
         <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-          A calm place for the life you{" "}
-          <span className="italic text-primary">want to build</span>
+          A calm place for the life you <span className="italic text-primary">want to build</span>
         </h1>
         <p className="mx-auto mt-3 max-w-md text-base text-muted-foreground">
-          Set meaningful goals, focus on today, and watch them grow on your
-          mind map. Begin in any way that feels right.
+          Set meaningful goals, focus on today, and watch them grow on your mind map. Begin in any
+          way that feels right.
         </p>
 
         <div className="mx-auto mt-7 grid max-w-2xl gap-3 sm:grid-cols-3">
@@ -93,9 +91,21 @@ export function EmptyStateHero() {
         </div>
 
         <div className="mx-auto mt-8 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
-          <Reason icon={<Compass className="h-4 w-4" />} title="Long-term clarity" body="One place for the goals that matter most." />
-          <Reason icon={<Sun className="h-4 w-4" />} title="Today's focus" body="See what to do today without the noise." />
-          <Reason icon={<Network className="h-4 w-4" />} title="Visual mind map" body="Watch your life take shape, branch by branch." />
+          <Reason
+            icon={<Compass className="h-4 w-4" />}
+            title="Long-term clarity"
+            body="One place for the goals that matter most."
+          />
+          <Reason
+            icon={<Sun className="h-4 w-4" />}
+            title="Today's focus"
+            body="See what to do today without the noise."
+          />
+          <Reason
+            icon={<Network className="h-4 w-4" />}
+            title="Visual mind map"
+            body="Watch your life take shape, branch by branch."
+          />
         </div>
       </div>
     </section>
@@ -130,28 +140,24 @@ function IntentCard({
       <span
         className={cn(
           "flex h-9 w-9 items-center justify-center rounded-xl",
-          primary ? "bg-primary-foreground/15 text-primary-foreground" : "bg-secondary/60 text-primary",
+          primary
+            ? "bg-primary-foreground/15 text-primary-foreground"
+            : "bg-secondary/60 text-primary",
         )}
       >
         {icon}
       </span>
       <span className="mt-1 text-sm font-semibold">{title}</span>
-      <span className={cn("text-xs", primary ? "text-primary-foreground/80" : "text-muted-foreground")}>
+      <span
+        className={cn("text-xs", primary ? "text-primary-foreground/80" : "text-muted-foreground")}
+      >
         {sub}
       </span>
     </button>
   );
 }
 
-function Reason({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-}) {
+function Reason({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
   return (
     <div className="flex gap-3 rounded-2xl border border-border/60 bg-card/60 p-3 backdrop-blur-sm">
       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-secondary/60 text-primary">

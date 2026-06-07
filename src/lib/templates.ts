@@ -61,7 +61,8 @@ export const TEMPLATES: GoalTemplate[] = [
     skillLabel: "Health",
     skillColor: "#ef4444",
     title: "Couch-to-5K running plan",
-    description: "Go from no running to a continuous 5K over 9 weeks of progressive interval training.",
+    description:
+      "Go from no running to a continuous 5K over 9 weeks of progressive interval training.",
     rationale:
       "Based on the NHS Couch-to-5K programme — progressive overload with rest days reliably builds aerobic base in beginners.",
     durationDays: 63,

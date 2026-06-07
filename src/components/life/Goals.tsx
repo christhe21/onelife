@@ -24,13 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  progressFor,
-  useAppData,
-  type GoalStatus,
-  type SkillId,
-  type Goal,
-} from "@/lib/app-data";
+import { progressFor, useAppData, type GoalStatus, type SkillId, type Goal } from "@/lib/app-data";
 
 const STATUS_LABEL: Record<GoalStatus, string> = {
   not_started: "Not started",
@@ -80,7 +74,10 @@ function GoalDialog({ goal, trigger }: GoalDialogProps) {
         <div className="space-y-3">
           <div>
             <Label>Title</Label>
-            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <Input
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+            />
           </div>
           <div>
             <Label>Description</Label>
@@ -96,10 +93,14 @@ function GoalDialog({ goal, trigger }: GoalDialogProps) {
                 value={form.skill}
                 onValueChange={(v) => setForm({ ...form, skill: v as SkillId })}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {skills.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -110,10 +111,14 @@ function GoalDialog({ goal, trigger }: GoalDialogProps) {
                 value={form.status}
                 onValueChange={(v) => setForm({ ...form, status: v as GoalStatus })}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {(Object.keys(STATUS_LABEL) as GoalStatus[]).map((s) => (
-                    <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {STATUS_LABEL[s]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -144,7 +149,8 @@ function GoalDialog({ goal, trigger }: GoalDialogProps) {
             />
           </div>
           <div className="rounded-md border bg-muted/40 p-2.5 text-xs text-muted-foreground">
-            Progress is auto-calculated from linked tasks (or milestones if no tasks). No manual input needed.
+            Progress is auto-calculated from linked tasks (or milestones if no tasks). No manual
+            input needed.
           </div>
         </div>
         <DialogFooter>
@@ -198,9 +204,7 @@ function Timeline({ goal }: { goal: Goal }) {
   return (
     <div className="mt-4">
       <div className="mb-1.5 flex items-center justify-between text-[11px]">
-        <span className="font-medium uppercase tracking-wider text-muted-foreground">
-          Timeline
-        </span>
+        <span className="font-medium uppercase tracking-wider text-muted-foreground">Timeline</span>
         <span
           className={
             overdue && goal.status !== "completed"
@@ -220,7 +224,10 @@ function Timeline({ goal }: { goal: Goal }) {
         </span>
       </div>
 
-      <div ref={trackRef} className="relative h-4 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50">
+      <div
+        ref={trackRef}
+        className="relative h-4 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50"
+      >
         <div
           className="h-full rounded-full transition-[width] duration-700 ease-out"
           style={{
@@ -304,7 +311,8 @@ function GoalCard({ goal }: { goal: Goal }) {
   const [subTitle, setSubTitle] = useState("");
   const [subDate, setSubDate] = useState("");
   const [quickTask, setQuickTask] = useState("");
-  const meta = skills.find((s) => s.id === goal.skill) ?? skills[0] ?? { label: goal.skill, color: "#10b981" };
+  const meta = skills.find((s) => s.id === goal.skill) ??
+    skills[0] ?? { label: goal.skill, color: "#10b981" };
   const pct = progressFor(goal, tasks);
   const subGoals = goal.subGoals ?? [];
 
@@ -334,24 +342,44 @@ function GoalCard({ goal }: { goal: Goal }) {
                 </Button>
               }
             />
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setExpanded((e) => !e)}>
-              {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={() => setExpanded((e) => !e)}
+            >
+              {expanded ? (
+                <ChevronUp className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+              )}
             </Button>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => deleteGoal(goal.id)}>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={() => deleteGoal(goal.id)}
+            >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          <Badge variant="secondary" className="text-[10px]">{meta.label}</Badge>
+          <Badge variant="secondary" className="text-[10px]">
+            {meta.label}
+          </Badge>
           <Select
             value={goal.status}
             onValueChange={(v) => updateGoal(goal.id, { status: v as GoalStatus })}
           >
-            <SelectTrigger className="h-6 w-auto min-w-0 px-2 text-[11px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-6 w-auto min-w-0 px-2 text-[11px]">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               {(Object.keys(STATUS_LABEL) as GoalStatus[]).map((s) => (
-                <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>
+                <SelectItem key={s} value={s}>
+                  {STATUS_LABEL[s]}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -390,13 +418,19 @@ function GoalCard({ goal }: { goal: Goal }) {
                       checked={s.done}
                       onCheckedChange={() => toggleSubGoal(goal.id, s.id)}
                     />
-                    <span className={`flex-1 text-sm ${s.done ? "line-through text-muted-foreground" : ""}`}>
+                    <span
+                      className={`flex-1 text-sm ${s.done ? "line-through text-muted-foreground" : ""}`}
+                    >
                       {s.title}
                     </span>
                     {s.targetDate && (
                       <span className="text-xs text-muted-foreground">{s.targetDate}</span>
                     )}
-                    <Button size="icon" variant="ghost" onClick={() => deleteSubGoal(goal.id, s.id)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => deleteSubGoal(goal.id, s.id)}
+                    >
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -475,11 +509,15 @@ export function Goals() {
         <div className="flex items-center gap-2">
           <Label className="text-sm">Filter:</Label>
           <Select value={filter} onValueChange={(v) => setFilter(v as SkillId | "all")}>
-            <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All skills</SelectItem>
               {skills.map((s) => (
-                <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -487,12 +525,16 @@ export function Goals() {
         <NewGoalButton label="New goal" />
       </div>
       {filtered.length === 0 ? (
-        <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">
-          No goals yet. Create your first one.
-        </CardContent></Card>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No goals yet. Create your first one.
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((g) => <GoalCard key={g.id} goal={g} />)}
+          {filtered.map((g) => (
+            <GoalCard key={g.id} goal={g} />
+          ))}
         </div>
       )}
     </div>

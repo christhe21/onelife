@@ -9,7 +9,7 @@
   3. Ring radius per depth grows with the max node box at that depth:
      `R(d) = R(d-1) + maxHalfH(d-1) + maxHalfH(d) + GAP`, where `GAP = 60`.
   4. Tangential spacing constraint: required arc length per child = `2 * halfW(c) + GAP`. If `R(d) * sweep < required`, push the ring outward by `required / sweep` (so siblings never overlap even when many short children share a small sector).
-  This guarantees no two siblings collide at the same depth, and no parent collides with its children.
+     This guarantees no two siblings collide at the same depth, and no parent collides with its children.
 - Keep drag-to-rearrange, but the auto layout (seed positions) becomes the formula above instead of the current fixed `RING`.
 
 ## 2. Goals section (`src/components/life/Goals.tsx`, `src/lib/app-data.tsx`)
@@ -24,7 +24,7 @@
 ## 3. In-progress promotion + timeline color + milestone popover
 
 - **Auto-promote** in `app-data.tsx`:
-  - `toggleTask` and `toggleSubtask`: if the parent goal's `status === "not_started"`, set it to `"in_progress"` the first time *any* task or subtask under it is toggled (done or in-flight). The existing `promoteGoal` helper already exists for the "first completion" case — broaden it to also fire when an item is first checked or when a scheduled block is created.
+  - `toggleTask` and `toggleSubtask`: if the parent goal's `status === "not_started"`, set it to `"in_progress"` the first time _any_ task or subtask under it is toggled (done or in-flight). The existing `promoteGoal` helper already exists for the "first completion" case — broaden it to also fire when an item is first checked or when a scheduled block is created.
   - Same when a sub-goal is toggled.
 - **Timeline color reflects status** (`Goals.tsx` `Timeline`):
   - `not_started` → grey track + grey fill (`bg-muted` / `oklch(0.75 0.02 250)`), no glow.

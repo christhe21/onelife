@@ -1,10 +1,31 @@
 import { useState, type ReactNode } from "react";
-import { LayoutDashboard, Target, ListChecks, Sparkles, Menu, X, Palette, Network, CalendarCheck, CalendarDays, Settings as SettingsIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  Target,
+  ListChecks,
+  Sparkles,
+  Menu,
+  X,
+  Palette,
+  Network,
+  CalendarCheck,
+  CalendarDays,
+  Settings as SettingsIcon,
+} from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export type TabId = "dashboard" | "today" | "calendar" | "overview" | "goals" | "tasks" | "bucket" | "skills" | "settings";
+export type TabId =
+  | "dashboard"
+  | "today"
+  | "calendar"
+  | "overview"
+  | "goals"
+  | "tasks"
+  | "bucket"
+  | "skills"
+  | "settings";
 
 const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Overview & progress" },
@@ -183,7 +204,9 @@ function NavButton({
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
-      <Icon className={cn("h-4 w-4", active ? "" : "text-muted-foreground group-hover:text-foreground")} />
+      <Icon
+        className={cn("h-4 w-4", active ? "" : "text-muted-foreground group-hover:text-foreground")}
+      />
       <span className="flex-1 text-left">{item.label}</span>
       {count !== undefined && count > 0 && (
         <span

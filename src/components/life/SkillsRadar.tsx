@@ -41,42 +41,42 @@ export function SkillsRadar() {
           {hasData ? (
             <ClientOnly fallback={<div className="h-full" />}>
               <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={data} outerRadius="78%">
-                <defs>
-                  <radialGradient id="radarFill" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
-                  </radialGradient>
-                </defs>
-                <PolarGrid stroke="hsl(var(--border))" />
-                <PolarAngleAxis
-                  dataKey="skill"
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                />
-                <PolarRadiusAxis
-                  angle={90}
-                  domain={[0, 100]}
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
-                  stroke="hsl(var(--border))"
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--popover))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                  formatter={(v: number) => [`${v}%`, "Progress"]}
-                />
-                <Radar
-                  name="Progress"
-                  dataKey="value"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fill="url(#radarFill)"
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+                <RadarChart data={data} outerRadius="78%">
+                  <defs>
+                    <radialGradient id="radarFill" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+                    </radialGradient>
+                  </defs>
+                  <PolarGrid stroke="hsl(var(--border))" />
+                  <PolarAngleAxis
+                    dataKey="skill"
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  />
+                  <PolarRadiusAxis
+                    angle={90}
+                    domain={[0, 100]}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                    stroke="hsl(var(--border))"
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 8,
+                      fontSize: 12,
+                    }}
+                    formatter={(v: number) => [`${v}%`, "Progress"]}
+                  />
+                  <Radar
+                    name="Progress"
+                    dataKey="value"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    fill="url(#radarFill)"
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
             </ClientOnly>
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">

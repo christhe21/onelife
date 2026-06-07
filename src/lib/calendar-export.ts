@@ -2,10 +2,11 @@ import type { Task } from "@/lib/app-data";
 
 const BLOCK_MINUTES = 20;
 const DAY_START_HOUR = 9; // 09:00
-const DAY_END_HOUR = 18;  // 18:00 — fits weekdays + weekends per user
+const DAY_END_HOUR = 18; // 18:00 — fits weekdays + weekends per user
 
-
-function pad(n: number) { return String(n).padStart(2, "0"); }
+function pad(n: number) {
+  return String(n).padStart(2, "0");
+}
 function fmtICS(d: Date) {
   return (
     d.getUTCFullYear().toString() +
@@ -18,12 +19,20 @@ function fmtICS(d: Date) {
   );
 }
 
-interface Block { title: string; start: Date; end: Date; description?: string; }
+interface Block {
+  title: string;
+  start: Date;
+  end: Date;
+  description?: string;
+}
 
 function nextSlot(cursor: Date): Date {
   // Move to next free 20-min slot in the work window [9:00, 18:00]
   const d = new Date(cursor);
-  if (d.getHours() >= DAY_END_HOUR || (d.getHours() === DAY_END_HOUR - 1 && d.getMinutes() >= 60 - BLOCK_MINUTES + 1)) {
+  if (
+    d.getHours() >= DAY_END_HOUR ||
+    (d.getHours() === DAY_END_HOUR - 1 && d.getMinutes() >= 60 - BLOCK_MINUTES + 1)
+  ) {
     d.setDate(d.getDate() + 1);
     d.setHours(DAY_START_HOUR, 0, 0, 0);
   } else if (d.getHours() < DAY_START_HOUR) {
@@ -32,7 +41,13 @@ function nextSlot(cursor: Date): Date {
   return d;
 }
 
-function addBlocks(cursor: Date, count: number, title: string, description: string, dueDate?: Date): { blocks: Block[]; cursor: Date } {
+function addBlocks(
+  cursor: Date,
+  count: number,
+  title: string,
+  description: string,
+  dueDate?: Date,
+): { blocks: Block[]; cursor: Date } {
   const blocks: Block[] = [];
   let cur = nextSlot(new Date(cursor));
   for (let i = 0; i < count; i++) {
@@ -78,7 +93,9 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
         const hpw = st.hoursPerWeek ?? 1;
         const blocksPerWeek = Math.max(1, Math.round(hpw * (60 / BLOCK_MINUTES)));
         // total weeks from now → end
-        const weeks = end ? Math.max(1, Math.ceil((end.getTime() - cursor.getTime()) / (7 * 86400000))) : 4;
+        const weeks = end
+          ? Math.max(1, Math.ceil((end.getTime() - cursor.getTime()) / (7 * 86400000)))
+          : 4;
         for (let w = 0; w < weeks; w++) {
           const weekEnd = new Date(cursor);
           weekEnd.setDate(weekEnd.getDate() + 7);

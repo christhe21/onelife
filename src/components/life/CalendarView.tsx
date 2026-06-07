@@ -168,21 +168,44 @@ export function CalendarView() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-md border bg-background">
-              <Button size="icon" variant="ghost" className="h-8 w-8 rounded-r-none" onClick={goPrev} aria-label="Previous">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 rounded-r-none"
+                onClick={goPrev}
+                aria-label="Previous"
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button size="sm" variant="ghost" className="h-8 rounded-none border-x" onClick={goToday}>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 rounded-none border-x"
+                onClick={goToday}
+              >
                 Today
               </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8 rounded-l-none" onClick={goNext} aria-label="Next">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 rounded-l-none"
+                onClick={goNext}
+                aria-label="Next"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
             <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
               <TabsList className="h-8">
-                <TabsTrigger value="month" className="text-xs">Month</TabsTrigger>
-                <TabsTrigger value="week" className="text-xs">Week</TabsTrigger>
-                <TabsTrigger value="day" className="text-xs">Day</TabsTrigger>
+                <TabsTrigger value="month" className="text-xs">
+                  Month
+                </TabsTrigger>
+                <TabsTrigger value="week" className="text-xs">
+                  Week
+                </TabsTrigger>
+                <TabsTrigger value="day" className="text-xs">
+                  Day
+                </TabsTrigger>
               </TabsList>
             </Tabs>
             <Button size="sm" onClick={() => openAdd(cursor)} className="h-8">
@@ -212,7 +235,11 @@ export function CalendarView() {
         </CardContent>
       </Card>
 
-      <AddToScheduleDialog open={dialogOpen} onOpenChange={setDialogOpen} defaultDate={dialogDate} />
+      <AddToScheduleDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        defaultDate={dialogDate}
+      />
     </div>
   );
 }
@@ -247,7 +274,9 @@ function MonthGrid({
     <div>
       <div className="grid grid-cols-7 border-b text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {weekdays.map((d, i) => (
-          <div key={i} className="py-2">{d}</div>
+          <div key={i} className="py-2">
+            {d}
+          </div>
         ))}
       </div>
       <div className="grid grid-cols-7">
@@ -287,7 +316,9 @@ function MonthGrid({
                       />
                     ))}
                     {dayEvents.length > 4 && (
-                      <span className="text-[9px] text-muted-foreground">+{dayEvents.length - 4}</span>
+                      <span className="text-[9px] text-muted-foreground">
+                        +{dayEvents.length - 4}
+                      </span>
                     )}
                   </div>
                 )
@@ -383,11 +414,18 @@ function WeekGrid({
               return (
                 <div key={i} className="relative border-l">
                   {HOURS.map((h) => (
-                    <div key={h} className="border-t border-border/60" style={{ height: HOUR_PX }} />
+                    <div
+                      key={h}
+                      className="border-t border-border/60"
+                      style={{ height: HOUR_PX }}
+                    />
                   ))}
                   {dayEvents.map((e) => {
                     const startH = e.start.getHours() + e.start.getMinutes() / 60;
-                    const endH = Math.max(startH + 0.25, e.end.getHours() + e.end.getMinutes() / 60);
+                    const endH = Math.max(
+                      startH + 0.25,
+                      e.end.getHours() + e.end.getMinutes() / 60,
+                    );
                     const top = (startH - baseHour) * HOUR_PX;
                     const height = Math.max(20, (endH - startH) * HOUR_PX - 2);
                     return (
@@ -442,7 +480,15 @@ function DayGrid({ cursor, events }: { cursor: Date; events: Event[] }) {
         <div className="pointer-events-none absolute inset-0 pl-12 pr-2">
           {events.length === 0 && (
             <div className="pointer-events-auto absolute inset-x-2 top-4 rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
-              Nothing scheduled for {isToday ? "today" : cursor.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}.
+              Nothing scheduled for{" "}
+              {isToday
+                ? "today"
+                : cursor.toLocaleDateString(undefined, {
+                    weekday: "long",
+                    month: "short",
+                    day: "numeric",
+                  })}
+              .
             </div>
           )}
           {events.map((e) => {
@@ -461,7 +507,9 @@ function DayGrid({ cursor, events }: { cursor: Date; events: Event[] }) {
               >
                 <div className="flex items-center gap-1.5">
                   {e.isSub && (
-                    <Badge variant="outline" className="px-1 py-0 text-[9px]">sub</Badge>
+                    <Badge variant="outline" className="px-1 py-0 text-[9px]">
+                      sub
+                    </Badge>
                   )}
                   <span className="min-w-0 flex-1 truncate font-medium">{e.title}</span>
                 </div>
