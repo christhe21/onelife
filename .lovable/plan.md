@@ -1,46 +1,56 @@
-## 1. Mindmap (`src/components/life/MindMapCanvas.tsx`)
+# Plan
 
-- **Remove borders**: drop `stroke` from every shape (set `strokeWidth: 0`); rely on a soft drop-shadow for separation. Hover state becomes a slight scale/shadow bump instead of a thicker stroke.
-- **Brighter palette**: swap the cool-mist palette for a brighter, more saturated set, e.g.
-  `#A5B4FC` (indigo), `#7DD3FC` (sky), `#5EEAD4` (teal), `#C4B5FD` (violet), `#FCA5A5` (rose), `#FDE68A` (amber), `#86EFAC` (green), `#F0ABFC` (fuchsia). Root gets a stronger tint.
-- **Non-overlap layout via a deterministic formula**: replace the current `RING.*` constants and per-level "sector half" math with a per-node radius computed from the actual subtree size. For every node:
-  1. Compute its angular footprint: `leafCount(node)` recursively (subtask=1; collapsed=1).
-  2. Allocate angles proportionally to leaf count (Reingold–Tilford-style radial layout). For each parent with subtree size `T`, each child `c` gets sweep `2π * leafCount(c)/T` (or sector size at deeper levels).
-  3. Ring radius per depth grows with the max node box at that depth:
-     `R(d) = R(d-1) + maxHalfH(d-1) + maxHalfH(d) + GAP`, where `GAP = 60`.
-  4. Tangential spacing constraint: required arc length per child = `2 * halfW(c) + GAP`. If `R(d) * sweep < required`, push the ring outward by `required / sweep` (so siblings never overlap even when many short children share a small sector).
-     This guarantees no two siblings collide at the same depth, and no parent collides with its children.
-- Keep drag-to-rearrange, but the auto layout (seed positions) becomes the formula above instead of the current fixed `RING`.
+## 1. Confirm-delete dialog for goals
 
-## 2. Goals section (`src/components/life/Goals.tsx`, `src/lib/app-data.tsx`)
+In `src/components/life/Goals.tsx`, wrap the goal delete trash button (line ~376) with an `AlertDialog` from `@/components/ui/alert-dialog`.
 
-- **Remove the milestone progress bar** (`SkillProgress` line `<SkillProgress value={pct} … />` in `GoalCard`). Keep only the `Timeline` component beneath the header. Milestone count badge stays in the header chip row.
-- **UI specialist sanity check on the timeline**: keep the horizontal track + dots + "today" pin (that pattern is the conventional best fit for a date-bounded goal with milestones — superior to a Gantt for a card). Tighten spacing now that the bar is gone: increase track height from `h-3` to `h-4`, give the start/end date labels a bit more contrast, and label dots with a small tooltip on hover (lead-in to item 3).
-- **Cascading close** in `app-data.tsx`:
-  - `toggleSubGoal`: when a sub-goal flips to `done: true`, also mark every task with `goalId == goal.id` that is tagged to this milestone as `done`, and all of their subtasks `done`. (Today tasks are linked to a goal, not directly to a sub-goal — so the scope is "all tasks under this goal whose `dueDate <= subGoal.targetDate` and still open". We'll add an explicit `subGoalId?: string` field to `Task` so the cascade is precise; existing tasks keep working because the field is optional.)
-  - `toggleTask`: when a task flips to `done: true`, set every subtask to `done: true` in the same update. When it flips back to `done: false`, leave subtasks alone (only close cascades, never auto-reopen).
-  - Hours-spent accumulation that already runs on `toggleTask` / `toggleSubtask` keeps working; cascaded completions also bump `spentHours` once per item.
+- Title: "Delete this goal?"
+- Description: "This will permanently remove the goal, its milestones, tasks and scheduled blocks. This can't be undone."
+- Actions: **Cancel** (secondary) and **Delete goal** (destructive variant) → calls `deleteGoal(goal.id)`.
+- Apply the same pattern to the inner trash button at line ~449 (sub-goal / milestone delete) for consistency — title "Delete this milestone?".
 
-## 3. In-progress promotion + timeline color + milestone popover
+No business-logic changes — `deleteGoal` in `app-data.tsx` stays the same.
 
-- **Auto-promote** in `app-data.tsx`:
-  - `toggleTask` and `toggleSubtask`: if the parent goal's `status === "not_started"`, set it to `"in_progress"` the first time _any_ task or subtask under it is toggled (done or in-flight). The existing `promoteGoal` helper already exists for the "first completion" case — broaden it to also fire when an item is first checked or when a scheduled block is created.
-  - Same when a sub-goal is toggled.
-- **Timeline color reflects status** (`Goals.tsx` `Timeline`):
-  - `not_started` → grey track + grey fill (`bg-muted` / `oklch(0.75 0.02 250)`), no glow.
-  - `in_progress` → bright green gradient (`oklch(0.7 0.18 150) → oklch(0.82 0.16 150)`) with the existing glow. Overrides "due soon / overdue" tinting only when status is `not_started`; if `in_progress` we keep green but layer the overdue/due-soon pill on top.
-  - `completed` → solid muted green, 100% fill.
-- **Milestone dot popover**: convert each dot in `Timeline` from a bare `<div title>` into a Radix Popover (or a controlled lightweight tooltip) that opens on click, showing `{title} · {targetDate} · {done ? "Done" : "Open"}`. Auto-dismiss after 3.5s via `setTimeout`, and also dismiss on outside click (Popover handles outside-click natively). Same treatment for the "you are here" / decade dots in `LifeTimeline.tsx` so milestones in the life canvas behave identically.
+## 2. New Welcome / Home screen
 
-## Technical notes
+Replace the current behavior in `src/routes/index.tsx` where `!settings.onboardedAt` immediately renders `<Onboarding />`. Instead, render a new `<Welcome />` screen as the default landing for **every** user (onboarded or not).
 
-- New field: `Task.subGoalId?: string` (optional, normalized in `normalizeTask`, included in `TEMPLATE_PAYLOAD` and `AI_SYSTEM_PROMPT`). Goals UI gets a small "milestone" select on the task quick-add so the cascade has something to bite on; absent that, the cascade falls back to all open tasks under the goal.
-- Mindmap layout formula is pure (no state); seeds are recomputed in the existing `useMemo`. Stored user-dragged positions in `localStorage` still win over computed seeds.
-- No backend / data-model migrations beyond the optional `subGoalId` field; existing saved JSON keeps loading.
+### New file: `src/components/life/Welcome.tsx`
+
+A marketing-style intro screen, mobile-first, no app chrome. Sections:
+
+1. **Hero** — Sparkles logo, "Life Manager", tagline ("Plan your life like you plan your week").
+2. **What it is** — one short paragraph explaining the app.
+3. **What's inside** — 5 feature cards with icon + title + 1-line description:
+   - **Skills** — life areas (Career, Health, Faith…) that color-code everything.
+   - **Goals** — meaningful outcomes with a target date.
+   - **Milestones (sub-goals)** — checkpoints on the way to a goal.
+   - **Tasks & sub-tasks** — concrete actions you tick off.
+   - **Today & Calendar** — schedule blocks and see your day.
+4. **CTAs** — two buttons:
+   - **Start onboarding** → opens the existing `<Onboarding />` flow.
+   - **Go to dashboard** → enters the app shell directly (skips onboarding; if user is not yet onboarded, sets `settings.onboardedAt` to "skipped" so the Welcome screen still remains the front door but the app no longer redirects).
+
+### Routing / state changes in `src/routes/index.tsx`
+
+- Add new local state: `view: "welcome" | "onboarding" | "app"`, default `"welcome"`.
+- Remove the `if (!settings.onboardedAt) return <Onboarding />` gate.
+- Render:
+  - `view === "welcome"` → `<Welcome onOnboard={() => setView("onboarding")} onDashboard={() => setView("app")} />`
+  - `view === "onboarding"` → `<Onboarding />` (when its finish handler fires, set `view = "app"`).
+  - `view === "app"` → existing `<AppShell>` tree.
+- Add a "Home" entry point: a small Home icon button in `AppShell`'s header (or a new tab) that sets `view` back to `"welcome"`, so the user can revisit it.
+
+### Onboarding finish hook
+
+`Onboarding`'s `finish()` currently only writes `settings.onboardedAt`. Add an optional `onFinish?: () => void` prop so `index.tsx` can flip `view` to `"app"` after onboarding completes (also call it from "Skip setup").
 
 ## Files touched
 
-- `src/components/life/MindMapCanvas.tsx` — borders, palette, radial layout formula.
-- `src/components/life/Goals.tsx` — remove progress bar, status-driven timeline color, milestone popover, optional milestone select on task add.
-- `src/components/life/LifeTimeline.tsx` — dot popover parity.
-- `src/lib/app-data.tsx` — cascading close in `toggleSubGoal` / `toggleTask`, broader auto-promotion in `toggleTask` / `toggleSubtask`, `Task.subGoalId` field + normalizer + template/system-prompt updates.
+- `src/components/life/Goals.tsx` — wrap two trash buttons with `AlertDialog`.
+- `src/components/life/Welcome.tsx` — new file.
+- `src/components/life/Onboarding.tsx` — add optional `onFinish` prop, call it from `finish()` and the Skip button.
+- `src/routes/index.tsx` — add `view` state, render Welcome by default, route between Welcome / Onboarding / App.
+- `src/components/life/AppShell.tsx` — add a small "Home" button that calls a passed-in `onHome` prop (wired from `index.tsx`).
+
+No data-model changes, no migrations.
