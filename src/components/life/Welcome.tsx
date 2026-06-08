@@ -7,6 +7,9 @@ import {
   Palette,
   ArrowRight,
   LayoutDashboard,
+  PlayCircle,
+  Stars,
+  Compass
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
@@ -42,75 +45,75 @@ export function Welcome() {
       <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-16">
         {/* Hero */}
         <div className="text-center">
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-fuchsia-500 text-primary-foreground shadow-xl shadow-primary/30 ring-1 ring-white/20">
-            <Sparkles className="h-7 w-7" />
+          <div className="mx-auto mb-6 flex justify-center gap-2 text-primary/40">
+            <Sparkles className="h-6 w-6 -rotate-12" />
+            <Compass className="h-8 w-8 text-primary/60" />
+            <Stars className="h-6 w-6 rotate-12" />
           </div>
-          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            Welcome to{" "}
-            <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
-              Life Manager
-            </span>
+          <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl text-foreground">
+            Your life, one dashboard.
           </h1>
-          <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground sm:text-base">
+          <p className="mx-auto mt-4 max-w-md text-sm text-muted-foreground sm:text-base">
             Plan your life like you plan your week. Organize what matters into skills, goals,
             milestones, and tasks — then actually do them.
           </p>
         </div>
 
-        {/* What it is */}
-        <div className="mt-8 rounded-2xl border bg-card/60 p-4 text-sm leading-relaxed text-muted-foreground sm:p-5">
-          Life Manager is a personal workspace that keeps your long-term goals connected to your
-          daily schedule. Pick the areas of life that matter, set goals with target dates, break
-          them into milestones and tasks, and track progress over time.
-        </div>
-
         {/* Features */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {FEATURES.map((f) => (
-            <div key={f.title} className="flex items-start gap-3 rounded-xl border bg-card p-3.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <f.icon className="h-4 w-4" />
+            <div key={f.title} className="flex flex-col gap-2 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <f.icon className="h-5 w-5" />
               </div>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold">{f.title}</div>
-                <div className="text-xs text-muted-foreground">{f.desc}</div>
+              <div className="mt-1">
+                <div className="text-sm font-semibold text-foreground">{f.title}</div>
+                <div className="mt-1 text-xs text-muted-foreground leading-relaxed">{f.desc}</div>
               </div>
             </div>
           ))}
         </div>
 
+        {/* Video Placeholder */}
+        <div className="mt-8 overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <div className="flex aspect-video w-full flex-col items-center justify-center bg-muted/30 p-6 text-center">
+            <PlayCircle className="mb-3 h-10 w-10 text-primary/40" />
+            <h3 className="font-medium text-foreground">See how it works</h3>
+            <p className="mt-1 text-xs text-muted-foreground max-w-[250px]">
+              Watch a quick 2-minute walkthrough on how to set your first goals and start tracking progress.
+            </p>
+          </div>
+        </div>
+
         {/* CTAs */}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-10 flex flex-col items-center gap-4">
           <Button
             size="lg"
             onClick={() => navigate({ to: "/", search: { onboarding: 1 } })}
-            className="h-12 rounded-full px-6 shadow-lg shadow-primary/30 sm:min-w-[200px]"
+            className="w-full h-14 rounded-full px-8 shadow-xl shadow-primary/20 text-base font-medium bg-primary hover:bg-primary/90 text-primary-foreground sm:max-w-md"
           >
-            <Sparkles className="mr-2 h-4 w-4" />
+            <Sparkles className="mr-2 h-5 w-5" />
             {hasOnboarded ? "Redo onboarding" : "Start onboarding"}
           </Button>
-          <Button
-            size="lg"
-            variant="outline"
+
+          <button
             onClick={() => {
               if (!hasOnboarded) {
                 updateSettings({ onboardedAt: "skipped" });
               }
               navigate({ to: "/", search: {} });
             }}
-            className="h-12 rounded-full px-6 sm:min-w-[200px]"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2"
           >
-            <LayoutDashboard className="mr-2 h-4 w-4" />
-            Go to dashboard
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+            Skip onboarding
+          </button>
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          {hasOnboarded
-            ? "You can jump straight back into your workspace."
-            : "Not sure yet? Skip onboarding and explore the dashboard first."}
-        </p>
+        {hasOnboarded && (
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            You can jump straight back into your workspace.
+          </p>
+        )}
       </div>
     </div>
   );
