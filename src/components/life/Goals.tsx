@@ -25,6 +25,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { progressFor, useAppData, type GoalStatus, type SkillId, type Goal } from "@/lib/app-data";
 
 const STATUS_LABEL: Record<GoalStatus, string> = {
@@ -369,14 +380,31 @@ function GoalCard({ goal }: { goal: Goal }) {
                 <ChevronDown className="h-3.5 w-3.5" />
               )}
             </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7"
-              onClick={() => deleteGoal(goal.id)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-7 w-7" title="Delete goal">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently remove &quot;{goal.title}&quot; along with its
+                    milestones, tasks and scheduled blocks. This can&apos;t be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => deleteGoal(goal.id)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete goal
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -441,13 +469,31 @@ function GoalCard({ goal }: { goal: Goal }) {
                     {s.targetDate && (
                       <span className="text-xs text-muted-foreground">{s.targetDate}</span>
                     )}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => deleteSubGoal(goal.id, s.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" title="Delete milestone">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this milestone?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            &quot;{s.title}&quot; will be removed from this goal. This can&apos;t
+                            be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteSubGoal(goal.id, s.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete milestone
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 ))}
                 {subGoals.length === 0 && (
