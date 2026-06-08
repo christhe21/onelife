@@ -850,6 +850,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       } catch {
         /* ignore */
       }
+      window.location.href = "/home";
     },
   };
 

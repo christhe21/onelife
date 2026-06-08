@@ -390,8 +390,8 @@ function GoalCard({ goal }: { goal: Goal }) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently remove &quot;{goal.title}&quot; along with its
-                    milestones, tasks and scheduled blocks. This can&apos;t be undone.
+                    This will permanently remove &quot;{goal.title}&quot; along with its milestones,
+                    tasks and scheduled blocks. This can&apos;t be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -479,8 +479,8 @@ function GoalCard({ goal }: { goal: Goal }) {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete this milestone?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            &quot;{s.title}&quot; will be removed from this goal. This can&apos;t
-                            be undone.
+                            &quot;{s.title}&quot; will be removed from this goal. This can&apos;t be
+                            undone.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

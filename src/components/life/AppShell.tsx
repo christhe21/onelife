@@ -96,13 +96,7 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
                 <p className="truncate text-xs text-muted-foreground">{active.hint}</p>
               </div>
               {onHome && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={onHome}
-                  aria-label="Home"
-                  title="Home"
-                >
+                <Button size="icon" variant="ghost" onClick={onHome} aria-label="Home" title="Home">
                   <Home className="h-5 w-5" />
                 </Button>
               )}

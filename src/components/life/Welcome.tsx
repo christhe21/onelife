@@ -1,22 +1,40 @@
-import { Sparkles, Target, Flag, ListChecks, CalendarCheck, Palette, ArrowRight, LayoutDashboard } from "lucide-react";
+import {
+  Sparkles,
+  Target,
+  Flag,
+  ListChecks,
+  CalendarCheck,
+  Palette,
+  ArrowRight,
+  LayoutDashboard,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
-
-interface Props {
-  onOnboard: () => void;
-  onDashboard: () => void;
-}
+import { useNavigate } from "@tanstack/react-router";
 
 const FEATURES = [
-  { icon: Palette, title: "Skills", desc: "Life areas like Career, Health and Faith that color-code everything." },
+  {
+    icon: Palette,
+    title: "Skills",
+    desc: "Life areas like Career, Health and Faith that color-code everything.",
+  },
   { icon: Target, title: "Goals", desc: "Meaningful outcomes with a clear target date." },
   { icon: Flag, title: "Milestones", desc: "Sub-goals — checkpoints on the way to a goal." },
-  { icon: ListChecks, title: "Tasks & sub-tasks", desc: "Concrete actions you tick off as you go." },
-  { icon: CalendarCheck, title: "Today & Calendar", desc: "Schedule blocks and see your day at a glance." },
+  {
+    icon: ListChecks,
+    title: "Tasks & sub-tasks",
+    desc: "Concrete actions you tick off as you go.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Today & Calendar",
+    desc: "Schedule blocks and see your day at a glance.",
+  },
 ];
 
-export function Welcome({ onOnboard, onDashboard }: Props) {
-  const { settings } = useAppData();
+export function Welcome() {
+  const { settings, updateSettings } = useAppData();
+  const navigate = useNavigate();
   const hasOnboarded = !!settings.onboardedAt;
 
   return (
@@ -65,7 +83,7 @@ export function Welcome({ onOnboard, onDashboard }: Props) {
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button
             size="lg"
-            onClick={onOnboard}
+            onClick={() => navigate({ to: "/", search: { onboarding: 1 } })}
             className="h-12 rounded-full px-6 shadow-lg shadow-primary/30 sm:min-w-[200px]"
           >
             <Sparkles className="mr-2 h-4 w-4" />
@@ -74,7 +92,12 @@ export function Welcome({ onOnboard, onDashboard }: Props) {
           <Button
             size="lg"
             variant="outline"
-            onClick={onDashboard}
+            onClick={() => {
+              if (!hasOnboarded) {
+                updateSettings({ onboardedAt: "skipped" });
+              }
+              navigate({ to: "/", search: {} });
+            }}
             className="h-12 rounded-full px-6 sm:min-w-[200px]"
           >
             <LayoutDashboard className="mr-2 h-4 w-4" />
