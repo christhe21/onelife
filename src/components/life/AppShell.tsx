@@ -10,6 +10,7 @@ import {
   Network,
   CalendarCheck,
   CalendarDays,
+  Home,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
@@ -44,9 +45,10 @@ interface Props {
   onTab: (t: TabId) => void;
   children: ReactNode;
   stats: { goals: number; tasks: number; bucket: number };
+  onHome?: () => void;
 }
 
-export function AppShell({ tab, onTab, children, stats }: Props) {
+export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const active = NAV.find((n) => n.id === tab)!;
 
@@ -93,6 +95,17 @@ export function AppShell({ tab, onTab, children, stats }: Props) {
                 </div>
                 <p className="truncate text-xs text-muted-foreground">{active.hint}</p>
               </div>
+              {onHome && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={onHome}
+                  aria-label="Home"
+                  title="Home"
+                >
+                  <Home className="h-5 w-5" />
+                </Button>
+              )}
               <ExportImport />
             </div>
           </header>

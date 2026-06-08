@@ -65,7 +65,7 @@ function addDays(base: Date, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function Onboarding() {
+export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
   const { addSkill, addGoal, addSubGoal, addTask, updateSettings, skills } = useAppData();
   const [step, setStep] = useState<Step>("welcome");
   const [name, setName] = useState("");
@@ -91,6 +91,7 @@ export function Onboarding() {
   const finish = () => {
     if (name.trim()) updateSettings({ userName: name.trim() });
     updateSettings({ onboardedAt: new Date().toISOString() });
+    onFinish?.();
   };
 
   const handleAreasNext = () => {

@@ -12,6 +12,7 @@ import { Skills } from "@/components/life/Skills";
 import { DueBanner } from "@/components/life/DueBanner";
 import { Overview } from "@/components/life/Overview";
 import { Onboarding } from "@/components/life/Onboarding";
+import { Welcome } from "@/components/life/Welcome";
 import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
@@ -39,9 +40,12 @@ function Index() {
   );
 }
 
+type View = "welcome" | "onboarding" | "app";
+
 function Shell() {
+  const [view, setView] = useState<View>("welcome");
   const [tab, setTab] = useState<TabId>("dashboard");
-  const { goals, tasks, bucketList, settings } = useAppData();
+  const { goals, tasks, bucketList } = useAppData();
   useAppSettingsEffects();
   const stats = {
     goals: goals.filter((g) => g.status !== "completed").length,
@@ -49,12 +53,21 @@ function Shell() {
     bucket: bucketList.filter((b) => !b.achieved).length,
   };
 
-  if (!settings.onboardedAt) {
-    return <Onboarding />;
+  if (view === "welcome") {
+    return (
+      <Welcome
+        onOnboard={() => setView("onboarding")}
+        onDashboard={() => setView("app")}
+      />
+    );
+  }
+
+  if (view === "onboarding") {
+    return <Onboarding onFinish={() => setView("app")} />;
   }
 
   return (
-    <AppShell tab={tab} onTab={setTab} stats={stats}>
+    <AppShell tab={tab} onTab={setTab} stats={stats} onHome={() => setView("welcome")}>
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
       {tab === "today" && (
