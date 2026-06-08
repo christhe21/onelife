@@ -5,6 +5,42 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Plus, CalendarDays } from "lucide-react";
 import { useAppData, type Task, type SubTask } from "@/lib/app-data";
+
+import { addDays, addWeeks, addMonths, addYears } from "date-fns";
+
+function getProjectedEvents(baseEvent: Event, recurrence: "none" | "daily" | "weekly" | "monthly" | "yearly" | undefined, horizonDays: number = 365): Event[] {
+  if (!recurrence || recurrence === "none") return [baseEvent];
+  const events: Event[] = [];
+  let currentStart = new Date(baseEvent.start);
+  let currentEnd = new Date(baseEvent.end);
+  const endLimit = addDays(new Date(), horizonDays); // Don't project infinitely
+
+  let i = 0;
+  while (currentStart <= endLimit && i < 365) {
+    events.push({
+      ...baseEvent,
+      id: `${baseEvent.id}_${i}`,
+      start: new Date(currentStart),
+      end: new Date(currentEnd),
+    });
+    if (recurrence === "daily") {
+        currentStart = addDays(currentStart, 1);
+        currentEnd = addDays(currentEnd, 1);
+    } else if (recurrence === "weekly") {
+        currentStart = addWeeks(currentStart, 1);
+        currentEnd = addWeeks(currentEnd, 1);
+    } else if (recurrence === "monthly") {
+        currentStart = addMonths(currentStart, 1);
+        currentEnd = addMonths(currentEnd, 1);
+    } else if (recurrence === "yearly") {
+        currentStart = addYears(currentStart, 1);
+        currentEnd = addYears(currentEnd, 1);
+    }
+    i++;
+  }
+  return events;
+}
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { AddToScheduleDialog } from "@/components/life/AddToScheduleDialog";
@@ -44,7 +80,7 @@ function startOfWeek(d: Date) {
 function startOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
-function addDays(d: Date, n: number) {
+function addDaysLocal(d: Date, n: number) {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
   return x;
@@ -77,7 +113,7 @@ export function CalendarView() {
         const end = t.endDate ? new Date(t.endDate) : new Date(start.getTime() + 60 * 60 * 1000);
         if (!Number.isNaN(start.getTime())) {
           const sk = skillColor(t.goalId);
-          out.push({
+          const baseEvent: Event = {
             id: `task:${t.id}`,
             title: t.title,
             start,
@@ -86,7 +122,8 @@ export function CalendarView() {
             goalTitle: sk.goalTitle,
             isSub: false,
             done: t.done,
-          });
+          };
+          out.push(...getProjectedEvents(baseEvent, t.recurrence, 365));
         }
       }
       for (const s of t.subtasks) {
@@ -95,7 +132,7 @@ export function CalendarView() {
         const end = s.endDate ? new Date(s.endDate) : new Date(start.getTime() + 60 * 60 * 1000);
         if (Number.isNaN(start.getTime())) continue;
         const sk = skillColor(t.goalId);
-        out.push({
+        const baseEvent: Event = {
           id: `sub:${t.id}|${s.id}`,
           title: s.title,
           start,
@@ -105,7 +142,8 @@ export function CalendarView() {
           isSub: true,
           parentTitle: t.title,
           done: s.done,
-        });
+        };
+        out.push(...getProjectedEvents(baseEvent, s.recurrence, 365));
       }
     }
     return out.sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -368,7 +406,7 @@ function WeekGrid({
   onAddOnDay: (d: Date) => void;
 }) {
   const start = startOfWeek(cursor);
-  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const days = Array.from({ length: 7 }, (_, i) => addDaysLocal(start, i));
   const baseHour = HOURS[0];
   const today = startOfDay(new Date());
 

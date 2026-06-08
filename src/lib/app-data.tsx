@@ -20,6 +20,8 @@ export const DEFAULT_SKILLS: Skill[] = [
 
 export const SKILLS = DEFAULT_SKILLS;
 export type SkillId = string;
+export type Recurrence = "none" | "daily" | "weekly" | "monthly" | "yearly";
+
 export type GoalStatus = "not_started" | "in_progress" | "completed";
 
 export interface SubGoal {
@@ -53,6 +55,7 @@ export interface SubTask {
   startDate?: string;
   plannedHours?: number;
   spentHours?: number;
+  recurrence?: Recurrence;
 }
 
 export interface Task {
@@ -69,6 +72,7 @@ export interface Task {
   evidence?: string;
   plannedHours?: number;
   spentHours?: number;
+  recurrence?: Recurrence;
 }
 
 export interface BucketItem {
@@ -132,14 +136,16 @@ function hoursBetween(startISO?: string, endISO?: string): number {
 function normalizeSubTask(raw: any): SubTask {
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
-    title: String(raw?.title ?? "Subtask"),
+    title: String(raw?.title ?? "Untitled subtask"),
     done: Boolean(raw?.done),
-    hoursPerWeek:
-      typeof raw?.hoursPerWeek === "number" && raw.hoursPerWeek > 0 ? raw.hoursPerWeek : undefined,
-    endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
+    hoursPerWeek: nonNegNum(raw?.hoursPerWeek),
     startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
+    endDate: typeof raw?.endDate === "string" ? raw.endDate : undefined,
     plannedHours: nonNegNum(raw?.plannedHours),
     spentHours: nonNegNum(raw?.spentHours),
+    recurrence: ["none", "daily", "weekly", "monthly", "yearly"].includes(raw?.recurrence)
+      ? raw.recurrence
+      : "none",
   };
 }
 
@@ -191,6 +197,9 @@ function normalizeTask(raw: any): Task {
     evidence: typeof raw?.evidence === "string" ? raw.evidence : undefined,
     plannedHours: nonNegNum(raw?.plannedHours),
     spentHours: nonNegNum(raw?.spentHours),
+    recurrence: ["none", "daily", "weekly", "monthly", "yearly"].includes(raw?.recurrence)
+      ? raw.recurrence
+      : "none",
   };
 }
 
@@ -659,6 +668,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setTasks((cur) =>
         cur.map((t) => {
           if (t.id !== id) return t;
+          const isRecurring = t.recurrence && t.recurrence !== "none";
+          // If moving to done and it's recurring, bump instead
+          if (!t.done && isRecurring) {
+            const bumpedDueDate = bumpDateString(t.dueDate, t.recurrence);
+            const bumpedStartDate = bumpDateString(t.startDate, t.recurrence);
+            const bumpedEndDate = bumpDateString(t.endDate, t.recurrence);
+            toast.success(`Recurring task bumped to next occurrence`);
+            return {
+              ...t,
+              dueDate: bumpedDueDate,
+              startDate: bumpedStartDate,
+              endDate: bumpedEndDate,
+            };
+          }
+
           const nowDone = !t.done;
           const delta = hoursBetween(t.startDate, t.endDate);
           const curSpent = t.spentHours ?? 0;
@@ -706,6 +730,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           let nextTaskSpent = t.spentHours ?? 0;
           const subtasks = t.subtasks.map((s) => {
             if (s.id !== subId) return s;
+            const isRecurring = s.recurrence && s.recurrence !== "none";
+            if (!s.done && isRecurring) {
+              const bumpedStartDate = bumpDateString(s.startDate, s.recurrence);
+              const bumpedEndDate = bumpDateString(s.endDate, s.recurrence);
+              toast.success(`Recurring subtask bumped to next occurrence`);
+              return {
+                ...s,
+                startDate: bumpedStartDate,
+                endDate: bumpedEndDate,
+              };
+            }
+
             const nowDone = !s.done;
             const delta = hoursBetween(s.startDate, s.endDate);
             const curSpent = s.spentHours ?? 0;

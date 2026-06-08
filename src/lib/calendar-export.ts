@@ -24,6 +24,7 @@ interface Block {
   start: Date;
   end: Date;
   description?: string;
+  recurrence?: "none" | "daily" | "weekly" | "monthly" | "yearly";
 }
 
 function nextSlot(cursor: Date): Date {
@@ -84,6 +85,9 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
     if (t.subtasks.length === 0) {
       const reps = t.priority === "high" ? 2 : 1;
       const r = addBlocks(cursor, reps, `Focus: ${t.title}`, desc, due);
+      if (t.recurrence && t.recurrence !== "none") {
+         r.blocks.forEach(b => b.recurrence = t.recurrence);
+      }
       all.push(...r.blocks);
       cursor = r.cursor;
     } else {
@@ -107,7 +111,8 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
               title: `Focus: ${t.title} — ${st.title}`,
               start,
               end: stop,
-              description: `${desc}${desc ? "\n" : ""}Subtask: ${st.title} (${hpw}h/wk)`,
+              description: `${desc}${desc ? "\\n" : ""}Subtask: ${st.title} (${hpw}h/wk)`,
+              recurrence: st.recurrence || t.recurrence
             });
             placed++;
             cursor = nextSlot(new Date(stop));
@@ -140,8 +145,28 @@ export function blocksToICS(blocks: Block[]): string {
       `DTEND:${fmtICS(b.end)}`,
       `SUMMARY:${escapeICS(b.title)}`,
       b.description ? `DESCRIPTION:${escapeICS(b.description)}` : "",
-      "END:VEVENT",
     );
+    if (b.recurrence && b.recurrence !== "none") {
+        const freqMap: Record<string, string> = {
+            "daily": "DAILY",
+            "weekly": "WEEKLY",
+            "monthly": "MONTHLY",
+            "yearly": "YEARLY"
+        };
+        const freq = freqMap[b.recurrence];
+        if (freq) {
+            lines.push(`RRULE:FREQ=${freq}`);
+        }
+    }
+    // Add alarm for notifications on client apps
+    lines.push(
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:Reminder",
+      "TRIGGER:-PT0M",
+      "END:VALARM"
+    );
+    lines.push("END:VEVENT");
   }
   lines.push("END:VCALENDAR");
   return lines.filter(Boolean).join("\r\n");
