@@ -17,6 +17,7 @@ import { Welcome } from "@/components/life/Welcome";
 import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
+import { useNotifications } from "@/hooks/use-notifications";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
@@ -50,6 +51,7 @@ function Shell() {
   const [tab, setTab] = useState<TabId>("dashboard");
   const { goals, tasks, bucketList, settings } = useAppData();
   useAppSettingsEffects();
+  useNotifications();
   const stats = {
     goals: goals.filter((g) => g.status !== "completed").length,
     tasks: tasks.filter((t) => !t.done).length,

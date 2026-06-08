@@ -53,6 +53,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
     goalId: task.goalId ?? "none",
     progress: task.progress ?? 0,
     evidence: task.evidence ?? "",
+    recurrence: task.recurrence ?? "none",
   });
 
   const save = () => {
@@ -66,6 +67,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
       goalId: form.goalId === "none" ? undefined : form.goalId,
       progress: form.progress || undefined,
       evidence: form.evidence || undefined,
+      recurrence: form.recurrence as Recurrence,
     });
     setOpen(false);
   };
@@ -201,6 +203,7 @@ function SubtasksPanel({ task }: { task: Task }) {
             <div key={s.id} className="rounded border bg-background px-2 py-1.5">
               <div className="flex items-center gap-2">
                 <Checkbox checked={s.done} onCheckedChange={() => toggleSubtask(task.id, s.id)} />
+                {s.recurrence && s.recurrence !== "none" && <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
                 <Input
                   value={s.title}
                   onChange={(e) => updateSubtask(task.id, s.id, { title: e.target.value })}
@@ -375,8 +378,9 @@ function TaskRow({ task }: { task: Task }) {
             className="min-w-0 flex-1 text-left"
           >
             <div
-              className={`truncate text-sm font-medium leading-snug ${task.done ? "line-through text-muted-foreground" : ""}`}
+              className={`truncate text-sm font-medium leading-snug flex items-center gap-1.5 ${task.done ? "line-through text-muted-foreground" : ""}`}
             >
+              {task.recurrence && task.recurrence !== "none" && <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
               {task.title}
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
