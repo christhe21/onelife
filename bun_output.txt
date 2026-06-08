@@ -1,0 +1,10 @@
+$ vite dev
+
+  VITE v7.3.2  ready in 1782 ms
+
+  ➜  Local:   http://localhost:8080/
+  ➜  Network: http://192.168.0.2:8080/
+[vite] connected.
+6:36:30 PM [vite] (client) hmr update /src/styles.css?direct, /src/components/life/SkillsRadar.tsx
+6:36:30 PM [vite] (ssr) page reload src/components/life/SkillsRadar.tsx
+[vite] program reload
