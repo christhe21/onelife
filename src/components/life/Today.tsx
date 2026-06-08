@@ -19,7 +19,7 @@ interface Props {
 
 const QUOTE = {
   text: "The future depends on what you do today.",
-  author: "Mahatma Gandhi"
+  author: "Mahatma Gandhi",
 };
 
 export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
@@ -180,7 +180,7 @@ function TaskGroup({
   goalOf,
   skillOf,
   onToggle,
-  showOverdueHighlight
+  showOverdueHighlight,
 }: {
   items: Task[];
   goalOf: (id?: string) => { title: string; skill: string } | undefined;
@@ -219,7 +219,7 @@ function TaskGroup({
                     key={t.id}
                     className={cn(
                       "group flex w-full min-w-0 items-center gap-3 rounded-lg border bg-card p-3 shadow-sm transition-all hover:shadow-md",
-                      isOverdue ? "border-destructive/30 bg-destructive/5" : ""
+                      isOverdue ? "border-destructive/30 bg-destructive/5" : "",
                     )}
                   >
                     <Checkbox
@@ -232,7 +232,7 @@ function TaskGroup({
                         className={cn(
                           "truncate font-medium text-sm leading-tight",
                           t.done && "line-through text-muted-foreground",
-                          isOverdue && !t.done && "text-destructive"
+                          isOverdue && !t.done && "text-destructive",
                         )}
                       >
                         {t.title}
@@ -240,15 +240,20 @@ function TaskGroup({
                       {(t.dueDate || t.priority === "high") && (
                         <div className="flex gap-2 mt-1 items-center">
                           {t.priority === "high" && (
-                            <Badge variant="destructive" className="h-4 px-1 text-[9px] rounded-sm uppercase tracking-widest font-bold">
+                            <Badge
+                              variant="destructive"
+                              className="h-4 px-1 text-[9px] rounded-sm uppercase tracking-widest font-bold"
+                            >
                               High Priority
                             </Badge>
                           )}
                           {t.dueDate && (
-                            <span className={cn(
-                              "text-[10px] font-medium",
-                              isOverdue ? "text-destructive" : "text-muted-foreground"
-                            )}>
+                            <span
+                              className={cn(
+                                "text-[10px] font-medium",
+                                isOverdue ? "text-destructive" : "text-muted-foreground",
+                              )}
+                            >
                               {isOverdue ? "Overdue" : "Due"}
                             </span>
                           )}

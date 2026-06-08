@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
+import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { AppDataProvider, useAppData } from "@/lib/app-data";
 import { AppShell, type TabId } from "@/components/life/AppShell";
+import { z } from "zod";
 import { Dashboard } from "@/components/life/Dashboard";
 import { Today } from "@/components/life/Today";
 import { Goals } from "@/components/life/Goals";
@@ -18,6 +19,9 @@ import { SettingsView } from "@/components/life/Settings";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 
 export const Route = createFileRoute("/")({
+  validateSearch: z.object({
+    onboarding: z.number().optional(),
+  }),
   component: Index,
   head: () => ({
     meta: [
@@ -40,12 +44,11 @@ function Index() {
   );
 }
 
-type View = "welcome" | "onboarding" | "app";
-
 function Shell() {
-  const [view, setView] = useState<View>("welcome");
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("dashboard");
-  const { goals, tasks, bucketList } = useAppData();
+  const { goals, tasks, bucketList, settings } = useAppData();
   useAppSettingsEffects();
   const stats = {
     goals: goals.filter((g) => g.status !== "completed").length,
@@ -53,25 +56,24 @@ function Shell() {
     bucket: bucketList.filter((b) => !b.achieved).length,
   };
 
-  if (view === "welcome") {
-    return (
-      <Welcome
-        onOnboard={() => setView("onboarding")}
-        onDashboard={() => setView("app")}
-      />
-    );
+  if (!settings.onboardedAt && search.onboarding !== 1) {
+    return <Navigate to="/home" replace />;
   }
 
-  if (view === "onboarding") {
-    return <Onboarding onFinish={() => setView("app")} />;
+  if (search.onboarding === 1) {
+    return <Onboarding onFinish={() => navigate({ to: "/", search: {} })} />;
   }
 
   return (
-    <AppShell tab={tab} onTab={setTab} stats={stats} onHome={() => setView("welcome")}>
+    <AppShell tab={tab} onTab={setTab} stats={stats} onHome={() => navigate({ to: "/home" })}>
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
       {tab === "today" && (
-        <Today onGoTasks={() => setTab("tasks")} onGoGoals={() => setTab("goals")} onGoCalendar={() => setTab("calendar")} />
+        <Today
+          onGoTasks={() => setTab("tasks")}
+          onGoGoals={() => setTab("goals")}
+          onGoCalendar={() => setTab("calendar")}
+        />
       )}
       {tab === "calendar" && <CalendarView />}
       {tab === "overview" && <Overview />}
