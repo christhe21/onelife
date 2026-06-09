@@ -125,6 +125,16 @@ function nonNegNum(v: any): number | undefined {
   return typeof v === "number" && isFinite(v) && v >= 0 ? v : undefined;
 }
 
+function bumpDateString(iso?: string, rec?: Recurrence): string | undefined {
+  if (!iso || !rec || rec === "none") return iso;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  if (rec === "daily") d.setDate(d.getDate() + 1);
+  else if (rec === "weekly") d.setDate(d.getDate() + 7);
+  else if (rec === "monthly") d.setMonth(d.getMonth() + 1);
+  else if (rec === "yearly") d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+}
 function hoursBetween(startISO?: string, endISO?: string): number {
   if (!startISO || !endISO) return 0;
   const s = new Date(startISO).getTime();

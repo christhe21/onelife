@@ -9,7 +9,9 @@ import {
   Flag,
   Link2,
   ChevronDown,
+  Repeat,
 } from "lucide-react";
+import type { Recurrence } from "@/lib/app-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
