@@ -245,6 +245,7 @@ function SkillNode({
           ) : (
             goals.map((g) => {
               const tg = tasksByGoal(g.id);
+              const ms = g.subGoals ?? [];
               const gOpen = openGoals.has(g.id);
               return (
                 <div key={g.id}>
@@ -261,17 +262,36 @@ function SkillNode({
                     />
                     <EditableLabel value={g.title} onSave={(v) => updateGoal(g.id, { title: v })} />
                     <span className="ml-auto text-[10px] text-muted-foreground">
-                      {tg.length} task{tg.length === 1 ? "" : "s"}
+                      {ms.length} milestone{ms.length === 1 ? "" : "s"} · {tg.length} task{tg.length === 1 ? "" : "s"}
                     </span>
                   </div>
                   {gOpen && (
                     <div className="ml-5 border-l border-border/60 pl-3">
-                      {tg.length === 0 ? (
+                      {ms.length === 0 && tg.length === 0 ? (
                         <p className="py-1 text-xs italic text-muted-foreground">
-                          No linked tasks.
+                          No milestones or tasks.
                         </p>
                       ) : (
-                        tg.map((t) => (
+                        <>
+                          {ms.map((m) => (
+                            <div
+                              key={m.id}
+                              className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 shrink-0 rounded-sm ${m.done ? "bg-emerald-500" : "bg-amber-400"}`}
+                              />
+                              <span className={m.done ? "line-through text-muted-foreground" : "font-medium"}>
+                                {m.title}
+                              </span>
+                              {m.targetDate && (
+                                <span className="ml-auto text-[10px] text-muted-foreground">
+                                  {m.targetDate}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                          {tg.map((t) => (
                           <div
                             key={t.id}
                             className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
@@ -290,7 +310,8 @@ function SkillNode({
                               </span>
                             )}
                           </div>
-                        ))
+                          ))}
+                        </>
                       )}
                     </div>
                   )}
