@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
 
-type Kind = "root" | "skill" | "goal" | "task" | "subtask";
+type Kind = "root" | "skill" | "goal" | "milestone" | "task" | "subtask";
 
 interface Node {
   id: string;
@@ -203,6 +203,7 @@ export function MindMapCanvas() {
         skillGoals.forEach((g, gi) => {
           const gFill = PALETTE[(i + 2) % PALETTE.length];
           const gTasks = tasks.filter((t) => t.goalId === g.id);
+          const gMilestones = g.subGoals ?? [];
           const goalExpanded = open.has(`g_${g.id}`);
           const gNode = mk(
             `g_${g.id}`,
@@ -210,11 +211,17 @@ export function MindMapCanvas() {
             g.title,
             gFill,
             goalExpanded,
-            gTasks.length,
+            gMilestones.length + gTasks.length,
             `s_${sk.id}`,
           );
           skNode.children.push(gNode);
           if (!goalExpanded) return;
+          gMilestones.forEach((m) => {
+            const mFill = PALETTE[(i + 1) % PALETTE.length];
+            gNode.children.push(
+              mk(`m_${m.id}`, "milestone", m.title, mFill, true, 0, `g_${g.id}`),
+            );
+          });
           gTasks.forEach((t, ti) => {
             const tFill = PALETTE[(i + 4) % PALETTE.length];
             const sub = t.subtasks ?? [];
@@ -435,6 +442,7 @@ export function MindMapCanvas() {
     if (kind === "root") return { family, size: 22, weight: 700 };
     if (kind === "skill") return { family, size: 16, weight: 700 };
     if (kind === "goal") return { family, size: 14, weight: 600 };
+    if (kind === "milestone") return { family, size: 13, weight: 600 };
     if (kind === "task") return { family, size: 13, weight: 500 };
     return { family, size: 12, weight: 500 };
   };
