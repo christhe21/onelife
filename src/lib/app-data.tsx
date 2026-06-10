@@ -473,6 +473,7 @@ interface Ctx extends AppData {
   addSubGoal: (goalId: string, title: string, targetDate?: string) => string;
   toggleSubGoal: (goalId: string, subId: string) => void;
   deleteSubGoal: (goalId: string, subId: string) => void;
+  ensureDefaultMilestone: (goalId: string) => string;
 
   addTask: (t: Omit<Task, "id" | "done" | "subtasks"> & { subtasks?: SubTask[] }) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
