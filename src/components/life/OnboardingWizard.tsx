@@ -72,13 +72,16 @@ export function OnboardingWizard({ trigger, initialTemplate }: Props) {
       status: "not_started",
       currentActivity: "",
     });
-    picked.subGoals.forEach((sg) => addSubGoal(goalId, sg.title, addDays(base, sg.offsetDays)));
+    const milestoneIds = picked.subGoals.map((sg) =>
+      addSubGoal(goalId, sg.title, addDays(base, sg.offsetDays)),
+    );
+    const firstMilestone = milestoneIds[0];
     picked.tasks.forEach((t) =>
       addTask({
         title: t.title,
         priority: t.priority,
         dueDate: addDays(base, t.offsetDays),
-        goalId,
+        subGoalId: firstMilestone,
       }),
     );
     setOpen(false);

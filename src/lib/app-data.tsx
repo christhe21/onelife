@@ -473,6 +473,7 @@ interface Ctx extends AppData {
   addSubGoal: (goalId: string, title: string, targetDate?: string) => string;
   toggleSubGoal: (goalId: string, subId: string) => void;
   deleteSubGoal: (goalId: string, subId: string) => void;
+  ensureDefaultMilestone: (goalId: string) => string;
 
   addTask: (t: Omit<Task, "id" | "done" | "subtasks"> & { subtasks?: SubTask[] }) => void;
   updateTask: (id: string, patch: Partial<Task>) => void;
@@ -621,7 +622,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     addGoal: (g) => {
       const id = uid();
-      setGoals((cur) => [...cur, { ...g, id, subGoals: [] }]);
+      const generalId = uid();
+      setGoals((cur) => [
+        ...cur,
+        {
+          ...g,
+          id,
+          subGoals: [{ id: generalId, title: "General", done: false }],
+        },
+      ]);
       return id;
     },
     updateGoal: (id, patch) =>
@@ -633,6 +642,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         cur.map((g) =>
           g.id === goalId
             ? { ...g, subGoals: [...g.subGoals, { id, title, targetDate, done: false }] }
+            : g,
+        ),
+      );
+      return id;
+    },
+    ensureDefaultMilestone: (goalId) => {
+      const existing = goals.find((g) => g.id === goalId);
+      const first = existing?.subGoals[0];
+      if (first) return first.id;
+      const id = uid();
+      setGoals((cur) =>
+        cur.map((g) =>
+          g.id === goalId
+            ? { ...g, subGoals: [...g.subGoals, { id, title: "General", done: false }] }
             : g,
         ),
       );
@@ -652,11 +675,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }),
       );
       // Cascade-close: when a milestone closes, mark every open task (and its subtasks)
-      // under this goal as done.
+      // linked to that milestone as done.
       if (cascade) {
         setTasks((cur) =>
           cur.map((t) =>
-            t.goalId === goalId
+            t.subGoalId === subId
               ? { ...t, done: true, subtasks: t.subtasks.map((s) => ({ ...s, done: true })) }
               : t,
           ),

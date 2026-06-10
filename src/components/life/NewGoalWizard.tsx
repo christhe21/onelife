@@ -44,7 +44,7 @@ interface Props {
 }
 
 export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
-  const { skills, addGoal, addSubGoal, addTask } = useAppData();
+  const { skills, addGoal, addSubGoal, addTask, ensureDefaultMilestone } = useAppData();
   const today = new Date().toISOString().slice(0, 10);
 
   const [step, setStep] = useState<Step>("basics");
@@ -155,17 +155,16 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
 
   const saveAll = () => {
     const id = commitGoal();
+    const subGoalId = ensureDefaultMilestone(id);
     // persist tasks + their subtasks now
     tasks
       .filter((t) => t.title.trim())
       .forEach((t) => {
-        // addTask doesn't return id; create subtasks by re-finding from context isn't possible.
-        // Workaround: include subtasks inline via the optional `subtasks` field on addTask.
         addTask({
           title: t.title.trim(),
           dueDate: t.due || undefined,
           priority: t.priority,
-          goalId: id,
+          subGoalId,
           subtasks: t.subtasks
             .filter((st) => st.title.trim())
             .map((st) => ({
