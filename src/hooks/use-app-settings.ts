@@ -36,7 +36,7 @@ export function useAppSettingsEffects() {
         const fireAt = start - lead * 60_000;
         if (now >= fireAt && now < start + 60_000 && !firedRef.current.has(t.id)) {
           firedRef.current.add(t.id);
-          const goal = goals.find((g) => g.id === t.goalId);
+          const goal = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId));
           try {
             new Notification(`Upcoming: ${t.title}`, {
               body: goal

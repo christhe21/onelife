@@ -8,7 +8,11 @@ import { useAppData, type Task, type SubTask } from "@/lib/app-data";
 
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 
-function getProjectedEvents(baseEvent: Event, recurrence: "none" | "daily" | "weekly" | "monthly" | "yearly" | undefined, horizonDays: number = 365): Event[] {
+function getProjectedEvents(
+  baseEvent: Event,
+  recurrence: "none" | "daily" | "weekly" | "monthly" | "yearly" | undefined,
+  horizonDays: number = 365,
+): Event[] {
   if (!recurrence || recurrence === "none") return [baseEvent];
   const events: Event[] = [];
   let currentStart = new Date(baseEvent.start);
@@ -24,17 +28,17 @@ function getProjectedEvents(baseEvent: Event, recurrence: "none" | "daily" | "we
       end: new Date(currentEnd),
     });
     if (recurrence === "daily") {
-        currentStart = addDays(currentStart, 1);
-        currentEnd = addDays(currentEnd, 1);
+      currentStart = addDays(currentStart, 1);
+      currentEnd = addDays(currentEnd, 1);
     } else if (recurrence === "weekly") {
-        currentStart = addWeeks(currentStart, 1);
-        currentEnd = addWeeks(currentEnd, 1);
+      currentStart = addWeeks(currentStart, 1);
+      currentEnd = addWeeks(currentEnd, 1);
     } else if (recurrence === "monthly") {
-        currentStart = addMonths(currentStart, 1);
-        currentEnd = addMonths(currentEnd, 1);
+      currentStart = addMonths(currentStart, 1);
+      currentEnd = addMonths(currentEnd, 1);
     } else if (recurrence === "yearly") {
-        currentStart = addYears(currentStart, 1);
-        currentEnd = addYears(currentEnd, 1);
+      currentStart = addYears(currentStart, 1);
+      currentEnd = addYears(currentEnd, 1);
     }
     i++;
   }
@@ -102,8 +106,8 @@ export function CalendarView() {
 
   const events = useMemo<Event[]>(() => {
     const out: Event[] = [];
-    const skillColor = (goalId?: string) => {
-      const g = goals.find((x) => x.id === goalId);
+    const skillColor = (subGoalId?: string) => {
+      const g = goals.find((x) => x.subGoals.some((sg) => sg.id === subGoalId));
       const sk = skills.find((s) => s.id === g?.skill);
       return { color: sk?.color ?? "hsl(var(--muted-foreground))", goalTitle: g?.title };
     };
@@ -112,7 +116,7 @@ export function CalendarView() {
         const start = new Date(t.startDate);
         const end = t.endDate ? new Date(t.endDate) : new Date(start.getTime() + 60 * 60 * 1000);
         if (!Number.isNaN(start.getTime())) {
-          const sk = skillColor(t.goalId);
+          const sk = skillColor(t.subGoalId);
           const baseEvent: Event = {
             id: `task:${t.id}`,
             title: t.title,
@@ -131,7 +135,7 @@ export function CalendarView() {
         const start = new Date(s.startDate);
         const end = s.endDate ? new Date(s.endDate) : new Date(start.getTime() + 60 * 60 * 1000);
         if (Number.isNaN(start.getTime())) continue;
-        const sk = skillColor(t.goalId);
+        const sk = skillColor(t.subGoalId);
         const baseEvent: Event = {
           id: `sub:${t.id}|${s.id}`,
           title: s.title,

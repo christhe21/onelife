@@ -52,7 +52,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
     startDate: task.startDate ?? "",
     endDate: task.endDate ?? "",
     priority: task.priority,
-    goalId: task.goalId ?? "none",
+    subGoalId: task.subGoalId ?? "none",
     progress: task.progress ?? 0,
     evidence: task.evidence ?? "",
     recurrence: task.recurrence ?? "none",
@@ -66,7 +66,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
       startDate: form.startDate || undefined,
       endDate: form.endDate || undefined,
       priority: form.priority,
-      goalId: form.goalId === "none" ? undefined : form.goalId,
+      subGoalId: form.subGoalId === "none" ? undefined : form.subGoalId,
       progress: form.progress || undefined,
       evidence: form.evidence || undefined,
       recurrence: form.recurrence as Recurrence,
@@ -132,18 +132,20 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
             </div>
           </div>
           <div>
-            <Label>Linked goal</Label>
-            <Select value={form.goalId} onValueChange={(v) => setForm({ ...form, goalId: v })}>
+            <Label>Linked milestone</Label>
+            <Select value={form.subGoalId} onValueChange={(v) => setForm({ ...form, subGoalId: v })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No goal</SelectItem>
-                {goals.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    {g.title}
-                  </SelectItem>
-                ))}
+                <SelectItem value="none">General / Daily</SelectItem>
+                {goals.map((g) => {
+                  return g.subGoals.map((sg) => (
+                    <SelectItem key={sg.id} value={sg.id}>
+                      {g.title} - {sg.title}
+                    </SelectItem>
+                  ));
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -205,7 +207,9 @@ function SubtasksPanel({ task }: { task: Task }) {
             <div key={s.id} className="rounded border bg-background px-2 py-1.5">
               <div className="flex items-center gap-2">
                 <Checkbox checked={s.done} onCheckedChange={() => toggleSubtask(task.id, s.id)} />
-                {s.recurrence && s.recurrence !== "none" && <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+                {s.recurrence && s.recurrence !== "none" && (
+                  <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                )}
                 <Input
                   value={s.title}
                   onChange={(e) => updateSubtask(task.id, s.id, { title: e.target.value })}
@@ -279,7 +283,7 @@ function AddTaskBar() {
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
-  const [goalId, setGoalId] = useState<string>("none");
+  const [subGoalId, setSubGoalId] = useState<string>("none");
 
   const submit = () => {
     if (!title.trim()) return;
@@ -287,12 +291,12 @@ function AddTaskBar() {
       title,
       dueDate: dueDate || undefined,
       priority,
-      goalId: goalId === "none" ? undefined : goalId,
+      subGoalId: subGoalId === "none" ? undefined : subGoalId,
     });
     setTitle("");
     setDueDate("");
     setPriority("medium");
-    setGoalId("none");
+    setSubGoalId("none");
   };
 
   return (
@@ -330,18 +334,20 @@ function AddTaskBar() {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Goal</Label>
-            <Select value={goalId} onValueChange={setGoalId}>
+            <Label className="text-xs">Milestone</Label>
+            <Select value={subGoalId} onValueChange={setSubGoalId}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No goal</SelectItem>
-                {goals.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    {g.title}
-                  </SelectItem>
-                ))}
+                <SelectItem value="none">General / Daily</SelectItem>
+                {goals.map((g) => {
+                  return g.subGoals.map((sg) => (
+                    <SelectItem key={sg.id} value={sg.id}>
+                      {g.title} - {sg.title}
+                    </SelectItem>
+                  ));
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -361,7 +367,7 @@ function TaskRow({ task }: { task: Task }) {
 
   const today = new Date().toISOString().slice(0, 10);
   const overdue = !task.done && task.dueDate && task.dueDate < today;
-  const goal = goals.find((g) => g.id === task.goalId);
+  const goal = goals.find((g) => g.subGoals.some((sg) => sg.id === task.subGoalId));
   const subDone = task.subtasks.filter((s) => s.done).length;
   const hasProgress = !task.done && (task.progress ?? 0) > 0 && (task.progress ?? 0) < 100;
 
@@ -382,7 +388,9 @@ function TaskRow({ task }: { task: Task }) {
             <div
               className={`truncate text-sm font-medium leading-snug flex items-center gap-1.5 ${task.done ? "line-through text-muted-foreground" : ""}`}
             >
-              {task.recurrence && task.recurrence !== "none" && <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />}
+              {task.recurrence && task.recurrence !== "none" && (
+                <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              )}
               {task.title}
             </div>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">

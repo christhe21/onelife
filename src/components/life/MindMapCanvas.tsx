@@ -202,7 +202,6 @@ export function MindMapCanvas() {
         if (!skillExpanded) return;
         skillGoals.forEach((g, gi) => {
           const gFill = PALETTE[(i + 2) % PALETTE.length];
-          const gTasks = tasks.filter((t) => t.goalId === g.id);
           const gMilestones = g.subGoals ?? [];
           const goalExpanded = open.has(`g_${g.id}`);
           const gNode = mk(
@@ -211,39 +210,69 @@ export function MindMapCanvas() {
             g.title,
             gFill,
             goalExpanded,
-            gMilestones.length + gTasks.length,
+            gMilestones.length,
             `s_${sk.id}`,
           );
           skNode.children.push(gNode);
           if (!goalExpanded) return;
           gMilestones.forEach((m) => {
             const mFill = PALETTE[(i + 1) % PALETTE.length];
-            gNode.children.push(
-              mk(`m_${m.id}`, "milestone", m.title, mFill, true, 0, `g_${g.id}`),
-            );
-          });
-          gTasks.forEach((t, ti) => {
-            const tFill = PALETTE[(i + 4) % PALETTE.length];
-            const sub = t.subtasks ?? [];
-            const taskExpanded = open.has(`t_${t.id}`);
-            const tNode = mk(
-              `t_${t.id}`,
-              "task",
-              t.title,
-              tFill,
-              taskExpanded,
-              sub.length,
+            const mTasks = tasks.filter((t) => t.subGoalId === m.id);
+            const mExpanded = open.has(`m_${m.id}`);
+            const mNode = mk(
+              `m_${m.id}`,
+              "milestone",
+              m.title,
+              mFill,
+              mExpanded,
+              mTasks.length,
               `g_${g.id}`,
             );
-            gNode.children.push(tNode);
-            if (!taskExpanded) return;
-            sub.forEach((s) => {
-              const sFill = PALETTE[(i + 3) % PALETTE.length];
-              tNode.children.push(
-                mk(`st_${s.id}`, "subtask", s.title, sFill, true, 0, `t_${t.id}`),
+            gNode.children.push(mNode);
+            if (!mExpanded) return;
+            mTasks.forEach((t) => {
+              const tFill = PALETTE[(i + 3) % PALETTE.length];
+              const tExpanded = open.has(`t_${t.id}`);
+              const tNode = mk(
+                `t_${t.id}`,
+                "task",
+                t.title,
+                tFill,
+                tExpanded,
+                t.subtasks.length,
+                `m_${m.id}`,
               );
+              mNode.children.push(tNode);
+              if (!tExpanded) return;
+              t.subtasks.forEach((st) => {
+                tNode.children.push(
+                  mk(`st_${st.id}`, "subtask", st.title, "#f1f5f9", false, 0, `t_${t.id}`),
+                );
+              });
             });
           });
+        });
+      });
+      // Attach unlinked tasks (General/Daily) to the Root
+      const unlinkedTasks = tasks.filter((t) => !t.subGoalId);
+      unlinkedTasks.forEach((t, i) => {
+        const tFill = "#cbd5e1"; // General task fill
+        const taskExpanded = open.has(`t_${t.id}`);
+        const tNode = mk(
+          `t_${t.id}`,
+          "task",
+          t.title,
+          tFill,
+          taskExpanded,
+          t.subtasks.length,
+          "root",
+        );
+        root.children.push(tNode);
+        if (!taskExpanded) return;
+        t.subtasks.forEach((s) => {
+          tNode.children.push(
+            mk(`st_${s.id}`, "subtask", s.title, "#f1f5f9", true, 0, `t_${t.id}`),
+          );
         });
       });
     }

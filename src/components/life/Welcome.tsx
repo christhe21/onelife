@@ -9,7 +9,7 @@ import {
   LayoutDashboard,
   PlayCircle,
   Stars,
-  Compass
+  Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
@@ -62,7 +62,10 @@ export function Welcome() {
         {/* Features */}
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
           {FEATURES.map((f) => (
-            <div key={f.title} className="flex flex-col gap-2 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+            <div
+              key={f.title}
+              className="flex flex-col gap-2 rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md"
+            >
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <f.icon className="h-5 w-5" />
               </div>
@@ -80,7 +83,8 @@ export function Welcome() {
             <PlayCircle className="mb-3 h-10 w-10 text-primary/40" />
             <h3 className="font-medium text-foreground">See how it works</h3>
             <p className="mt-1 text-xs text-muted-foreground max-w-[250px]">
-              Watch a quick 2-minute walkthrough on how to set your first goals and start tracking progress.
+              Watch a quick 2-minute walkthrough on how to set your first goals and start tracking
+              progress.
             </p>
           </div>
         </div>

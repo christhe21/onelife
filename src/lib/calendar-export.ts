@@ -78,7 +78,7 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
   // Tasks (open, with sub-tasks or plain)
   const open = tasks.filter((t) => !t.done);
   for (const t of open) {
-    const goalLabel = t.goalId ? goalsTitleById[t.goalId] : undefined;
+    const goalLabel = t.subGoalId ? goalsTitleById[t.subGoalId] : undefined;
     const desc = goalLabel ? `Goal: ${goalLabel}` : "";
     const due = t.dueDate ? new Date(`${t.dueDate}T${pad(DAY_END_HOUR)}:00:00`) : undefined;
 
@@ -86,7 +86,7 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
       const reps = t.priority === "high" ? 2 : 1;
       const r = addBlocks(cursor, reps, `Focus: ${t.title}`, desc, due);
       if (t.recurrence && t.recurrence !== "none") {
-         r.blocks.forEach(b => b.recurrence = t.recurrence);
+        r.blocks.forEach((b) => (b.recurrence = t.recurrence));
       }
       all.push(...r.blocks);
       cursor = r.cursor;
@@ -112,7 +112,7 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
               start,
               end: stop,
               description: `${desc}${desc ? "\\n" : ""}Subtask: ${st.title} (${hpw}h/wk)`,
-              recurrence: st.recurrence || t.recurrence
+              recurrence: st.recurrence || t.recurrence,
             });
             placed++;
             cursor = nextSlot(new Date(stop));
@@ -147,16 +147,16 @@ export function blocksToICS(blocks: Block[]): string {
       b.description ? `DESCRIPTION:${escapeICS(b.description)}` : "",
     );
     if (b.recurrence && b.recurrence !== "none") {
-        const freqMap: Record<string, string> = {
-            "daily": "DAILY",
-            "weekly": "WEEKLY",
-            "monthly": "MONTHLY",
-            "yearly": "YEARLY"
-        };
-        const freq = freqMap[b.recurrence];
-        if (freq) {
-            lines.push(`RRULE:FREQ=${freq}`);
-        }
+      const freqMap: Record<string, string> = {
+        daily: "DAILY",
+        weekly: "WEEKLY",
+        monthly: "MONTHLY",
+        yearly: "YEARLY",
+      };
+      const freq = freqMap[b.recurrence];
+      if (freq) {
+        lines.push(`RRULE:FREQ=${freq}`);
+      }
     }
     // Add alarm for notifications on client apps
     lines.push(
@@ -164,7 +164,7 @@ export function blocksToICS(blocks: Block[]): string {
       "ACTION:DISPLAY",
       "DESCRIPTION:Reminder",
       "TRIGGER:-PT0M",
-      "END:VALARM"
+      "END:VALARM",
     );
     lines.push("END:VEVENT");
   }

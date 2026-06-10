@@ -534,7 +534,7 @@ function GoalCard({ goal }: { goal: Goal }) {
                   onChange={(e) => setQuickTask(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && quickTask.trim()) {
-                      addTask({ title: quickTask, priority: "medium", goalId: goal.id });
+                      addTask({ title: quickTask, priority: "medium", subGoalId: goal.subGoals[0]?.id });
                       setQuickTask("");
                     }
                   }}
@@ -544,7 +544,7 @@ function GoalCard({ goal }: { goal: Goal }) {
                   variant="secondary"
                   onClick={() => {
                     if (!quickTask.trim()) return;
-                    addTask({ title: quickTask, priority: "medium", goalId: goal.id });
+                    addTask({ title: quickTask, priority: "medium", subGoalId: goal.subGoals[0]?.id });
                     setQuickTask("");
                   }}
                 >

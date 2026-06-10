@@ -190,7 +190,7 @@ function TaskGroup({
 }) {
   const byGoal = new Map<string, Task[]>();
   for (const t of items) {
-    const key = t.goalId ?? "__none__";
+    const key = t.subGoalId ?? "__none__";
     if (!byGoal.has(key)) byGoal.set(key, []);
     byGoal.get(key)!.push(t);
   }
