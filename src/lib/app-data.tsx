@@ -64,7 +64,7 @@ export interface Task {
   dueDate?: string;
   priority: "low" | "medium" | "high";
   done: boolean;
-  goalId?: string;
+  subGoalId?: string;
   subtasks: SubTask[];
   progress?: number;
   startDate?: string;
@@ -199,7 +199,7 @@ function normalizeTask(raw: any): Task {
     dueDate: typeof raw?.dueDate === "string" ? raw.dueDate : undefined,
     priority: PRIORITIES.includes(raw?.priority) ? raw.priority : "medium",
     done: Boolean(raw?.done),
-    goalId: typeof raw?.goalId === "string" ? raw.goalId : undefined,
+    subGoalId: typeof raw?.subGoalId === "string" ? raw.subGoalId : undefined,
     subtasks: Array.isArray(raw?.subtasks) ? raw.subtasks.map(normalizeSubTask) : [],
     progress: clamp(raw?.progress),
     startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
@@ -293,7 +293,7 @@ const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview th
   }],
   "tasks": [{
     "id": "string", "title": "string", "dueDate": "YYYY-MM-DD",
-    "priority": "low|medium|high", "done": false, "goalId": "<goal id or omit>",
+    "priority": "low|medium|high", "done": false, "subGoalId": "<subGoal id or omit>",
     "progress": 0, "startDate": "YYYY-MM-DDTHH:mm:ss", "endDate": "YYYY-MM-DDTHH:mm:ss",
     "evidence": "what has been done so far / links",
     "plannedHours": 4, "spentHours": 0,
@@ -315,7 +315,7 @@ export const TEMPLATE_PAYLOAD = {
     settings:
       "birthYear, userName, onboardedAt, textScale, notificationsEnabled, reminderLeadMinutes",
     goal: "title, description, skill, startDate, targetDate, status, currentActivity, manualProgress (0-100), plannedHours, spentHours, subGoals[]",
-    task: "title, priority, dueDate, goalId, progress (0-100), startDate, endDate, evidence, plannedHours, spentHours, subtasks[]",
+    task: "title, priority, dueDate, subGoalId, progress (0-100), startDate, endDate, evidence, plannedHours, spentHours, subtasks[]", // subGoalId links task to a milestone (subgoal) under a goal
     subtask:
       "title, done, hoursPerWeek (auto-schedules .ics), startDate, endDate, plannedHours, spentHours",
     bucketList: "title, notes, targetYear, achieved",
@@ -374,7 +374,7 @@ export const TEMPLATE_PAYLOAD = {
       dueDate: "2026-02-10",
       priority: "high",
       done: false,
-      goalId: "g_react",
+      subGoalId: undefined,
       progress: 35,
       startDate: "2026-02-03T09:00:00",
       endDate: "2026-02-03T11:00:00",
@@ -410,7 +410,7 @@ export const TEMPLATE_PAYLOAD = {
       dueDate: "2026-02-04",
       priority: "medium",
       done: true,
-      goalId: "g_run5k",
+      subGoalId: undefined,
       progress: 100,
       startDate: "2026-02-04T07:00:00",
       endDate: "2026-02-04T08:00:00",
@@ -470,7 +470,7 @@ interface Ctx extends AppData {
   addGoal: (g: Omit<Goal, "id" | "subGoals">) => string;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
-  addSubGoal: (goalId: string, title: string, targetDate?: string) => void;
+  addSubGoal: (goalId: string, title: string, targetDate?: string) => string;
   toggleSubGoal: (goalId: string, subId: string) => void;
   deleteSubGoal: (goalId: string, subId: string) => void;
 
@@ -627,14 +627,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     updateGoal: (id, patch) =>
       setGoals((cur) => cur.map((g) => (g.id === id ? { ...g, ...patch } : g))),
     deleteGoal: (id) => setGoals((cur) => cur.filter((g) => g.id !== id)),
-    addSubGoal: (goalId, title, targetDate) =>
+    addSubGoal: (goalId, title, targetDate) => {
+      const id = uid();
       setGoals((cur) =>
         cur.map((g) =>
           g.id === goalId
-            ? { ...g, subGoals: [...g.subGoals, { id: uid(), title, targetDate, done: false }] }
+            ? { ...g, subGoals: [...g.subGoals, { id, title, targetDate, done: false }] }
             : g,
         ),
-      ),
+      );
+      return id;
+    },
     toggleSubGoal: (goalId, subId) => {
       let cascade = false;
       setGoals((cur) =>
@@ -698,10 +701,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           const curSpent = t.spentHours ?? 0;
           const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
           // Promote linked goal on ANY interaction
-          promoted = t.goalId;
+          promoted = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId))?.id;
           if (delta > 0) {
             goalDelta = nowDone ? delta : -delta;
-            goalIdForDelta = t.goalId;
+            goalIdForDelta = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId))?.id;
           }
           // Cascade-close subtasks when task is being completed
           const subtasks = nowDone ? t.subtasks.map((s) => ({ ...s, done: true })) : t.subtasks;
@@ -756,12 +759,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             const delta = hoursBetween(s.startDate, s.endDate);
             const curSpent = s.spentHours ?? 0;
             const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
-            promoted = t.goalId;
+            promoted = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId))?.id;
             if (delta > 0) {
               const signed = nowDone ? delta : -delta;
               taskDelta = signed;
               goalDelta = signed;
-              goalIdForDelta = t.goalId;
+              goalIdForDelta = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId))?.id;
               nextTaskSpent = Math.max(0, nextTaskSpent + signed);
             }
             return { ...s, done: nowDone, spentHours: nextSpent };
@@ -848,15 +851,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
       // Remap ids so we never collide with existing data, and rewire goalId references
       const goalIdMap = new Map<string, string>();
+      const subGoalIdMap = new Map<string, string>();
       const newGoals = data.goals.map((g) => {
         const nid = uid();
         goalIdMap.set(g.id, nid);
-        return { ...g, id: nid, subGoals: g.subGoals.map((s) => ({ ...s, id: uid() })) };
+        return { ...g, id: nid, subGoals: g.subGoals.map((s) => {
+            const sid = uid();
+            subGoalIdMap.set(s.id, sid);
+            return { ...s, id: sid };
+        }) };
       });
       const newTasks = data.tasks.map((t) => ({
         ...t,
         id: uid(),
-        goalId: t.goalId ? (goalIdMap.get(t.goalId) ?? undefined) : undefined,
+        subGoalId: t.subGoalId ? (subGoalIdMap.get(t.subGoalId) ?? undefined) : undefined,
         subtasks: t.subtasks.map((s) => ({ ...s, id: uid() })),
       }));
       const newBucket = data.bucketList.map((b) => ({ ...b, id: uid() }));
@@ -910,7 +918,7 @@ export function useAppData() {
 }
 
 export function progressFor(g: Goal, tasks: Task[] = []): number {
-  const linked = tasks.filter((t) => t.goalId === g.id);
+  const linked = tasks.filter((t) => t.subGoalId && g.subGoals?.some(sg => sg.id === t.subGoalId));
   if (linked.length > 0) {
     const done = linked.filter((t) => t.done).length;
     return Math.round((done / linked.length) * 100);

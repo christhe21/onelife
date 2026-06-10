@@ -114,7 +114,7 @@ export function Overview() {
   };
 
   const goalsBySkill = (id: string) => goals.filter((g) => g.skill === id);
-  const tasksByGoal = (id: string) => tasks.filter((t) => t.goalId === id);
+  const tasksByGoal = (id: string) => tasks.filter((t) => t.subGoalId === id);
 
   return (
     <div className="space-y-4">
@@ -244,7 +244,6 @@ function SkillNode({
             <p className="py-2 text-xs italic text-muted-foreground">No goals yet.</p>
           ) : (
             goals.map((g) => {
-              const tg = tasksByGoal(g.id);
               const ms = g.subGoals ?? [];
               const gOpen = openGoals.has(g.id);
               return (
@@ -262,55 +261,65 @@ function SkillNode({
                     />
                     <EditableLabel value={g.title} onSave={(v) => updateGoal(g.id, { title: v })} />
                     <span className="ml-auto text-[10px] text-muted-foreground">
-                      {ms.length} milestone{ms.length === 1 ? "" : "s"} · {tg.length} task{tg.length === 1 ? "" : "s"}
+                      {ms.length} milestone{ms.length === 1 ? "" : "s"}
                     </span>
                   </div>
                   {gOpen && (
                     <div className="ml-5 border-l border-border/60 pl-3">
-                      {ms.length === 0 && tg.length === 0 ? (
+                      {ms.length === 0 ? (
                         <p className="py-1 text-xs italic text-muted-foreground">
-                          No milestones or tasks.
+                          No milestones.
                         </p>
                       ) : (
                         <>
-                          {ms.map((m) => (
-                            <div
-                              key={m.id}
-                              className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
-                            >
-                              <span
-                                className={`h-1.5 w-1.5 shrink-0 rounded-sm ${m.done ? "bg-emerald-500" : "bg-amber-400"}`}
-                              />
-                              <span className={m.done ? "line-through text-muted-foreground" : "font-medium"}>
-                                {m.title}
-                              </span>
-                              {m.targetDate && (
-                                <span className="ml-auto text-[10px] text-muted-foreground">
-                                  {m.targetDate}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                          {tg.map((t) => (
-                          <div
-                            key={t.id}
-                            className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.done ? "bg-emerald-500" : "bg-slate-400"}`}
-                            />
-                            <EditableLabel
-                              className={t.done ? "line-through text-muted-foreground" : ""}
-                              value={t.title}
-                              onSave={(v) => updateTask(t.id, { title: v })}
-                            />
-                            {t.dueDate && (
-                              <span className="ml-auto text-[10px] text-muted-foreground">
-                                {t.dueDate}
-                              </span>
-                            )}
-                          </div>
-                          ))}
+                          {ms.map((m) => {
+                            const tg = tasksByGoal(m.id);
+                            return (
+                              <div key={m.id}>
+                                <div
+                                  className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
+                                >
+                                  <span
+                                    className={`h-1.5 w-1.5 shrink-0 rounded-sm ${m.done ? "bg-emerald-500" : "bg-amber-400"}`}
+                                  />
+                                  <span
+                                    className={
+                                      m.done ? "line-through text-muted-foreground" : "font-medium"
+                                    }
+                                  >
+                                    {m.title}
+                                  </span>
+                                  {m.targetDate && (
+                                    <span className="ml-auto text-[10px] text-muted-foreground">
+                                      {m.targetDate}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="ml-4 pl-2 border-l border-border/60">
+                                  {tg.map((t) => (
+                                    <div
+                                      key={t.id}
+                                      className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
+                                    >
+                                      <span
+                                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.done ? "bg-emerald-500" : "bg-slate-400"}`}
+                                      />
+                                      <EditableLabel
+                                        className={t.done ? "line-through text-muted-foreground" : ""}
+                                        value={t.title}
+                                        onSave={(v) => updateTask(t.id, { title: v })}
+                                      />
+                                      {t.dueDate && (
+                                        <span className="ml-auto text-[10px] text-muted-foreground">
+                                          {t.dueDate}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </>
                       )}
                     </div>

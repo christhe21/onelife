@@ -62,7 +62,7 @@ export function AddToScheduleDialog({
   const flat: FlatItem[] = useMemo(() => {
     const out: FlatItem[] = [];
     for (const t of tasks) {
-      const g = goals.find((x) => x.id === t.goalId);
+      const g = goals.find((x) => x.subGoals.some((sg) => sg.id === t.subGoalId));
       const sk = skills.find((s) => s.id === g?.skill);
       out.push({
         kind: "task",
