@@ -280,23 +280,24 @@ function SubtasksPanel({ task }: { task: Task }) {
 
 function AddTaskBar() {
   const { addTask, goals } = useAppData();
+  const firstMilestone = goals.flatMap((g) => g.subGoals)[0]?.id;
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
-  const [subGoalId, setSubGoalId] = useState<string>("none");
+  const [subGoalId, setSubGoalId] = useState<string>(firstMilestone ?? "");
 
   const submit = () => {
     if (!title.trim()) return;
+    if (!subGoalId) return;
     addTask({
       title,
       dueDate: dueDate || undefined,
       priority,
-      subGoalId: subGoalId === "none" ? undefined : subGoalId,
+      subGoalId,
     });
     setTitle("");
     setDueDate("");
     setPriority("medium");
-    setSubGoalId("none");
   };
 
   return (
@@ -337,23 +338,27 @@ function AddTaskBar() {
             <Label className="text-xs">Milestone</Label>
             <Select value={subGoalId} onValueChange={setSubGoalId}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select a milestone" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">General / Daily</SelectItem>
-                {goals.map((g) => {
-                  return g.subGoals.map((sg) => (
+                {goals.length === 0 && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    Create a goal first
+                  </div>
+                )}
+                {goals.map((g) =>
+                  g.subGoals.map((sg) => (
                     <SelectItem key={sg.id} value={sg.id}>
-                      {g.title} - {sg.title}
+                      {g.title} — {sg.title}
                     </SelectItem>
-                  ));
-                })}
+                  )),
+                )}
               </SelectContent>
             </Select>
           </div>
         </PopoverContent>
       </Popover>
-      <Button size="sm" onClick={submit} className="h-9 shrink-0">
+      <Button size="sm" onClick={submit} disabled={!subGoalId} className="h-9 shrink-0">
         <Plus className="h-4 w-4" />
       </Button>
     </div>
