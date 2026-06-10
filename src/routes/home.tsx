@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Welcome } from "@/components/life/Welcome";
-import { AppDataProvider } from "@/lib/app-data";
 
 export const Route = createFileRoute("/home")({
   component: Home,
@@ -18,8 +17,6 @@ export const Route = createFileRoute("/home")({
 
 function Home() {
   return (
-    <AppDataProvider>
-      <Welcome />
-    </AppDataProvider>
+    <Welcome />
   );
 }
