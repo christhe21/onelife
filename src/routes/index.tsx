@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
-import { AppDataProvider, useAppData } from "@/lib/app-data";
+import { useAppData } from "@/lib/app-data";
 import { AppShell, type TabId } from "@/components/life/AppShell";
 import { z } from "zod";
 import { Dashboard } from "@/components/life/Dashboard";
@@ -38,10 +38,10 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <AppDataProvider>
+    <>
       <Shell />
       <Toaster />
-    </AppDataProvider>
+    </>
   );
 }
 
