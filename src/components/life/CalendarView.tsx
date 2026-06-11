@@ -174,6 +174,42 @@ export function CalendarView() {
     return m;
   }, [events]);
 
+  const dayStats = useMemo(() => {
+    const m = new Map<string, { completed: number; total: number }>();
+    for (const [k, evs] of eventsByDay) {
+      let c = 0;
+      for (const e of evs) if (e.done) c++;
+      m.set(k, { completed: c, total: evs.length });
+    }
+    return m;
+  }, [eventsByDay]);
+
+  const streaks = useMemo(() => {
+    const keys = [...dayStats.keys()].sort();
+    const m = new Map<string, number>();
+    let run = 0;
+    let prev: string | null = null;
+    for (const k of keys) {
+      const s = dayStats.get(k)!;
+      if (s.completed > 0) {
+        // require contiguous calendar days
+        if (prev) {
+          const pd = new Date(prev);
+          const cd = new Date(k);
+          const diff = Math.round((cd.getTime() - pd.getTime()) / 86400000);
+          if (diff !== 1) run = 0;
+        }
+        run++;
+        m.set(k, run);
+        prev = k;
+      } else {
+        run = 0;
+        prev = k;
+      }
+    }
+    return m;
+  }, [dayStats]);
+
   const goPrev = () => {
     if (view === "month") setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
     else if (view === "week") setCursor(addDays(cursor, -7));
