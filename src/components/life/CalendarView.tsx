@@ -648,7 +648,23 @@ function WeekGrid({
               const dayEvents = events.filter((e) => sameDay(e.start, d));
               const isCurrentDay = sameDay(d, new Date());
               return (
-                <div key={i} className="relative border-l">
+                <div
+                  key={i}
+                  className={cn("relative border-l", dragOver === i && "bg-primary/10")}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragOver !== i) setDragOver(i);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOver === i) setDragOver(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const payload = e.dataTransfer.getData("text/plain");
+                    setDragOver(null);
+                    if (payload) onDropDay(d, payload);
+                  }}
+                >
                   {isCurrentDay && showNow && (
                     <div
                       className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
@@ -676,9 +692,14 @@ function WeekGrid({
                     return (
                       <div
                         key={e.id}
-                        title={`${hm(e.start)}–${hm(e.end)} ${e.title}`}
+                        draggable
+                        onDragStart={(ev) => {
+                          ev.dataTransfer.setData("text/plain", e.id);
+                          ev.dataTransfer.effectAllowed = "move";
+                        }}
+                        title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
-                          "absolute inset-x-1 overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm",
+                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing",
                           e.done && "opacity-60 line-through",
                         )}
                         style={{
