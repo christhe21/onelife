@@ -12,6 +12,7 @@ import {
   CalendarDays,
   Home,
   Settings as SettingsIcon,
+  Store,
 } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,8 @@ export type TabId =
   | "tasks"
   | "bucket"
   | "skills"
-  | "settings";
+  | "settings"
+  | "marketplace";
 
 const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Overview & progress" },
@@ -38,6 +40,7 @@ const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: strin
   { id: "bucket", label: "Bucket list", icon: Sparkles, hint: "Lifetime wishes" },
   { id: "skills", label: "Skills", icon: Palette, hint: "Customize skill areas & colors" },
   { id: "settings", label: "Settings", icon: SettingsIcon, hint: "Text size, reminders, profile" },
+  { id: "marketplace", label: "Marketplace", icon: Store, hint: "Community goals" },
 ];
 
 interface Props {

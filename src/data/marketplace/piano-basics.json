@@ -1,0 +1,64 @@
+{
+  "id": "piano-basics",
+  "title": "Piano Basics: From Zero to First Song",
+  "description": "A beginner's journey to learning the piano, focusing on basic theory, hand coordination, and playing your first simple song.",
+  "skillName": "Piano",
+  "creatorName": "MelodyMaker",
+  "verified": true,
+  "resources": ["https://www.musictheory.net/", "https://www.youtube.com/user/pianoteofficial"],
+  "advice": "Practice 15-20 minutes every single day rather than 2 hours once a week. Muscle memory builds through consistent daily repetition.",
+  "durationDays": 30,
+  "subGoals": [
+    {
+      "title": "Learn the Notes & Basic Posture",
+      "dayOffset": 7
+    },
+    {
+      "title": "Master Major Scales (C, G, D)",
+      "dayOffset": 14
+    },
+    {
+      "title": "Play First Simple Song Hands Together",
+      "dayOffset": 30
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Daily Finger Exercises (Hanon)",
+      "priority": "medium",
+      "subGoalIndex": 0,
+      "startDayOffset": 0,
+      "endDayOffset": 30,
+      "recurrence": "daily",
+      "plannedHours": 0.25,
+      "subtasks": [
+        { "title": "Warm up right hand", "recurrence": "daily" },
+        { "title": "Warm up left hand", "recurrence": "daily" }
+      ]
+    },
+    {
+      "title": "Practice Scales",
+      "priority": "high",
+      "subGoalIndex": 1,
+      "startDayOffset": 7,
+      "endDayOffset": 14,
+      "recurrence": "daily",
+      "plannedHours": 0.5,
+      "subtasks": [{ "title": "C Major Scale (Both Hands)", "recurrence": "daily" }]
+    },
+    {
+      "title": "Song Practice",
+      "priority": "high",
+      "subGoalIndex": 2,
+      "startDayOffset": 14,
+      "endDayOffset": 30,
+      "recurrence": "daily",
+      "plannedHours": 0.5,
+      "subtasks": [
+        { "title": "Right hand only", "recurrence": "daily" },
+        { "title": "Left hand only", "recurrence": "daily" },
+        { "title": "Both hands together slowly", "recurrence": "daily" }
+      ]
+    }
+  ]
+}

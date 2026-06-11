@@ -1,3 +1,4 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -534,7 +535,11 @@ function GoalCard({ goal }: { goal: Goal }) {
                   onChange={(e) => setQuickTask(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && quickTask.trim()) {
-                      addTask({ title: quickTask, priority: "medium", subGoalId: goal.subGoals[0]?.id });
+                      addTask({
+                        title: quickTask,
+                        priority: "medium",
+                        subGoalId: goal.subGoals[0]?.id,
+                      });
                       setQuickTask("");
                     }
                   }}
@@ -544,7 +549,11 @@ function GoalCard({ goal }: { goal: Goal }) {
                   variant="secondary"
                   onClick={() => {
                     if (!quickTask.trim()) return;
-                    addTask({ title: quickTask, priority: "medium", subGoalId: goal.subGoals[0]?.id });
+                    addTask({
+                      title: quickTask,
+                      priority: "medium",
+                      subGoalId: goal.subGoals[0]?.id,
+                    });
                     setQuickTask("");
                   }}
                 >
@@ -559,8 +568,9 @@ function GoalCard({ goal }: { goal: Goal }) {
   );
 }
 
-export function Goals() {
+export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
   const { goals, skills } = useAppData();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<SkillId | "all">("all");
   const filtered = filter === "all" ? goals : goals.filter((g) => g.skill === filter);
 
@@ -583,7 +593,20 @@ export function Goals() {
             </SelectContent>
           </Select>
         </div>
-        <NewGoalButton label="New goal" />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (onGoMarketplace) onGoMarketplace();
+              else navigate({ to: "/" });
+            }}
+          >
+            <Store className="h-4 w-4 mr-2" />
+            Marketplace
+          </Button>
+          <NewGoalButton label="New goal" />
+        </div>
       </div>
       {filtered.length === 0 ? (
         <Card>
