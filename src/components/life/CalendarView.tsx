@@ -307,16 +307,24 @@ export function CalendarView() {
             <MonthGrid
               cursor={cursor}
               eventsByDay={eventsByDay}
+              dayStats={dayStats}
+              streaks={streaks}
               isMobile={isMobile}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
               onAddOnDay={(d) => openAdd(d)}
+              onDropDay={onDropDay}
             />
           )}
           {view === "week" && (
-            <WeekGrid cursor={cursor} events={events} onAddOnDay={(d) => openAdd(d)} />
+            <WeekGrid
+              cursor={cursor}
+              events={events}
+              onAddOnDay={(d) => openAdd(d)}
+              onDropDay={onDropDay}
+            />
           )}
           {view === "day" && (
             <DayGrid cursor={cursor} events={events.filter((e) => sameDay(e.start, cursor))} />
