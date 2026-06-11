@@ -826,6 +826,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
+    rescheduleTask: (id, newYmd) => {
+      const shift = (iso: string | undefined) =>
+        iso ? newYmd + iso.slice(10) : iso;
+      setTasks((cur) =>
+        cur.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                dueDate: t.dueDate ? newYmd : t.dueDate,
+                startDate: shift(t.startDate),
+                endDate: shift(t.endDate),
+              }
+            : t,
+        ),
+      );
+      toast.success(`Moved to ${newYmd}`);
+    },
 
     addSubtask: (taskId, st) =>
       setTasks((cur) =>
