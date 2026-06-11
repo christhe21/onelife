@@ -1,3 +1,6 @@
+import { MarketplaceGoalTemplate } from "./marketplace";
+import { MarketplaceGoalTemplate } from "./marketplace";
+import { MarketplaceGoalTemplate } from "./marketplace";
 import { toast } from "sonner";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -495,6 +498,7 @@ interface Ctx extends AppData {
   appendJSON: (file: File) => Promise<{ goals: number; tasks: number; bucket: number }>;
   replaceAll: (data: AppData) => void;
   clearAll: () => void;
+  importMarketplaceGoal: (template: MarketplaceGoalTemplate) => void;
 }
 
 const AppDataContext = createContext<Ctx | null>(null);
@@ -599,6 +603,89 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         g.id === goalId ? { ...g, spentHours: Math.max(0, (g.spentHours ?? 0) + delta) } : g,
       ),
     );
+  };
+
+  const importMarketplaceGoal = (template: MarketplaceGoalTemplate) => {
+    let finalSkillId = skills.find(
+      (s) => s.label.toLowerCase() === template.skillName.toLowerCase(),
+    )?.id;
+    if (!finalSkillId) {
+      finalSkillId = uid();
+      setSkills((prev) => [
+        ...prev,
+        { id: finalSkillId, label: template.skillName, color: "#9ca3af" },
+      ]);
+    }
+
+    const today = new Date();
+    const startDate = today.toISOString().split("T")[0];
+
+    const targetDateObj = new Date(today);
+    targetDateObj.setDate(today.getDate() + template.durationDays);
+    const targetDate = targetDateObj.toISOString().split("T")[0];
+
+    const newGoal: Goal = {
+      id: uid(),
+      title: template.title,
+      description: template.description + (template.advice ? `\n\nAdvice: ${template.advice}` : ""),
+      skill: finalSkillId,
+      startDate,
+      targetDate,
+      status: "not_started",
+      subGoals: template.subGoals.map((sg) => {
+        const d = new Date(today);
+        d.setDate(today.getDate() + sg.dayOffset);
+        return {
+          id: uid(),
+          title: sg.title,
+          targetDate: d.toISOString().split("T")[0],
+          done: false,
+        };
+      }),
+    };
+
+    const newTasks: Task[] = template.tasks.map((t) => {
+      let taskStartDate, taskEndDate;
+      if (t.startDayOffset !== undefined) {
+        const sd = new Date(today);
+        sd.setDate(today.getDate() + t.startDayOffset);
+        taskStartDate = sd.toISOString().split("T")[0];
+      }
+      if (t.endDayOffset !== undefined) {
+        const ed = new Date(today);
+        ed.setDate(today.getDate() + t.endDayOffset);
+        taskEndDate = ed.toISOString().split("T")[0];
+      }
+
+      const linkedSubGoalId =
+        t.subGoalIndex !== undefined &&
+        t.subGoalIndex >= 0 &&
+        t.subGoalIndex < newGoal.subGoals.length
+          ? newGoal.subGoals[t.subGoalIndex].id
+          : undefined;
+
+      return {
+        id: uid(),
+        title: t.title,
+        priority: t.priority,
+        done: false,
+        subGoalId: linkedSubGoalId,
+        startDate: taskStartDate,
+        endDate: taskEndDate,
+        recurrence: t.recurrence,
+        plannedHours: t.plannedHours,
+        subtasks: t.subtasks.map((st) => ({
+          id: uid(),
+          title: st.title,
+          done: false,
+          recurrence: st.recurrence,
+        })),
+      };
+    });
+
+    setGoals((prev) => [...prev, newGoal]);
+    setTasks((prev) => [...prev, ...newTasks]);
+    toast.success("Goal imported successfully!");
   };
 
   const value: Ctx = {
@@ -787,7 +874,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               const signed = nowDone ? delta : -delta;
               taskDelta = signed;
               goalDelta = signed;
-              goalIdForDelta = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId))?.id;
+              goalIdForDelta = goals.find((g) =>
+                g.subGoals.some((sg) => sg.id === t.subGoalId),
+              )?.id;
               nextTaskSpent = Math.max(0, nextTaskSpent + signed);
             }
             return { ...s, done: nowDone, spentHours: nextSpent };
@@ -812,6 +901,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList((cur) => cur.map((b) => (b.id === id ? { ...b, achieved: !b.achieved } : b))),
     deleteBucket: (id) => setBucketList((cur) => cur.filter((b) => b.id !== id)),
 
+    importMarketplaceGoal,
     exportJSON: () => {
       const payload = {
         version: EXPORT_VERSION,
@@ -878,11 +968,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const newGoals = data.goals.map((g) => {
         const nid = uid();
         goalIdMap.set(g.id, nid);
-        return { ...g, id: nid, subGoals: g.subGoals.map((s) => {
+        return {
+          ...g,
+          id: nid,
+          subGoals: g.subGoals.map((s) => {
             const sid = uid();
             subGoalIdMap.set(s.id, sid);
             return { ...s, id: sid };
-        }) };
+          }),
+        };
       });
       const newTasks = data.tasks.map((t) => ({
         ...t,
@@ -941,7 +1035,9 @@ export function useAppData() {
 }
 
 export function progressFor(g: Goal, tasks: Task[] = []): number {
-  const linked = tasks.filter((t) => t.subGoalId && g.subGoals?.some(sg => sg.id === t.subGoalId));
+  const linked = tasks.filter(
+    (t) => t.subGoalId && g.subGoals?.some((sg) => sg.id === t.subGoalId),
+  );
   if (linked.length > 0) {
     const done = linked.filter((t) => t.done).length;
     return Math.round((done / linked.length) * 100);

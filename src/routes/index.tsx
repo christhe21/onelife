@@ -16,6 +16,7 @@ import { Onboarding } from "@/components/life/Onboarding";
 import { Welcome } from "@/components/life/Welcome";
 import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
+import { GoalMarketplace } from "@/components/life/GoalMarketplace";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 import { useNotifications } from "@/hooks/use-notifications";
 
@@ -49,7 +50,7 @@ function Shell() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("dashboard");
-  const { goals, tasks, bucketList, settings } = useAppData();
+  const { goals, tasks, bucketList, settings, importMarketplaceGoal } = useAppData();
   useAppSettingsEffects();
   useNotifications();
   const stats = {
@@ -79,11 +80,19 @@ function Shell() {
       )}
       {tab === "calendar" && <CalendarView />}
       {tab === "overview" && <Overview />}
-      {tab === "goals" && <Goals />}
+      {tab === "goals" && <Goals onGoMarketplace={() => setTab("marketplace")} />}
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
       {tab === "skills" && <Skills />}
       {tab === "settings" && <SettingsView />}
+      {tab === "marketplace" && (
+        <GoalMarketplace
+          onImport={(t) => {
+            importMarketplaceGoal(t);
+            setTab("goals");
+          }}
+        />
+      )}
     </AppShell>
   );
 }
