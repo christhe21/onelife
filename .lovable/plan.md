@@ -1,51 +1,63 @@
-# Plan: Show milestones (sub-goals) in Mindmap & Tree views
+# Calendar upgrade — Phase 1
 
-## Problem
+Upgrade the existing Calendar tab in place (`src/components/life/CalendarView.tsx`) with visual progress and direct calendar interactions. Phase 2 (view modes + backlog drawer, inline notes) is deferred.
 
-`Goal.subGoals[]` (milestones) exist in the data model but neither the **Tree view** (`Overview.tsx`) nor the **Map view** (`MindMapCanvas.tsx`) render them. The hierarchy currently jumps Skill → Goal → Tasks, hiding the milestone layer entirely.
+## Scope
 
-## Target hierarchy
+### 1. Visual progress on the month grid
 
-```text
-Skill ─▶ Goal ─▶ Milestone ─▶ Task
-                 └─▶ Task (unlinked to a milestone)
-```
+For each day cell compute:
 
-A task is associated with a milestone if it stores a milestone id (e.g. `task.subGoalId` / `task.milestoneId`). If no such field exists today, tasks remain directly under the goal — milestones still appear as siblings alongside an "Unassigned tasks" branch.
+- `completed` = tasks done that day + subtasks done that day
+- `total` = tasks scheduled/due that day + subtasks scheduled that day
+- `ratio` = completed / total (0 if total is 0)
 
-## 1. Tree view — `src/components/life/Overview.tsx`
+Use that to render three layered visual cues:
 
-In `SkillNode`, after rendering each goal row and before/instead of rendering its tasks directly:
+- **Heatmap background**: cell `background-color` = `color-mix(in oklab, hsl(var(--primary)) <intensity>%, transparent)` where intensity scales with `completed` (e.g. 0→0%, 1→12%, 2→22%, 3→32%, 4+→45%). Pure days with zero activity stay transparent so "other month" styling is preserved.
+- **Progress ring** on the day number badge: small SVG ring (16px) around the date showing `ratio`. Only rendered when `total > 0`.
+- **Streak indicator**: compute streaks across consecutive days where `completed > 0`. For any day that is part of a streak ≥ 2, show a small flame dot in the corner; on the current streak's last day (today or most recent), show the streak length as a tiny badge.
 
-- Render each `g.subGoals` item as a **milestone row** (flag/target icon, completed strikethrough, target date on right, expandable).
-- Under each milestone, list tasks whose `subGoalId === milestone.id` (check task schema; fall back to all tasks under goal if no link field exists).
-- Add an "Unassigned" milestone bucket showing tasks with no `subGoalId`.
-- Add `openMilestones: Set<string>` state, mirroring `openGoals`.
-- Reuse `EditableLabel` wired to a new `updateSubGoal(goalId, subId, patch)` (already exists in `app-data.tsx` as part of subgoal management — confirm and expose if needed).
+All three are computed once in a `useMemo` keyed on `events` → `Map<ymd, {completed, total}>`, plus a second pass for streaks.
 
-Update the goal-row counter to read `g.subGoals.length + tasksByGoal(g.id).length` so users see the milestone count, not just tasks.
+Add a compact legend row above the month grid: "Heat = completed · Ring = progress · 🔥 = streak".
 
-## 2. Map view — `src/components/life/MindMapCanvas.tsx`
+### 2. Click-to-add (quick add)
 
-Add a fourth node layer "milestone" between goal and task nodes:
+Single click on any day cell currently navigates to day view. Change to:
 
-- For each goal node, create child milestone nodes from `goal.subGoals`.
-- Re-parent task nodes: if `task.subGoalId` matches a milestone, attach to that milestone; otherwise attach directly to the goal (or an "Unassigned" pseudo-node).
-- Style milestones distinctly: smaller than goal, larger than task; use goal's skill color at ~50% opacity with a flag glyph; completed milestones get a check + reduced opacity.
-- Update layout (radial / force) so the extra depth doesn't overlap — typically increase the per-level radius step or recursion depth in the existing layout function.
-- Update the in-canvas legend to include "Milestone".
+- **Single click** on a cell → open `AddToScheduleDialog` with `defaultDate` = that day (currently this is double-click only).
+- **Click on the date number** (or a new small "open day" chevron) → switch to day view for that date.
 
-## 3. Task ↔ Milestone link (check first)
+This makes the calendar a control center: the obvious tap creates work for that day, while drilling in is a secondary action. Same change applied to week-view day headers.
 
-Before implementing, grep for `subGoalId` / `milestoneId` in `Task` interface (`app-data.tsx`). Two cases:
+### 3. Drag-to-reschedule
 
-- **Field exists**: use it directly.
-- **Field missing**: still render milestones as children of goals; place all tasks under the goal node. (No data-model change in this plan — adding the link is a separate feature.)
+Make each event chip draggable (HTML5 drag-and-drop, no new dependency):
+
+- Chip `draggable`, `onDragStart` sets `dataTransfer` with the event id (`task:<id>` or `sub:<taskId>|<subId>`).
+- Day cells (month + week) handle `onDragOver` (preventDefault + highlight ring) and `onDrop`.
+- On drop, parse the id and call a new helper on `useAppData()`:
+  - `rescheduleTask(taskId, newYmd)` → shifts `task.startDate`/`task.endDate`/`task.dueDate` to the new day, preserving time-of-day and duration.
+  - `rescheduleSubtask(taskId, subId, newYmd)` → same for subtasks (`startDate`/`endDate`).
+- Toast on success ("Moved to Mar 14").
+
+Recurring events: dragging a projected instance moves the base event (`task.startDate`); we surface this in the toast ("Series moved — every weekly occurrence shifted"). No per-instance exceptions in this phase.
 
 ## Files touched
 
-- `src/components/life/Overview.tsx` — add milestone layer, openMilestones state, render under each goal.
-- `src/components/life/MindMapCanvas.tsx` — add milestone node type, re-parenting, layout/legend updates.
-- `src/lib/app-data.tsx` — only if `updateSubGoal` patch helper isn't exposed (small addition).
+- `src/lib/app-data.tsx` — add `rescheduleTask` and `rescheduleSubtask` to the context value; pure date math, no schema change.
+- `src/components/life/CalendarView.tsx` —
+  - `useMemo` for `dayStats` (`Map<ymd, {completed, total}>`) and `streaks` (`Map<ymd, {inStreak: boolean, length: number, isTip: boolean}>`).
+  - New `DayBadge` subcomponent: date number + SVG progress ring.
+  - `MonthGrid` cell: heatmap bg, DayBadge, streak dot/badge; swap click handlers (single click → add, date badge → drill in); add `onDragOver`/`onDrop`.
+  - Event chip rendering (month list items + week-grid blocks): add `draggable`, `onDragStart`.
+  - `WeekGrid` day header: same single-click-adds behavior; drop targets on each day column.
+- No new dependencies.
 
-No schema changes, no migrations.
+## Out of scope (Phase 2, not in this plan)
+
+- View modes (Focus/Today, backlog drawer with drag-from-backlog).
+- Inline notes/journal per day.
+- Contextual time-of-day reminders beyond what tasks already store.
+

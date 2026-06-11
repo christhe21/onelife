@@ -97,12 +97,23 @@ function hm(d: Date) {
 }
 
 export function CalendarView() {
-  const { tasks, goals, skills } = useAppData();
+  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask } = useAppData();
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string | undefined>(undefined);
+
+  const onDropDay = (d: Date, payload: string) => {
+    const newYmd = ymd(d);
+    const base = payload.replace(/_\d+$/, "");
+    if (base.startsWith("task:")) {
+      rescheduleTask(base.slice(5), newYmd);
+    } else if (base.startsWith("sub:")) {
+      const [tid, sid] = base.slice(4).split("|");
+      if (tid && sid) rescheduleSubtask(tid, sid, newYmd);
+    }
+  };
 
   const events = useMemo<Event[]>(() => {
     const out: Event[] = [];
@@ -162,6 +173,42 @@ export function CalendarView() {
     }
     return m;
   }, [events]);
+
+  const dayStats = useMemo(() => {
+    const m = new Map<string, { completed: number; total: number }>();
+    for (const [k, evs] of eventsByDay) {
+      let c = 0;
+      for (const e of evs) if (e.done) c++;
+      m.set(k, { completed: c, total: evs.length });
+    }
+    return m;
+  }, [eventsByDay]);
+
+  const streaks = useMemo(() => {
+    const keys = [...dayStats.keys()].sort();
+    const m = new Map<string, number>();
+    let run = 0;
+    let prev: string | null = null;
+    for (const k of keys) {
+      const s = dayStats.get(k)!;
+      if (s.completed > 0) {
+        // require contiguous calendar days
+        if (prev) {
+          const pd = new Date(prev);
+          const cd = new Date(k);
+          const diff = Math.round((cd.getTime() - pd.getTime()) / 86400000);
+          if (diff !== 1) run = 0;
+        }
+        run++;
+        m.set(k, run);
+        prev = k;
+      } else {
+        run = 0;
+        prev = k;
+      }
+    }
+    return m;
+  }, [dayStats]);
 
   const goPrev = () => {
     if (view === "month") setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
@@ -260,16 +307,24 @@ export function CalendarView() {
             <MonthGrid
               cursor={cursor}
               eventsByDay={eventsByDay}
+              dayStats={dayStats}
+              streaks={streaks}
               isMobile={isMobile}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
               onAddOnDay={(d) => openAdd(d)}
+              onDropDay={onDropDay}
             />
           )}
           {view === "week" && (
-            <WeekGrid cursor={cursor} events={events} onAddOnDay={(d) => openAdd(d)} />
+            <WeekGrid
+              cursor={cursor}
+              events={events}
+              onAddOnDay={(d) => openAdd(d)}
+              onDropDay={onDropDay}
+            />
           )}
           {view === "day" && (
             <DayGrid cursor={cursor} events={events.filter((e) => sameDay(e.start, cursor))} />
@@ -288,18 +343,66 @@ export function CalendarView() {
 
 /* ============== Month ============== */
 
+function DayBadge({
+  day,
+  ratio,
+  isToday,
+}: {
+  day: number;
+  ratio: number;
+  isToday: boolean;
+}) {
+  const size = 22;
+  const r = 9;
+  const c = 2 * Math.PI * r;
+  const dash = c * Math.min(1, Math.max(0, ratio));
+  return (
+    <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      {ratio > 0 && (
+        <svg width={size} height={size} className="absolute inset-0 -rotate-90">
+          <circle cx={size / 2} cy={size / 2} r={r} stroke="hsl(var(--muted))" strokeWidth="2" fill="none" />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            stroke={ratio >= 1 ? "hsl(var(--primary))" : "hsl(var(--primary))"}
+            strokeWidth="2"
+            strokeDasharray={`${dash} ${c - dash}`}
+            strokeLinecap="round"
+            fill="none"
+          />
+        </svg>
+      )}
+      <span
+        className={cn(
+          "relative z-10 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-semibold tabular-nums",
+          isToday && "bg-primary text-primary-foreground",
+        )}
+      >
+        {day}
+      </span>
+    </span>
+  );
+}
+
 function MonthGrid({
   cursor,
   eventsByDay,
+  dayStats,
+  streaks,
   isMobile,
   onPickDay,
   onAddOnDay,
+  onDropDay,
 }: {
   cursor: Date;
   eventsByDay: Map<string, Event[]>;
+  dayStats: Map<string, { completed: number; total: number }>;
+  streaks: Map<string, number>;
   isMobile: boolean;
   onPickDay: (d: Date) => void;
   onAddOnDay: (d: Date) => void;
+  onDropDay: (d: Date, payload: string) => void;
 }) {
   const first = startOfMonth(cursor);
   const gridStart = startOfWeek(first);
@@ -307,13 +410,32 @@ function MonthGrid({
   for (let i = 0; i < 42; i++) cells.push(addDays(gridStart, i));
   const month = cursor.getMonth();
   const today = startOfDay(new Date());
+  const [dragOver, setDragOver] = useState<string | null>(null);
 
   const weekdays = isMobile
     ? ["M", "T", "W", "T", "F", "S", "S"]
     : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+  const heatBg = (completed: number) => {
+    if (completed <= 0) return undefined;
+    const pct = Math.min(45, 8 + completed * 10);
+    return `color-mix(in oklab, hsl(var(--primary)) ${pct}%, transparent)`;
+  };
+
   return (
     <div>
+      <div className="flex items-center justify-end gap-3 px-3 py-1.5 text-[10px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-sm" style={{ background: "color-mix(in oklab, hsl(var(--primary)) 35%, transparent)" }} />
+          Heat
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="h-2 w-2 rounded-full border-2 border-primary" />
+          Progress
+        </span>
+        <span className="inline-flex items-center gap-1">🔥 Streak</span>
+        <span className="hidden sm:inline">· Click day to add · Drag chips to reschedule</span>
+      </div>
       <div className="grid grid-cols-7 border-b text-center text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {weekdays.map((d, i) => (
           <div key={i} className="py-2">
@@ -325,35 +447,68 @@ function MonthGrid({
         {cells.map((d, i) => {
           const key = ymd(d);
           const dayEvents = eventsByDay.get(key) ?? [];
+          const stats = dayStats.get(key);
+          const ratio = stats && stats.total > 0 ? stats.completed / stats.total : 0;
+          const streak = streaks.get(key) ?? 0;
           const isOtherMonth = d.getMonth() !== month;
           const isToday = sameDay(d, today);
+          const isDragOver = dragOver === key;
           return (
-            <button
+            <div
               key={i}
-              onClick={() => onPickDay(d)}
-              onDoubleClick={() => onAddOnDay(d)}
+              onClick={() => onAddOnDay(d)}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (dragOver !== key) setDragOver(key);
+              }}
+              onDragLeave={() => {
+                if (dragOver === key) setDragOver(null);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const payload = e.dataTransfer.getData("text/plain");
+                setDragOver(null);
+                if (payload) onDropDay(d, payload);
+              }}
               className={cn(
-                "group relative flex flex-col gap-1 border-b border-r p-1.5 text-left transition hover:bg-muted/40",
+                "group relative flex cursor-pointer flex-col gap-1 border-b border-r p-1.5 text-left transition hover:bg-muted/40",
                 isMobile ? "min-h-[56px]" : "min-h-[96px]",
                 (i + 1) % 7 === 0 && "border-r-0",
-                isOtherMonth && "bg-muted/20 text-muted-foreground",
+                isOtherMonth && "text-muted-foreground",
+                isDragOver && "ring-2 ring-inset ring-primary",
               )}
+              style={{ backgroundColor: heatBg(stats?.completed ?? 0) }}
             >
-              <span
-                className={cn(
-                  "inline-flex h-5 min-w-5 items-center justify-center self-start rounded-full px-1 text-[11px] font-semibold tabular-nums",
-                  isToday && "bg-primary text-primary-foreground",
+              <div className="flex items-start justify-between">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPickDay(d);
+                  }}
+                  className="rounded transition hover:scale-110"
+                  aria-label={`Open ${key}`}
+                >
+                  <DayBadge day={d.getDate()} ratio={ratio} isToday={isToday} />
+                </button>
+                {streak >= 2 && (
+                  <span
+                    className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-orange-500"
+                    title={`${streak}-day streak`}
+                  >
+                    🔥{!isMobile && <span className="tabular-nums">{streak}</span>}
+                  </span>
                 )}
-              >
-                {d.getDate()}
-              </span>
+              </div>
               {isMobile ? (
                 dayEvents.length > 0 && (
                   <div className="flex flex-wrap gap-0.5">
                     {dayEvents.slice(0, 4).map((e) => (
                       <span
                         key={e.id}
-                        className="h-1.5 w-1.5 rounded-full"
+                        draggable
+                        onDragStart={(ev) => ev.dataTransfer.setData("text/plain", e.id)}
+                        className="h-1.5 w-1.5 cursor-grab rounded-full active:cursor-grabbing"
                         style={{ backgroundColor: e.color }}
                       />
                     ))}
@@ -369,8 +524,15 @@ function MonthGrid({
                   {dayEvents.slice(0, 3).map((e) => (
                     <span
                       key={e.id}
+                      draggable
+                      onDragStart={(ev) => {
+                        ev.stopPropagation();
+                        ev.dataTransfer.setData("text/plain", e.id);
+                        ev.dataTransfer.effectAllowed = "move";
+                      }}
+                      onClick={(ev) => ev.stopPropagation()}
                       className={cn(
-                        "truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight",
+                        "cursor-grab truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing",
                         e.done && "line-through opacity-60",
                       )}
                       style={{
@@ -378,7 +540,7 @@ function MonthGrid({
                         color: e.color,
                         borderLeft: `2px solid ${e.color}`,
                       }}
-                      title={`${hm(e.start)} ${e.title}`}
+                      title={`${hm(e.start)} ${e.title} — drag to reschedule`}
                     >
                       {hm(e.start)} {e.title}
                     </span>
@@ -390,7 +552,7 @@ function MonthGrid({
                   )}
                 </div>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -404,11 +566,14 @@ function WeekGrid({
   cursor,
   events,
   onAddOnDay,
+  onDropDay,
 }: {
   cursor: Date;
   events: Event[];
   onAddOnDay: (d: Date) => void;
+  onDropDay: (d: Date, payload: string) => void;
 }) {
+  const [dragOver, setDragOver] = useState<number | null>(null);
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDaysLocal(start, i));
   const baseHour = HOURS[0];
@@ -483,7 +648,23 @@ function WeekGrid({
               const dayEvents = events.filter((e) => sameDay(e.start, d));
               const isCurrentDay = sameDay(d, new Date());
               return (
-                <div key={i} className="relative border-l">
+                <div
+                  key={i}
+                  className={cn("relative border-l", dragOver === i && "bg-primary/10")}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragOver !== i) setDragOver(i);
+                  }}
+                  onDragLeave={() => {
+                    if (dragOver === i) setDragOver(null);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const payload = e.dataTransfer.getData("text/plain");
+                    setDragOver(null);
+                    if (payload) onDropDay(d, payload);
+                  }}
+                >
                   {isCurrentDay && showNow && (
                     <div
                       className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
@@ -511,9 +692,14 @@ function WeekGrid({
                     return (
                       <div
                         key={e.id}
-                        title={`${hm(e.start)}–${hm(e.end)} ${e.title}`}
+                        draggable
+                        onDragStart={(ev) => {
+                          ev.dataTransfer.setData("text/plain", e.id);
+                          ev.dataTransfer.effectAllowed = "move";
+                        }}
+                        title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
-                          "absolute inset-x-1 overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm",
+                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing",
                           e.done && "opacity-60 line-through",
                         )}
                         style={{

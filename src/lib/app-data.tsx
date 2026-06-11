@@ -1,6 +1,4 @@
 import { MarketplaceGoalTemplate } from "./marketplace";
-import { MarketplaceGoalTemplate } from "./marketplace";
-import { MarketplaceGoalTemplate } from "./marketplace";
 import { toast } from "sonner";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -482,11 +480,13 @@ interface Ctx extends AppData {
   updateTask: (id: string, patch: Partial<Task>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
+  rescheduleTask: (id: string, newYmd: string) => void;
 
   addSubtask: (taskId: string, st: Omit<SubTask, "id" | "done">) => void;
   updateSubtask: (taskId: string, subId: string, patch: Partial<SubTask>) => void;
   toggleSubtask: (taskId: string, subId: string) => void;
   deleteSubtask: (taskId: string, subId: string) => void;
+  rescheduleSubtask: (taskId: string, subId: string, newYmd: string) => void;
 
   addBucket: (b: Omit<BucketItem, "id" | "achieved">) => void;
   updateBucket: (id: string, patch: Partial<BucketItem>) => void;
@@ -610,10 +610,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       (s) => s.label.toLowerCase() === template.skillName.toLowerCase(),
     )?.id;
     if (!finalSkillId) {
-      finalSkillId = uid();
+      const newSkillId = uid();
+      finalSkillId = newSkillId;
       setSkills((prev) => [
         ...prev,
-        { id: finalSkillId, label: template.skillName, color: "#9ca3af" },
+        { id: newSkillId, label: template.skillName, color: "#9ca3af" },
       ]);
     }
 
@@ -825,6 +826,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
+    rescheduleTask: (id, newYmd) => {
+      const shift = (iso: string | undefined) =>
+        iso ? newYmd + iso.slice(10) : iso;
+      setTasks((cur) =>
+        cur.map((t) =>
+          t.id === id
+            ? {
+                ...t,
+                dueDate: t.dueDate ? newYmd : t.dueDate,
+                startDate: shift(t.startDate),
+                endDate: shift(t.endDate),
+              }
+            : t,
+        ),
+      );
+      toast.success(`Moved to ${newYmd}`);
+    },
 
     addSubtask: (taskId, st) =>
       setTasks((cur) =>
@@ -893,6 +911,25 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           t.id === taskId ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subId) } : t,
         ),
       ),
+    rescheduleSubtask: (taskId, subId, newYmd) => {
+      const shift = (iso: string | undefined) =>
+        iso ? newYmd + iso.slice(10) : iso;
+      setTasks((cur) =>
+        cur.map((t) =>
+          t.id === taskId
+            ? {
+                ...t,
+                subtasks: t.subtasks.map((s) =>
+                  s.id === subId
+                    ? { ...s, startDate: shift(s.startDate), endDate: shift(s.endDate) }
+                    : s,
+                ),
+              }
+            : t,
+        ),
+      );
+      toast.success(`Moved to ${newYmd}`);
+    },
 
     addBucket: (b) => setBucketList((cur) => [...cur, { ...b, id: uid(), achieved: false }]),
     updateBucket: (id, patch) =>
