@@ -610,10 +610,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       (s) => s.label.toLowerCase() === template.skillName.toLowerCase(),
     )?.id;
     if (!finalSkillId) {
-      finalSkillId = uid();
+      const newSkillId = uid();
+      finalSkillId = newSkillId;
       setSkills((prev) => [
         ...prev,
-        { id: finalSkillId, label: template.skillName, color: "#9ca3af" },
+        { id: newSkillId, label: template.skillName, color: "#9ca3af" },
       ]);
     }
 
