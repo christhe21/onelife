@@ -566,11 +566,14 @@ function WeekGrid({
   cursor,
   events,
   onAddOnDay,
+  onDropDay,
 }: {
   cursor: Date;
   events: Event[];
   onAddOnDay: (d: Date) => void;
+  onDropDay: (d: Date, payload: string) => void;
 }) {
+  const [dragOver, setDragOver] = useState<number | null>(null);
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDaysLocal(start, i));
   const baseHour = HOURS[0];
