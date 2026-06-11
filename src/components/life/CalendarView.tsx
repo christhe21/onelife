@@ -97,12 +97,23 @@ function hm(d: Date) {
 }
 
 export function CalendarView() {
-  const { tasks, goals, skills } = useAppData();
+  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask } = useAppData();
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string | undefined>(undefined);
+
+  const onDropDay = (d: Date, payload: string) => {
+    const newYmd = ymd(d);
+    const base = payload.replace(/_\d+$/, "");
+    if (base.startsWith("task:")) {
+      rescheduleTask(base.slice(5), newYmd);
+    } else if (base.startsWith("sub:")) {
+      const [tid, sid] = base.slice(4).split("|");
+      if (tid && sid) rescheduleSubtask(tid, sid, newYmd);
+    }
+  };
 
   const events = useMemo<Event[]>(() => {
     const out: Event[] = [];
