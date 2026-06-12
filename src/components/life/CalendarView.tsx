@@ -344,7 +344,6 @@ export function CalendarView() {
                 setCursor(d);
                 setView("day");
               }}
-              onAddOnDay={(d) => openAdd(d)}
               onDropDay={onDropDay}
               onEventClick={onEventClick}
             />
@@ -353,7 +352,10 @@ export function CalendarView() {
             <WeekGrid
               cursor={cursor}
               events={events}
-              onAddOnDay={(d) => openAdd(d)}
+              onPickDay={(d) => {
+                setCursor(d);
+                setView("day");
+              }}
               onDropDay={onDropDay}
               onEventClick={onEventClick}
             />
@@ -365,36 +367,34 @@ export function CalendarView() {
       </Card>
 
       <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
-        <DialogContent className="sm:max-w-md border-primary/60 border-2">
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-4 overflow-x-hidden overflow-y-auto border-2 border-primary/60 p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span
                 className="h-3 w-3 rounded-full shrink-0"
                 style={{ backgroundColor: selectedEvent?.color }}
               />
-              <span className="truncate">{selectedEvent?.title}</span>
+              <span className="min-w-0 break-words">{selectedEvent?.title}</span>
             </DialogTitle>
             <DialogDescription>
                {selectedEvent && `${hm(selectedEvent.start)} - ${hm(selectedEvent.end)}`}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2 py-4">
+          <div className="flex flex-col gap-2">
              {selectedEvent?.isSub && (
-                 <div className="text-sm"><strong>Parent Task:</strong> {selectedEvent.parentTitle}</div>
+                 <div className="text-sm break-words"><strong>Parent Task:</strong> {selectedEvent.parentTitle}</div>
              )}
              {selectedEvent?.goalTitle && (
-                 <div className="text-sm"><strong>Goal:</strong> {selectedEvent.goalTitle}</div>
+                 <div className="text-sm break-words"><strong>Goal:</strong> {selectedEvent.goalTitle}</div>
              )}
              <div className="text-sm"><strong>Status:</strong> {selectedEvent?.done ? 'Completed' : 'Pending'}</div>
           </div>
-          <DialogFooter className="sm:justify-between flex-row gap-2">
-            <Button variant="outline" onClick={() => setEventDetailsOpen(false)}>Close</Button>
-            <Button variant="destructive" onClick={() => {
+          <DialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setEventDetailsOpen(false)}>Close</Button>
+            <Button variant="destructive" className="w-full sm:w-auto" onClick={() => {
                 if (selectedEvent) {
                     const baseId = selectedEvent.id.replace(/_\d+$/, "");
                     if (baseId.startsWith("task:")) {
-                        // For deleting task entirely: but we probably just want to un-schedule it?
-                        // Let's unschedule it instead of delete.
                         updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
                     } else if (baseId.startsWith("sub:")) {
                         const [tid, sid] = baseId.slice(4).split("|");
@@ -403,20 +403,19 @@ export function CalendarView() {
                     setEventDetailsOpen(false);
                 }
             }}>Unschedule</Button>
-            <Button variant="secondary" onClick={() => {
+            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => {
                 if (selectedEvent) {
-                    // Open reschedule dialog
                     setEventDetailsOpen(false);
-                    // Add dialog can't target specifically yet unless we just open it on that date
                     openAdd(selectedEvent.start);
                 }
             }}>Reschedule</Button>
-            <Button onClick={toggleCompletion}>
-               {selectedEvent?.done ? 'Mark as Pending' : 'Mark as Completed'}
+            <Button className="w-full sm:w-auto" onClick={toggleCompletion}>
+               {selectedEvent?.done ? 'Mark Pending' : 'Mark Done'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       <AddToScheduleDialog
         open={dialogOpen}
@@ -478,8 +477,8 @@ function MonthGrid({
   streaks,
   isMobile,
   onPickDay,
-  onAddOnDay,
   onDropDay,
+  onEventClick,
 }: {
   cursor: Date;
   eventsByDay: Map<string, Event[]>;
@@ -487,7 +486,6 @@ function MonthGrid({
   streaks: Map<string, number>;
   isMobile: boolean;
   onPickDay: (d: Date) => void;
-  onAddOnDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
 }) {
@@ -543,7 +541,7 @@ function MonthGrid({
           return (
             <div
               key={i}
-              onClick={() => onAddOnDay(d)}
+              onClick={() => onPickDay(d)}
               onDragOver={(e) => {
                 e.preventDefault();
                 if (dragOver !== key) setDragOver(key);
@@ -652,12 +650,13 @@ function MonthGrid({
 function WeekGrid({
   cursor,
   events,
-  onAddOnDay,
+  onPickDay,
   onDropDay,
+  onEventClick,
 }: {
   cursor: Date;
   events: Event[];
-  onAddOnDay: (d: Date) => void;
+  onPickDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
 }) {
@@ -694,7 +693,7 @@ function WeekGrid({
             return (
               <button
                 key={i}
-                onClick={() => onAddOnDay(d)}
+                onClick={() => onPickDay(d)}
                 className={cn(
                   "py-2 transition hover:bg-muted/40",
                   isToday && "bg-primary/10 text-primary font-semibold",
@@ -836,7 +835,7 @@ function DayGrid({ cursor, events, onEventClick }: { cursor: Date; events: Event
   const nowLabel = `${String(Math.floor(nowH)).padStart(2, "0")}:${String(Math.round((nowH % 1) * 60)).padStart(2, "0")}`;
 
   return (
-    <div className="relative max-h-[70vh] overflow-y-auto">
+    <div className="relative max-h-[70vh] overflow-y-auto overflow-x-hidden">
       <div className="relative">
         {HOURS.map((h) => (
           <div
