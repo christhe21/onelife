@@ -545,7 +545,7 @@ function MonthGrid({
           return (
             <div
               key={i}
-              onClick={() => onAddOnDay(d)}
+              onClick={() => onPickDay(d)}
               onDragOver={(e) => {
                 e.preventDefault();
                 if (dragOver !== key) setDragOver(key);
