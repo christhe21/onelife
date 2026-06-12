@@ -353,7 +353,10 @@ export function CalendarView() {
             <WeekGrid
               cursor={cursor}
               events={events}
-              onAddOnDay={(d) => openAdd(d)}
+              onPickDay={(d) => {
+                setCursor(d);
+                setView("day");
+              }}
               onDropDay={onDropDay}
               onEventClick={onEventClick}
             />
