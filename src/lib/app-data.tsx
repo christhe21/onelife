@@ -771,7 +771,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     updateGoal: (id, patch) =>
       setGoals((cur) => cur.map((g) => (g.id === id ? { ...g, ...patch } : g))),
-    deleteGoal: (id) => setGoals((cur) => cur.filter((g) => g.id !== id)),
+    deleteGoal: (id) => {
+      const goalToDelete = goals.find((g) => g.id === id);
+      if (goalToDelete) {
+        const subGoalIds = new Set(goalToDelete.subGoals.map((sg) => sg.id));
+        setTasks((cur) => cur.filter((t) => !t.subGoalId || !subGoalIds.has(t.subGoalId)));
+      }
+      setGoals((cur) => cur.filter((g) => g.id !== id));
+    },
     addSubGoal: (goalId, title, targetDate) => {
       const id = uid();
       setGoals((cur) =>
@@ -822,12 +829,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    deleteSubGoal: (goalId, subId) =>
+    deleteSubGoal: (goalId, subId) => {
+      setTasks((cur) => cur.filter((t) => t.subGoalId !== subId));
       setGoals((cur) =>
         cur.map((g) =>
           g.id === goalId ? { ...g, subGoals: g.subGoals.filter((s) => s.id !== subId) } : g,
         ),
-      ),
+      );
+    },
 
     addTask: (t) =>
       setTasks((cur) => [...cur, { ...t, id: uid(), done: false, subtasks: t.subtasks ?? [] }]),
