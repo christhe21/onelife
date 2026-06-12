@@ -489,7 +489,6 @@ function MonthGrid({
   streaks: Map<string, number>;
   isMobile: boolean;
   onPickDay: (d: Date) => void;
-  onAddOnDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
 }) {
