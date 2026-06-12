@@ -133,7 +133,10 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
           </div>
           <div>
             <Label>Linked milestone</Label>
-            <Select value={form.subGoalId} onValueChange={(v) => setForm({ ...form, subGoalId: v })}>
+            <Select
+              value={form.subGoalId}
+              onValueChange={(v) => setForm({ ...form, subGoalId: v })}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

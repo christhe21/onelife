@@ -827,8 +827,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
     rescheduleTask: (id, newYmd) => {
-      const shift = (iso: string | undefined) =>
-        iso ? newYmd + iso.slice(10) : iso;
+      const shift = (iso: string | undefined) => (iso ? newYmd + iso.slice(10) : iso);
       setTasks((cur) =>
         cur.map((t) =>
           t.id === id
@@ -912,8 +911,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         ),
       ),
     rescheduleSubtask: (taskId, subId, newYmd) => {
-      const shift = (iso: string | undefined) =>
-        iso ? newYmd + iso.slice(10) : iso;
+      const shift = (iso: string | undefined) => (iso ? newYmd + iso.slice(10) : iso);
       setTasks((cur) =>
         cur.map((t) =>
           t.id === taskId

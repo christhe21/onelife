@@ -19,7 +19,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Dialog,
   DialogContent,
@@ -155,7 +154,7 @@ function TemplateDialog({
           </DialogHeader>
         </div>
 
-        <ScrollArea className="flex-1 p-6">
+        <div className="flex-1 overflow-y-auto p-6">
           <div className="space-y-8">
             {/* Advice Section */}
             {template.advice && (
@@ -227,7 +226,7 @@ function TemplateDialog({
               </div>
             </div>
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="p-4 border-t bg-muted/30 flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>

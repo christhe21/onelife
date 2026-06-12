@@ -66,7 +66,8 @@ function addDays(base: Date, days: number): string {
 }
 
 export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
-  const { addSkill, addGoal, addSubGoal, addTask, updateSettings, skills, ensureDefaultMilestone } = useAppData();
+  const { addSkill, addGoal, addSubGoal, addTask, updateSettings, skills, ensureDefaultMilestone } =
+    useAppData();
   const [step, setStep] = useState<Step>("welcome");
   const [name, setName] = useState("");
   const [areas, setAreas] = useState<Set<string>>(new Set(["Career", "Health"]));

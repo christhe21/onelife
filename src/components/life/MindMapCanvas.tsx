@@ -311,13 +311,7 @@ export function MindMapCanvas() {
     // Recursive parent-relative layout. Each node receives its absolute position
     // and the outward direction (angle from parent → self); it then lays out its
     // own children in a wedge centered on that outward direction.
-    const place = (
-      n: Tree,
-      x: number,
-      y: number,
-      outDir: number,
-      depth: number,
-    ) => {
+    const place = (n: Tree, x: number, y: number, outDir: number, depth: number) => {
       n.depth = depth;
       seeds[n.id] = { x, y };
       nodes.push({
