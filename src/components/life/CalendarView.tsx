@@ -3,8 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Plus, CalendarDays } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Download } from "lucide-react";
 import { useAppData, type Task, type SubTask } from "@/lib/app-data";
+import { downloadICS } from "@/lib/calendar-export";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 
@@ -63,7 +65,7 @@ interface Event {
   done: boolean;
 }
 
-const HOURS = Array.from({ length: 18 }, (_, i) => 6 + i); // 6..23
+const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0..23
 const HOUR_PX = 48;
 
 function ymd(d: Date) {
@@ -97,12 +99,34 @@ function hm(d: Date) {
 }
 
 export function CalendarView() {
-  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask } = useAppData();
+  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } = useAppData();
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string | undefined>(undefined);
+  const [eventDetailsOpen, setEventDetailsOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  const onEventClick = (e: Event) => {
+    setSelectedEvent(e);
+    setEventDetailsOpen(true);
+  };
+
+  const toggleCompletion = () => {
+    if (!selectedEvent) return;
+
+    const isDone = !selectedEvent.done;
+    const baseId = selectedEvent.id.replace(/_\d+$/, "");
+    if (baseId.startsWith("task:")) {
+      updateTask(baseId.slice(5), { done: isDone });
+    } else if (baseId.startsWith("sub:")) {
+      const [tid, sid] = baseId.slice(4).split("|");
+      if (tid && sid) updateSubtask(tid, sid, { done: isDone });
+    }
+
+    setSelectedEvent({ ...selectedEvent, done: isDone });
+  };
 
   const onDropDay = (d: Date, payload: string) => {
     const newYmd = ymd(d);
@@ -297,6 +321,12 @@ export function CalendarView() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            <Button size="sm" variant="outline" onClick={() => {
+              const goalsTitleById = goals.reduce((acc, g) => { acc[g.id] = g.title; g.subGoals.forEach(sg => acc[sg.id] = g.title); return acc; }, {} as Record<string, string>);
+              downloadICS(tasks, goalsTitleById);
+            }} className="h-8">
+              <Download className="mr-1 h-3.5 w-3.5" /> Export .ics
+            </Button>
             <Button size="sm" onClick={() => openAdd(cursor)} className="h-8">
               <Plus className="mr-1 h-3.5 w-3.5" /> Add
             </Button>
@@ -316,6 +346,7 @@ export function CalendarView() {
               }}
               onAddOnDay={(d) => openAdd(d)}
               onDropDay={onDropDay}
+              onEventClick={onEventClick}
             />
           )}
           {view === "week" && (
@@ -324,13 +355,68 @@ export function CalendarView() {
               events={events}
               onAddOnDay={(d) => openAdd(d)}
               onDropDay={onDropDay}
+              onEventClick={onEventClick}
             />
           )}
           {view === "day" && (
-            <DayGrid cursor={cursor} events={events.filter((e) => sameDay(e.start, cursor))} />
+            <DayGrid cursor={cursor} events={events.filter((e) => sameDay(e.start, cursor))} onEventClick={onEventClick} />
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
+        <DialogContent className="sm:max-w-md border-primary/60 border-2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span
+                className="h-3 w-3 rounded-full shrink-0"
+                style={{ backgroundColor: selectedEvent?.color }}
+              />
+              <span className="truncate">{selectedEvent?.title}</span>
+            </DialogTitle>
+            <DialogDescription>
+               {selectedEvent && `${hm(selectedEvent.start)} - ${hm(selectedEvent.end)}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 py-4">
+             {selectedEvent?.isSub && (
+                 <div className="text-sm"><strong>Parent Task:</strong> {selectedEvent.parentTitle}</div>
+             )}
+             {selectedEvent?.goalTitle && (
+                 <div className="text-sm"><strong>Goal:</strong> {selectedEvent.goalTitle}</div>
+             )}
+             <div className="text-sm"><strong>Status:</strong> {selectedEvent?.done ? 'Completed' : 'Pending'}</div>
+          </div>
+          <DialogFooter className="sm:justify-between flex-row gap-2">
+            <Button variant="outline" onClick={() => setEventDetailsOpen(false)}>Close</Button>
+            <Button variant="destructive" onClick={() => {
+                if (selectedEvent) {
+                    const baseId = selectedEvent.id.replace(/_\d+$/, "");
+                    if (baseId.startsWith("task:")) {
+                        // For deleting task entirely: but we probably just want to un-schedule it?
+                        // Let's unschedule it instead of delete.
+                        updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
+                    } else if (baseId.startsWith("sub:")) {
+                        const [tid, sid] = baseId.slice(4).split("|");
+                        if (tid && sid) updateSubtask(tid, sid, { startDate: undefined, endDate: undefined });
+                    }
+                    setEventDetailsOpen(false);
+                }
+            }}>Unschedule</Button>
+            <Button variant="secondary" onClick={() => {
+                if (selectedEvent) {
+                    // Open reschedule dialog
+                    setEventDetailsOpen(false);
+                    // Add dialog can't target specifically yet unless we just open it on that date
+                    openAdd(selectedEvent.start);
+                }
+            }}>Reschedule</Button>
+            <Button onClick={toggleCompletion}>
+               {selectedEvent?.done ? 'Mark as Pending' : 'Mark as Completed'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AddToScheduleDialog
         open={dialogOpen}
@@ -403,6 +489,7 @@ function MonthGrid({
   onPickDay: (d: Date) => void;
   onAddOnDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
+  onEventClick: (e: Event) => void;
 }) {
   const first = startOfMonth(cursor);
   const gridStart = startOfWeek(first);
@@ -530,7 +617,7 @@ function MonthGrid({
                         ev.dataTransfer.setData("text/plain", e.id);
                         ev.dataTransfer.effectAllowed = "move";
                       }}
-                      onClick={(ev) => ev.stopPropagation()}
+                      onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
                       className={cn(
                         "cursor-grab truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing",
                         e.done && "line-through opacity-60",
@@ -572,6 +659,7 @@ function WeekGrid({
   events: Event[];
   onAddOnDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
+  onEventClick: (e: Event) => void;
 }) {
   const [dragOver, setDragOver] = useState<number | null>(null);
   const start = startOfWeek(cursor);
@@ -697,9 +785,10 @@ function WeekGrid({
                           ev.dataTransfer.setData("text/plain", e.id);
                           ev.dataTransfer.effectAllowed = "move";
                         }}
+                        onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
                         title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
-                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing",
+                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col",
                           e.done && "opacity-60 line-through",
                         )}
                         style={{
@@ -708,8 +797,8 @@ function WeekGrid({
                           borderLeft: `3px solid ${e.color}`,
                         }}
                       >
-                        <div className="truncate font-medium">{e.title}</div>
-                        <div className="truncate text-muted-foreground">{hm(e.start)}</div>
+                        <div className="break-words font-medium leading-tight mb-0.5 line-clamp-2">{e.title}</div>
+                        <div className="truncate text-muted-foreground mt-auto">{hm(e.start)}–{hm(e.end)}</div>
                       </div>
                     );
                   })}
@@ -725,7 +814,7 @@ function WeekGrid({
 
 /* ============== Day ============== */
 
-function DayGrid({ cursor, events }: { cursor: Date; events: Event[] }) {
+function DayGrid({ cursor, events, onEventClick }: { cursor: Date; events: Event[]; onEventClick: (e: Event) => void; }) {
   const baseHour = HOURS[0];
   const isToday = sameDay(cursor, startOfDay(new Date()));
 
@@ -784,21 +873,22 @@ function DayGrid({ cursor, events }: { cursor: Date; events: Event[] }) {
               return (
                 <div
                   key={e.id}
+                  onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
                   className={cn(
-                    "pointer-events-auto absolute left-1 right-1 rounded-md border bg-card px-2 py-1 text-xs shadow-sm",
+                    "pointer-events-auto absolute left-1 right-1 rounded-md border bg-card px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden",
                     e.done && "opacity-60 line-through",
                   )}
                   style={{ top, height, borderLeft: `3px solid ${e.color}` }}
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-start gap-1.5 mb-1 shrink-0">
                     {e.isSub && (
-                      <Badge variant="outline" className="px-1 py-0 text-[9px]">
+                      <Badge variant="outline" className="px-1 py-0 text-[9px] mt-0.5 shrink-0">
                         sub
                       </Badge>
                     )}
-                    <span className="min-w-0 flex-1 truncate font-medium">{e.title}</span>
+                    <span className="min-w-0 flex-1 break-words font-medium leading-tight line-clamp-2">{e.title}</span>
                   </div>
-                  <div className="truncate text-[10px] text-muted-foreground">
+                  <div className="truncate text-[10px] text-muted-foreground mt-auto shrink-0">
                     {hm(e.start)}–{hm(e.end)}
                     {e.goalTitle ? ` · ${e.goalTitle}` : ""}
                     {e.parentTitle ? ` · ${e.parentTitle}` : ""}
