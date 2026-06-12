@@ -653,12 +653,13 @@ function MonthGrid({
 function WeekGrid({
   cursor,
   events,
-  onAddOnDay,
+  onPickDay,
   onDropDay,
+  onEventClick,
 }: {
   cursor: Date;
   events: Event[];
-  onAddOnDay: (d: Date) => void;
+  onPickDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
 }) {
