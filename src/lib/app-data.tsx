@@ -587,6 +587,54 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(t);
   }, [goals, tasks, bucketList, skills, settings]);
 
+  useEffect(() => {
+    // Auto-complete subGoals and goals when their linked tasks are all completed.
+    setGoals((currentGoals) => {
+      let changed = false;
+      const newGoals = currentGoals.map((g) => {
+        let goalChanged = false;
+        const newSubGoals = g.subGoals.map((sg) => {
+          const linkedTasks = tasks.filter((t) => t.subGoalId === sg.id);
+          const hasLinkedTasks = linkedTasks.length > 0;
+          const allTasksDone = hasLinkedTasks && linkedTasks.every((t) => t.done);
+
+          let newDone = sg.done;
+          if (hasLinkedTasks) {
+            if (allTasksDone && !sg.done) {
+              newDone = true;
+              goalChanged = true;
+            } else if (!allTasksDone && sg.done) {
+              newDone = false;
+              goalChanged = true;
+            }
+          }
+          return newDone !== sg.done ? { ...sg, done: newDone } : sg;
+        });
+
+        let newStatus = g.status;
+
+        if (newSubGoals.length > 0) {
+          const allSubGoalsDone = newSubGoals.every((sg) => sg.done);
+          if (allSubGoalsDone && g.status !== "completed") {
+            newStatus = "completed";
+            goalChanged = true;
+          } else if (!allSubGoalsDone && g.status === "completed") {
+            newStatus = "in_progress";
+            goalChanged = true;
+          }
+        }
+
+        if (goalChanged) {
+          changed = true;
+          return { ...g, subGoals: newSubGoals, status: newStatus };
+        }
+        return g;
+      });
+
+      return changed ? newGoals : currentGoals;
+    });
+  }, [tasks]);
+
   // Promote linked goal to in_progress when a task / subgoal first completes
   const promoteGoal = (goalId?: string) => {
     if (!goalId) return;
@@ -868,6 +916,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         cur.map((t) => {
           if (t.id !== taskId) return t;
           let nextTaskSpent = t.spentHours ?? 0;
+          let toggledSubtaskNowDone = false;
           const subtasks = t.subtasks.map((s) => {
             if (s.id !== subId) return s;
             const isRecurring = s.recurrence && s.recurrence !== "none";
@@ -883,6 +932,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             }
 
             const nowDone = !s.done;
+            toggledSubtaskNowDone = nowDone;
             const delta = hoursBetween(s.startDate, s.endDate);
             const curSpent = s.spentHours ?? 0;
             const nextSpent = nowDone ? curSpent + delta : Math.max(0, curSpent - delta);
@@ -898,7 +948,23 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             }
             return { ...s, done: nowDone, spentHours: nextSpent };
           });
-          return { ...t, subtasks, spentHours: taskDelta !== 0 ? nextTaskSpent : t.spentHours };
+
+          let nextTaskDone = t.done;
+          const allSubsDone = subtasks.length > 0 && subtasks.every((s) => s.done);
+
+          const isTaskRecurring = t.recurrence && t.recurrence !== "none";
+          if (!toggledSubtaskNowDone) {
+            nextTaskDone = false;
+          } else if (allSubsDone && !isTaskRecurring) {
+            nextTaskDone = true;
+          }
+
+          return {
+            ...t,
+            done: nextTaskDone,
+            subtasks,
+            spentHours: taskDelta !== 0 ? nextTaskSpent : t.spentHours,
+          };
         }),
       );
       promoteGoal(promoted);
