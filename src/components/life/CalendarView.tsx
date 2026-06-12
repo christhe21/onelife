@@ -835,7 +835,7 @@ function DayGrid({ cursor, events, onEventClick }: { cursor: Date; events: Event
   const nowLabel = `${String(Math.floor(nowH)).padStart(2, "0")}:${String(Math.round((nowH % 1) * 60)).padStart(2, "0")}`;
 
   return (
-    <div className="relative max-h-[70vh] overflow-y-auto">
+    <div className="relative max-h-[70vh] overflow-y-auto overflow-x-hidden">
       <div className="relative">
         {HOURS.map((h) => (
           <div
