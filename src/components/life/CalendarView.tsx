@@ -6,7 +6,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Download } from "lucide-react";
 import { useAppData, type Task, type SubTask } from "@/lib/app-data";
 import { downloadICS } from "@/lib/calendar-export";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 
@@ -99,7 +106,8 @@ function hm(d: Date) {
 }
 
 export function CalendarView() {
-  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } = useAppData();
+  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } =
+    useAppData();
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
@@ -321,10 +329,22 @@ export function CalendarView() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
-            <Button size="sm" variant="outline" onClick={() => {
-              const goalsTitleById = goals.reduce((acc, g) => { acc[g.id] = g.title; g.subGoals.forEach(sg => acc[sg.id] = g.title); return acc; }, {} as Record<string, string>);
-              downloadICS(tasks, goalsTitleById);
-            }} className="h-8">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const goalsTitleById = goals.reduce(
+                  (acc, g) => {
+                    acc[g.id] = g.title;
+                    g.subGoals.forEach((sg) => (acc[sg.id] = g.title));
+                    return acc;
+                  },
+                  {} as Record<string, string>,
+                );
+                downloadICS(tasks, goalsTitleById);
+              }}
+              className="h-8"
+            >
               <Download className="mr-1 h-3.5 w-3.5" /> Export .ics
             </Button>
             <Button size="sm" onClick={() => openAdd(cursor)} className="h-8">
@@ -361,7 +381,11 @@ export function CalendarView() {
             />
           )}
           {view === "day" && (
-            <DayGrid cursor={cursor} events={events.filter((e) => sameDay(e.start, cursor))} onEventClick={onEventClick} />
+            <DayGrid
+              cursor={cursor}
+              events={events.filter((e) => sameDay(e.start, cursor))}
+              onEventClick={onEventClick}
+            />
           )}
         </CardContent>
       </Card>
@@ -377,45 +401,69 @@ export function CalendarView() {
               <span className="min-w-0 break-words">{selectedEvent?.title}</span>
             </DialogTitle>
             <DialogDescription>
-               {selectedEvent && `${hm(selectedEvent.start)} - ${hm(selectedEvent.end)}`}
+              {selectedEvent && `${hm(selectedEvent.start)} - ${hm(selectedEvent.end)}`}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
-             {selectedEvent?.isSub && (
-                 <div className="text-sm break-words"><strong>Parent Task:</strong> {selectedEvent.parentTitle}</div>
-             )}
-             {selectedEvent?.goalTitle && (
-                 <div className="text-sm break-words"><strong>Goal:</strong> {selectedEvent.goalTitle}</div>
-             )}
-             <div className="text-sm"><strong>Status:</strong> {selectedEvent?.done ? 'Completed' : 'Pending'}</div>
+            {selectedEvent?.isSub && (
+              <div className="text-sm break-words">
+                <strong>Parent Task:</strong> {selectedEvent.parentTitle}
+              </div>
+            )}
+            {selectedEvent?.goalTitle && (
+              <div className="text-sm break-words">
+                <strong>Goal:</strong> {selectedEvent.goalTitle}
+              </div>
+            )}
+            <div className="text-sm">
+              <strong>Status:</strong> {selectedEvent?.done ? "Completed" : "Pending"}
+            </div>
           </div>
           <DialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
-            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setEventDetailsOpen(false)}>Close</Button>
-            <Button variant="destructive" className="w-full sm:w-auto" onClick={() => {
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setEventDetailsOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => {
                 if (selectedEvent) {
-                    const baseId = selectedEvent.id.replace(/_\d+$/, "");
-                    if (baseId.startsWith("task:")) {
-                        updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
-                    } else if (baseId.startsWith("sub:")) {
-                        const [tid, sid] = baseId.slice(4).split("|");
-                        if (tid && sid) updateSubtask(tid, sid, { startDate: undefined, endDate: undefined });
-                    }
-                    setEventDetailsOpen(false);
+                  const baseId = selectedEvent.id.replace(/_\d+$/, "");
+                  if (baseId.startsWith("task:")) {
+                    updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
+                  } else if (baseId.startsWith("sub:")) {
+                    const [tid, sid] = baseId.slice(4).split("|");
+                    if (tid && sid)
+                      updateSubtask(tid, sid, { startDate: undefined, endDate: undefined });
+                  }
+                  setEventDetailsOpen(false);
                 }
-            }}>Unschedule</Button>
-            <Button variant="secondary" className="w-full sm:w-auto" onClick={() => {
+              }}
+            >
+              Unschedule
+            </Button>
+            <Button
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={() => {
                 if (selectedEvent) {
-                    setEventDetailsOpen(false);
-                    openAdd(selectedEvent.start);
+                  setEventDetailsOpen(false);
+                  openAdd(selectedEvent.start);
                 }
-            }}>Reschedule</Button>
+              }}
+            >
+              Reschedule
+            </Button>
             <Button className="w-full sm:w-auto" onClick={toggleCompletion}>
-               {selectedEvent?.done ? 'Mark Pending' : 'Mark Done'}
+              {selectedEvent?.done ? "Mark Pending" : "Mark Done"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       <AddToScheduleDialog
         open={dialogOpen}
@@ -428,24 +476,26 @@ export function CalendarView() {
 
 /* ============== Month ============== */
 
-function DayBadge({
-  day,
-  ratio,
-  isToday,
-}: {
-  day: number;
-  ratio: number;
-  isToday: boolean;
-}) {
+function DayBadge({ day, ratio, isToday }: { day: number; ratio: number; isToday: boolean }) {
   const size = 22;
   const r = 9;
   const c = 2 * Math.PI * r;
   const dash = c * Math.min(1, Math.max(0, ratio));
   return (
-    <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <span
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       {ratio > 0 && (
         <svg width={size} height={size} className="absolute inset-0 -rotate-90">
-          <circle cx={size / 2} cy={size / 2} r={r} stroke="hsl(var(--muted))" strokeWidth="2" fill="none" />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            stroke="hsl(var(--muted))"
+            strokeWidth="2"
+            fill="none"
+          />
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -511,7 +561,10 @@ function MonthGrid({
     <div>
       <div className="flex items-center justify-end gap-3 px-3 py-1.5 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-sm" style={{ background: "color-mix(in oklab, hsl(var(--primary)) 35%, transparent)" }} />
+          <span
+            className="h-2 w-2 rounded-sm"
+            style={{ background: "color-mix(in oklab, hsl(var(--primary)) 35%, transparent)" }}
+          />
           Heat
         </span>
         <span className="inline-flex items-center gap-1">
@@ -615,7 +668,10 @@ function MonthGrid({
                         ev.dataTransfer.setData("text/plain", e.id);
                         ev.dataTransfer.effectAllowed = "move";
                       }}
-                      onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        onEventClick(e);
+                      }}
                       className={cn(
                         "cursor-grab truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing",
                         e.done && "line-through opacity-60",
@@ -784,7 +840,10 @@ function WeekGrid({
                           ev.dataTransfer.setData("text/plain", e.id);
                           ev.dataTransfer.effectAllowed = "move";
                         }}
-                        onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          onEventClick(e);
+                        }}
                         title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
                           "absolute inset-x-1 cursor-grab overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col",
@@ -796,8 +855,12 @@ function WeekGrid({
                           borderLeft: `3px solid ${e.color}`,
                         }}
                       >
-                        <div className="break-words font-medium leading-tight mb-0.5 line-clamp-2">{e.title}</div>
-                        <div className="truncate text-muted-foreground mt-auto">{hm(e.start)}–{hm(e.end)}</div>
+                        <div className="break-words font-medium leading-tight mb-0.5 line-clamp-2">
+                          {e.title}
+                        </div>
+                        <div className="truncate text-muted-foreground mt-auto">
+                          {hm(e.start)}–{hm(e.end)}
+                        </div>
                       </div>
                     );
                   })}
@@ -813,7 +876,15 @@ function WeekGrid({
 
 /* ============== Day ============== */
 
-function DayGrid({ cursor, events, onEventClick }: { cursor: Date; events: Event[]; onEventClick: (e: Event) => void; }) {
+function DayGrid({
+  cursor,
+  events,
+  onEventClick,
+}: {
+  cursor: Date;
+  events: Event[];
+  onEventClick: (e: Event) => void;
+}) {
   const baseHour = HOURS[0];
   const isToday = sameDay(cursor, startOfDay(new Date()));
 
@@ -872,7 +943,10 @@ function DayGrid({ cursor, events, onEventClick }: { cursor: Date; events: Event
               return (
                 <div
                   key={e.id}
-                  onClick={(ev) => { ev.stopPropagation(); onEventClick(e); }}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    onEventClick(e);
+                  }}
                   className={cn(
                     "pointer-events-auto absolute left-1 right-1 rounded-md border bg-card px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden",
                     e.done && "opacity-60 line-through",
@@ -885,7 +959,9 @@ function DayGrid({ cursor, events, onEventClick }: { cursor: Date; events: Event
                         sub
                       </Badge>
                     )}
-                    <span className="min-w-0 flex-1 break-words font-medium leading-tight line-clamp-2">{e.title}</span>
+                    <span className="min-w-0 flex-1 break-words font-medium leading-tight line-clamp-2">
+                      {e.title}
+                    </span>
                   </div>
                   <div className="truncate text-[10px] text-muted-foreground mt-auto shrink-0">
                     {hm(e.start)}–{hm(e.end)}

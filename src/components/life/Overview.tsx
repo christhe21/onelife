@@ -267,18 +267,14 @@ function SkillNode({
                   {gOpen && (
                     <div className="ml-5 border-l border-border/60 pl-3">
                       {ms.length === 0 ? (
-                        <p className="py-1 text-xs italic text-muted-foreground">
-                          No milestones.
-                        </p>
+                        <p className="py-1 text-xs italic text-muted-foreground">No milestones.</p>
                       ) : (
                         <>
                           {ms.map((m) => {
                             const tg = tasksByGoal(m.id);
                             return (
                               <div key={m.id}>
-                                <div
-                                  className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60"
-                                >
+                                <div className="group flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted/60">
                                   <span
                                     className={`h-1.5 w-1.5 shrink-0 rounded-sm ${m.done ? "bg-emerald-500" : "bg-amber-400"}`}
                                   />
@@ -305,7 +301,9 @@ function SkillNode({
                                         className={`h-1.5 w-1.5 shrink-0 rounded-full ${t.done ? "bg-emerald-500" : "bg-slate-400"}`}
                                       />
                                       <EditableLabel
-                                        className={t.done ? "line-through text-muted-foreground" : ""}
+                                        className={
+                                          t.done ? "line-through text-muted-foreground" : ""
+                                        }
                                         value={t.title}
                                         onSave={(v) => updateTask(t.id, { title: v })}
                                       />

@@ -16,7 +16,5 @@ export const Route = createFileRoute("/home")({
 });
 
 function Home() {
-  return (
-    <Welcome />
-  );
+  return <Welcome />;
 }
