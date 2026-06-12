@@ -155,7 +155,7 @@ export function CalendarView() {
       return { color: sk?.color ?? "hsl(var(--muted-foreground))", goalTitle: g?.title };
     };
     for (const t of tasks) {
-      if (t.startDate) {
+      if (t.startDate && t.subtasks.length === 0) {
         const start = new Date(t.startDate);
         const end = t.endDate ? new Date(t.endDate) : new Date(start.getTime() + 60 * 60 * 1000);
         if (!Number.isNaN(start.getTime())) {
