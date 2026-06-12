@@ -696,7 +696,7 @@ function WeekGrid({
             return (
               <button
                 key={i}
-                onClick={() => onAddOnDay(d)}
+                onClick={() => onPickDay(d)}
                 className={cn(
                   "py-2 transition hover:bg-muted/40",
                   isToday && "bg-primary/10 text-primary font-semibold",
