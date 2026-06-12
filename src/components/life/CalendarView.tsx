@@ -344,7 +344,6 @@ export function CalendarView() {
                 setCursor(d);
                 setView("day");
               }}
-              onAddOnDay={(d) => openAdd(d)}
               onDropDay={onDropDay}
               onEventClick={onEventClick}
             />
