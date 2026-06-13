@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Repeat,
 } from "lucide-react";
+import { NewTaskWizard } from "./NewTaskWizard";
 import type { Recurrence } from "@/lib/app-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -375,7 +376,9 @@ function TaskRow({ task }: { task: Task }) {
 
   const today = new Date().toISOString().slice(0, 10);
   const overdue = !task.done && task.dueDate && task.dueDate < today;
-  const goal = goals.find((g) => g.subGoals.some((sg) => sg.id === task.subGoalId));
+  const goal =
+    goals.find((g) => g.subGoals.some((sg) => sg.id === task.subGoalId)) ??
+    goals.find((g) => g.id === task.goalId);
   const subDone = task.subtasks.filter((s) => s.done).length;
   const hasProgress = !task.done && (task.progress ?? 0) > 0 && (task.progress ?? 0) < 100;
 
@@ -468,6 +471,7 @@ function TaskRow({ task }: { task: Task }) {
 
 export function Tasks() {
   const { tasks, goals } = useAppData();
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const sorted = [...tasks].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
@@ -494,9 +498,10 @@ export function Tasks() {
         </Button>
       </div>
 
-      <div className="rounded-lg border bg-card p-3 shadow-sm">
-        <AddTaskBar />
-      </div>
+      <Button className="w-full" onClick={() => setWizardOpen(true)}>
+        <Plus className="mr-1 h-4 w-4" /> Create task
+      </Button>
+      <NewTaskWizard open={wizardOpen} onOpenChange={setWizardOpen} />
 
       {sorted.length === 0 ? (
         <Card>
@@ -514,3 +519,4 @@ export function Tasks() {
     </div>
   );
 }
+

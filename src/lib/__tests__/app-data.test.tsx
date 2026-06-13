@@ -20,6 +20,9 @@ describe("AppData cascading deletes", () => {
         title: "Test Goal",
         skill: "health",
         description: "",
+        startDate: new Date().toISOString().slice(0, 10),
+        targetDate: new Date().toISOString().slice(0, 10),
+        status: "not_started",
       });
 
       // Goal should automatically have a default milestone, let's get its id

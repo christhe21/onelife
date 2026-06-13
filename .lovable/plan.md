@@ -1,34 +1,48 @@
-## Calendar interaction & mobile fixes
+# Create Task wizard
 
-Three small fixes scoped to `src/components/life/CalendarView.tsx`.
+Replace the inline "add task" bar in the Tasks section with a single **Create Task** button that opens a stepper modal styled like the existing **New Goal** wizard (rounded `DialogContent`, top progress dots, step body, footer Back / Next).
 
-### 1. Week & Month: clicking a date opens Day view
+## Steps in the wizard
 
-Currently:
+1. **Basics** — Title (required), Description (optional, stored in `evidence`).
+2. **Priority** — Low / Medium / High (large card picker).
+3. **Schedule** — toggle "Daily task" (off by default).
+   - Off → standard task with a Due date.
+   - On → Start date + End date; recurrence forced to `daily`.
+4. **Link** —
+   - If **not daily**: choose a Goal, then a Milestone under that goal (two selects). Required.
+   - If **daily**: choose a Goal only. The task is linked directly to the goal (no milestone). Required.
+5. **Sub-tasks** (optional) — same inline list UX as the New Goal wizard's sub-tasks step (title + optional h/wk + end date, add/remove rows).
+6. **Done** — summary card with a "Create another" and "Close" action.
 
-- **Week view** day headers (Mon 26 / Tue 27 …) call `onAddOnDay(d)` → opens the Add dialog.
-- **Month view** day cells call `onAddOnDay(d)` on click; only the small number badge calls `onPickDay`.
+Footer: Back / Next on every step; Next disabled until that step is valid (e.g. title non-empty on step 1, goal selected on step 4). Skip is allowed only for the optional sub-tasks step.
 
-Change to:
+## Data model change (`src/lib/app-data.tsx`)
 
-- Week header buttons call a new `onPickDay(d)` prop → `setCursor(d); setView("day")`.
-- Month cells `onClick` → `onPickDay(d)` (switch to Day view). The `+ Add` toolbar button still handles adding; long-press / explicit add path is removed from the day cell click. Keep drop targets for drag-to-reschedule unchanged.
+Add `goalId?: string` to `Task` so a daily task can be linked directly to a goal without a milestone.
 
-### 2. Event details modal — mobile-safe
+- `normalizeTask`: read/write `goalId`.
+- `deleteGoal`: in addition to the existing milestone-based cascade, also remove tasks where `t.goalId === id`.
+- `addTask` accepts `goalId` via the existing pass-through.
 
-The dialog footer renders 4 buttons (Close / Unschedule / Reschedule / Mark complete) in a single `flex-row` that overflows on a 384px viewport. Update:
+No other write paths need changes — `subGoalId` stays optional and unset for daily tasks.
 
-- `DialogContent`: `w-[calc(100vw-1rem)] max-w-md p-4 sm:p-6` and `max-h-[90dvh] overflow-y-auto` (matches `AddToScheduleDialog`).
-- `DialogFooter`: stack vertically on mobile (`flex-col gap-2 sm:flex-row sm:justify-end`), full-width buttons on mobile (`w-full sm:w-auto`).
-- Title row already truncates; keep.
+## UI wiring
 
-### 3. Day view — content overflowing right edge
+- New file `src/components/life/NewTaskWizard.tsx` modeled on `NewGoalWizard.tsx` (same `Dialog` shell, `STEPS` array, dot indicator, footer).
+- `src/components/life/Tasks.tsx`:
+  - Remove `AddTaskBar` from the rendered tree.
+  - Replace the rounded card wrapper with a single full-width primary button: `+ Create task` that opens `<NewTaskWizard />`.
+  - Keep `AddTaskBar`'s code only if still referenced elsewhere; otherwise delete it.
+- `TaskRow` and `EditTaskDialog` need a tiny tweak: when displaying the linked goal, fall back to `goals.find(g => g.id === task.goalId)` if `subGoalId` is absent, so daily tasks still show their parent goal chip.
 
-Root cause: nothing constrains the Day grid's width inside `CardContent` on mobile, and the absolute event boxes use `left-1 right-1` while the hour-label column is `w-12 shrink-0` inside a `flex` row — the parent grid implicitly inherits the page width but events can still spill if Card padding/scroll is off.
+## Display semantics for daily tasks
 
-Fix:
+- The recurrence chip (existing `Repeat` icon when `task.recurrence !== "none"`) already covers visual indication.
+- In sorting / lists, daily tasks behave like normal tasks; the existing recurrence/scheduling logic continues to handle them.
 
-- Wrap `DayGrid` outer in `overflow-hidden` and switch the events overlay to use a left offset (`left-12 right-2`) on an absolutely-positioned layer scoped to the scroll container — guarantees chips never escape the right edge regardless of viewport.
-- Ensure long titles wrap via existing `break-words line-clamp-2` (already present), and confirm `min-w-0` on the title span.
+## Out of scope
 
-No new dependencies. No data-layer changes. Only `CalendarView.tsx` is edited.
+- Calendar view changes (it already reads `recurrence` + dates).
+- Editing the existing `EditTaskDialog` beyond the goal-chip fallback above.
+- Migrating already-stored tasks (the new `goalId` is purely additive and optional).
