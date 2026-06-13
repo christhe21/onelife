@@ -31,6 +31,8 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {isEmpty && <EmptyStateHero />}
+
       <LifeTimeline />
       {/* Hero stats */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -61,9 +63,7 @@ export function Dashboard() {
         />
       </div>
 
-      {isEmpty ? (
-        <EmptyStateHero />
-      ) : (
+      {!isEmpty && (
         <div className="grid gap-4 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <SkillsRadar />
