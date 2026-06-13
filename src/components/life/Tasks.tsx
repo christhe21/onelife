@@ -375,7 +375,9 @@ function TaskRow({ task }: { task: Task }) {
 
   const today = new Date().toISOString().slice(0, 10);
   const overdue = !task.done && task.dueDate && task.dueDate < today;
-  const goal = goals.find((g) => g.subGoals.some((sg) => sg.id === task.subGoalId));
+  const goal =
+    goals.find((g) => g.subGoals.some((sg) => sg.id === task.subGoalId)) ??
+    goals.find((g) => g.id === task.goalId);
   const subDone = task.subtasks.filter((s) => s.done).length;
   const hasProgress = !task.done && (task.progress ?? 0) > 0 && (task.progress ?? 0) < 100;
 
