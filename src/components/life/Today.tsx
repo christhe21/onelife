@@ -112,9 +112,9 @@ export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Daily Tasks Section */}
-          <Card className="h-fit">
+          <Card className="h-fit min-w-0">
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">Daily Tasks</CardTitle>
@@ -142,7 +142,7 @@ export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
           </Card>
 
           {/* Pending Tasks Section */}
-          <Card className="h-fit">
+          <Card className="h-fit min-w-0">
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg text-muted-foreground">Pending Tasks</CardTitle>
@@ -203,13 +203,13 @@ function TaskGroup({
         const g = key === "__none__" ? undefined : goalOf(key);
         const sk = skillOf(g);
         return (
-          <div key={key}>
-            <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+          <div key={key} className="min-w-0">
+            <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground min-w-0">
               <span
-                className="h-2 w-2 rounded-full"
+                className="h-2 w-2 rounded-full shrink-0"
                 style={{ backgroundColor: sk?.color ?? "#888" }}
               />
-              {g?.title ?? "No specific goal"}
+              <span className="truncate">{g?.title ?? "No specific goal"}</span>
             </div>
             <ul className="space-y-2">
               {ts.map((t) => {
