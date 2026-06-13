@@ -1,0 +1,81 @@
+{
+  "id": "frontend-mastery",
+  "title": "Frontend Web Development Mastery",
+  "description": "A comprehensive guide to becoming a proficient frontend developer, from HTML/CSS basics to advanced React and performance optimization.",
+  "skillName": "Frontend",
+  "creatorName": "WebDevExpert",
+  "verified": true,
+  "resources": ["https://developer.mozilla.org/", "https://react.dev/learn"],
+  "advice": "Build projects. Don't just watch tutorials. The best way to learn frontend development is by actively coding and solving problems you encounter.",
+  "durationDays": 120,
+  "subGoals": [
+    {
+      "title": "Master HTML, CSS, & Responsive Design",
+      "dayOffset": 21
+    },
+    {
+      "title": "Master JavaScript Fundamentals & DOM Manipulation",
+      "dayOffset": 50
+    },
+    {
+      "title": "Master React & State Management",
+      "dayOffset": 90
+    },
+    {
+      "title": "Performance Optimization & Advanced Concepts",
+      "dayOffset": 120
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Build a responsive landing page",
+      "priority": "high",
+      "subGoalIndex": 0,
+      "startDayOffset": 0,
+      "endDayOffset": 21,
+      "recurrence": "weekly",
+      "plannedHours": 4,
+      "subtasks": [
+        { "title": "Create semantic HTML structure", "recurrence": "none" },
+        { "title": "Style with CSS Flexbox/Grid", "recurrence": "none" },
+        { "title": "Make it responsive with media queries", "recurrence": "none" }
+      ]
+    },
+    {
+      "title": "Build a JavaScript To-Do App",
+      "priority": "high",
+      "subGoalIndex": 1,
+      "startDayOffset": 22,
+      "endDayOffset": 50,
+      "recurrence": "weekly",
+      "plannedHours": 5,
+      "subtasks": [
+        { "title": "Implement core logic (add/remove)", "recurrence": "none" },
+        { "title": "Add local storage persistence", "recurrence": "none" }
+      ]
+    },
+    {
+      "title": "Build a React Application",
+      "priority": "high",
+      "subGoalIndex": 2,
+      "startDayOffset": 51,
+      "endDayOffset": 90,
+      "recurrence": "weekly",
+      "plannedHours": 6,
+      "subtasks": [
+        { "title": "Set up components and routing", "recurrence": "none" },
+        { "title": "Implement global state management", "recurrence": "none" }
+      ]
+    },
+    {
+      "title": "Weekly Code Review and Refactoring",
+      "priority": "medium",
+      "subGoalIndex": 3,
+      "startDayOffset": 0,
+      "endDayOffset": 120,
+      "recurrence": "weekly",
+      "plannedHours": 2,
+      "subtasks": []
+    }
+  ]
+}

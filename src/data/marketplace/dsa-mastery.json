@@ -5,7 +5,10 @@
   "skillName": "DSA",
   "creatorName": "AlgoExpert",
   "verified": true,
-  "resources": ["https://leetcode.com/", "https://neetcode.io/roadmap"],
+  "resources": [
+    "https://leetcode.com/",
+    "https://neetcode.io/roadmap"
+  ],
   "advice": "Consistency is key. Don't just read solutions; try to solve them for at least 30 minutes before looking at hints. Understand the time and space complexity of every approach.",
   "durationDays": 90,
   "subGoals": [
@@ -37,12 +40,21 @@
       "subGoalIndex": 0,
       "startDayOffset": 0,
       "endDayOffset": 14,
-      "recurrence": "daily",
+      "recurrence": "weekly",
       "plannedHours": 1,
       "subtasks": [
-        { "title": "Review theory on Arrays/HashMaps", "recurrence": "none" },
-        { "title": "Solve problem 1 without help", "recurrence": "daily" },
-        { "title": "Solve problem 2 without help", "recurrence": "daily" }
+        {
+          "title": "Review theory on Arrays/HashMaps",
+          "recurrence": "none"
+        },
+        {
+          "title": "Solve problem 1 without help",
+          "recurrence": "weekly"
+        },
+        {
+          "title": "Solve problem 2 without help",
+          "recurrence": "weekly"
+        }
       ]
     },
     {
@@ -51,9 +63,14 @@
       "subGoalIndex": 1,
       "startDayOffset": 15,
       "endDayOffset": 28,
-      "recurrence": "daily",
+      "recurrence": "weekly",
       "plannedHours": 1.5,
-      "subtasks": [{ "title": "Solve 1 Medium Sliding Window problem", "recurrence": "daily" }]
+      "subtasks": [
+        {
+          "title": "Solve 1 Medium Sliding Window problem",
+          "recurrence": "weekly"
+        }
+      ]
     },
     {
       "title": "Weekly Review of Missed Problems",
@@ -62,7 +79,8 @@
       "endDayOffset": 90,
       "recurrence": "weekly",
       "plannedHours": 2,
-      "subtasks": []
+      "subtasks": [],
+      "subGoalIndex": 3
     }
   ]
 }
