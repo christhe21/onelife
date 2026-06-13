@@ -66,6 +66,7 @@ export interface Task {
   priority: "low" | "medium" | "high";
   done: boolean;
   subGoalId?: string;
+  goalId?: string;
   subtasks: SubTask[];
   progress?: number;
   startDate?: string;
@@ -201,6 +202,7 @@ function normalizeTask(raw: any): Task {
     priority: PRIORITIES.includes(raw?.priority) ? raw.priority : "medium",
     done: Boolean(raw?.done),
     subGoalId: typeof raw?.subGoalId === "string" ? raw.subGoalId : undefined,
+    goalId: typeof raw?.goalId === "string" ? raw.goalId : undefined,
     subtasks: Array.isArray(raw?.subtasks) ? raw.subtasks.map(normalizeSubTask) : [],
     progress: clamp(raw?.progress),
     startDate: typeof raw?.startDate === "string" ? raw.startDate : undefined,
@@ -775,7 +777,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const goalToDelete = goals.find((g) => g.id === id);
       if (goalToDelete) {
         const subGoalIds = new Set(goalToDelete.subGoals.map((sg) => sg.id));
-        setTasks((cur) => cur.filter((t) => !t.subGoalId || !subGoalIds.has(t.subGoalId)));
+        setTasks((cur) =>
+          cur.filter(
+            (t) =>
+              t.goalId !== id && (!t.subGoalId || !subGoalIds.has(t.subGoalId)),
+          ),
+        );
       }
       setGoals((cur) => cur.filter((g) => g.id !== id));
     },
