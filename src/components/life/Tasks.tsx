@@ -470,6 +470,7 @@ function TaskRow({ task }: { task: Task }) {
 
 export function Tasks() {
   const { tasks, goals } = useAppData();
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const sorted = [...tasks].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
@@ -496,9 +497,10 @@ export function Tasks() {
         </Button>
       </div>
 
-      <div className="rounded-lg border bg-card p-3 shadow-sm">
-        <AddTaskBar />
-      </div>
+      <Button className="w-full" onClick={() => setWizardOpen(true)}>
+        <Plus className="mr-1 h-4 w-4" /> Create task
+      </Button>
+      <NewTaskWizard open={wizardOpen} onOpenChange={setWizardOpen} />
 
       {sorted.length === 0 ? (
         <Card>
@@ -516,3 +518,4 @@ export function Tasks() {
     </div>
   );
 }
+
