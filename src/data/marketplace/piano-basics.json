@@ -5,7 +5,10 @@
   "skillName": "Piano",
   "creatorName": "MelodyMaker",
   "verified": true,
-  "resources": ["https://www.musictheory.net/", "https://www.youtube.com/user/pianoteofficial"],
+  "resources": [
+    "https://www.musictheory.net/",
+    "https://www.youtube.com/user/pianoteofficial"
+  ],
   "advice": "Practice 15-20 minutes every single day rather than 2 hours once a week. Muscle memory builds through consistent daily repetition.",
   "durationDays": 30,
   "subGoals": [
@@ -24,16 +27,22 @@
   ],
   "tasks": [
     {
-      "title": "Daily Finger Exercises (Hanon)",
+      "title": "Weekly Finger Exercises (Hanon)",
       "priority": "medium",
       "subGoalIndex": 0,
       "startDayOffset": 0,
       "endDayOffset": 30,
-      "recurrence": "daily",
+      "recurrence": "weekly",
       "plannedHours": 0.25,
       "subtasks": [
-        { "title": "Warm up right hand", "recurrence": "daily" },
-        { "title": "Warm up left hand", "recurrence": "daily" }
+        {
+          "title": "Warm up right hand",
+          "recurrence": "weekly"
+        },
+        {
+          "title": "Warm up left hand",
+          "recurrence": "weekly"
+        }
       ]
     },
     {
@@ -42,9 +51,14 @@
       "subGoalIndex": 1,
       "startDayOffset": 7,
       "endDayOffset": 14,
-      "recurrence": "daily",
+      "recurrence": "weekly",
       "plannedHours": 0.5,
-      "subtasks": [{ "title": "C Major Scale (Both Hands)", "recurrence": "daily" }]
+      "subtasks": [
+        {
+          "title": "C Major Scale (Both Hands)",
+          "recurrence": "weekly"
+        }
+      ]
     },
     {
       "title": "Song Practice",
@@ -52,12 +66,21 @@
       "subGoalIndex": 2,
       "startDayOffset": 14,
       "endDayOffset": 30,
-      "recurrence": "daily",
+      "recurrence": "weekly",
       "plannedHours": 0.5,
       "subtasks": [
-        { "title": "Right hand only", "recurrence": "daily" },
-        { "title": "Left hand only", "recurrence": "daily" },
-        { "title": "Both hands together slowly", "recurrence": "daily" }
+        {
+          "title": "Right hand only",
+          "recurrence": "weekly"
+        },
+        {
+          "title": "Left hand only",
+          "recurrence": "weekly"
+        },
+        {
+          "title": "Both hands together slowly",
+          "recurrence": "weekly"
+        }
       ]
     }
   ]
