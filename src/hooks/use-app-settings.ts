@@ -18,6 +18,54 @@ export function useAppSettingsEffects() {
     document.documentElement.style.fontSize = SCALE_PX[settings.textScale ?? "base"];
   }, [settings.textScale]);
 
+  // Theme mode
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = window.document.documentElement;
+    root.classList.remove("light", "dark");
+
+    let isDark = false;
+    const mode = settings.themeMode ?? "system";
+
+    if (mode === "system") {
+      isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    } else {
+      isDark = mode === "dark";
+    }
+
+    if (isDark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.add("light");
+    }
+  }, [settings.themeMode]);
+
+  // System theme changes listener
+  useEffect(() => {
+    if (typeof window === "undefined" || settings.themeMode !== "system") return;
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      const root = window.document.documentElement;
+      root.classList.remove("light", "dark");
+      if (e.matches) {
+        root.classList.add("dark");
+      } else {
+        root.classList.add("light");
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, [settings.themeMode]);
+
+  // Theme color
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = window.document.documentElement;
+    root.setAttribute("data-theme", settings.themeColor ?? "sage");
+  }, [settings.themeColor]);
+
   // Reminders
   const firedRef = useRef<Set<string>>(new Set());
   useEffect(() => {

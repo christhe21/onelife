@@ -6,13 +6,29 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Bell, BellOff, Type } from "lucide-react";
 import { toast } from "sonner";
-import { useAppData, type TextScale } from "@/lib/app-data";
+import { useAppData, type TextScale, type ThemeMode, type ThemeColor } from "@/lib/app-data";
+import { Palette, Moon } from "lucide-react";
 
 const SCALES: { id: TextScale; label: string; size: string; px: number }[] = [
   { id: "sm", label: "Compact", size: "14px", px: 14 },
   { id: "base", label: "Default", size: "16px", px: 16 },
   { id: "lg", label: "Comfortable", size: "18px", px: 18 },
   { id: "xl", label: "Large", size: "20px", px: 20 },
+];
+
+
+const THEME_MODES: { id: ThemeMode; label: string }[] = [
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
+  { id: "system", label: "System" },
+];
+
+const THEME_COLORS: { id: ThemeColor; label: string; primary: string; secondary: string }[] = [
+  { id: "sage", label: "Sage & Cream", primary: "bg-[#7d9b76]", secondary: "bg-[#a8c0a0]" },
+  { id: "ocean", label: "Ocean Blue", primary: "bg-[#2563eb]", secondary: "bg-[#93c5fd]" },
+  { id: "sunset", label: "Sunset Coral", primary: "bg-[#f43f5e]", secondary: "bg-[#fda4af]" },
+  { id: "lavender", label: "Lavender", primary: "bg-[#8b5cf6]", secondary: "bg-[#c4b5fd]" },
+  { id: "monochrome", label: "Monochrome", primary: "bg-[#171717]", secondary: "bg-[#a3a3a3]" },
 ];
 
 export function SettingsView() {
@@ -58,6 +74,59 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Palette className="h-4 w-4 text-primary" /> Appearance
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Theme Mode</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {THEME_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => updateSettings({ themeMode: m.id })}
+                  className={
+                    "flex flex-col items-center gap-1 rounded-xl border p-2 transition " +
+                    ((settings.themeMode ?? "system") === m.id
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                      : "hover:border-primary/40 hover:bg-muted/40")
+                  }
+                >
+                  <span className="text-sm font-medium">{m.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Color Theme</Label>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {THEME_COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => updateSettings({ themeColor: c.id })}
+                  className={
+                    "flex items-center gap-3 rounded-xl border p-3 text-left transition " +
+                    ((settings.themeColor ?? "sage") === c.id
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                      : "hover:border-primary/40 hover:bg-muted/40")
+                  }
+                >
+                  <div className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full border shadow-sm">
+                    <div className={`h-full w-1/2 ${c.primary}`} />
+                    <div className={`h-full w-1/2 ${c.secondary}`} />
+                  </div>
+                  <span className="text-xs font-medium leading-tight text-foreground">{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
