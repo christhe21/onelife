@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Repeat,
 } from "lucide-react";
+import { NewTaskWizard } from "./NewTaskWizard";
 import type { Recurrence } from "@/lib/app-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
