@@ -165,6 +165,8 @@ function normalizeSubTask(raw: any): SubTask {
     recurrence: ["none", "daily", "weekly", "monthly", "yearly"].includes(raw?.recurrence)
       ? raw.recurrence
       : "none",
+    priority: PRIORITIES.includes(raw?.priority) ? raw.priority : undefined,
+    description: typeof raw?.description === "string" ? raw.description : undefined,
   };
 }
 
