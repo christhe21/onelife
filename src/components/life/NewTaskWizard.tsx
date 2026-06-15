@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ListChecks, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ListChecks, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { useAppData, type Task } from "@/lib/app-data";
 import { cn } from "@/lib/utils";
+import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
+
 
 const STEPS = ["basics", "priority", "schedule", "link", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
