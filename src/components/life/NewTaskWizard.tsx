@@ -102,14 +102,16 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
       subGoalId: isDaily ? undefined : subGoalId || undefined,
       goalId: isDaily ? goalId || undefined : undefined,
       subtasks: subs
-        .filter((s) => s.title.trim())
+        .filter((s) => s.title.trim() && s.endDate)
         .map((s) => ({
           id: Math.random().toString(36).slice(2, 10),
           title: s.title.trim(),
           done: false,
-          hoursPerWeek: s.hoursPerWeek,
           endDate: s.endDate,
+          priority: s.priority,
+          description: s.description,
         })),
+
     });
     setStep("done");
   };
