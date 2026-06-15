@@ -179,7 +179,9 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={save}>Save</Button>
+          <Button onClick={save} disabled={!form.title.trim() || !form.dueDate}>
+            Save
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
