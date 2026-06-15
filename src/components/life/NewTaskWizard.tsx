@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ListChecks, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ListChecks, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,15 +15,13 @@ import {
 } from "@/components/ui/select";
 import { useAppData, type Task } from "@/lib/app-data";
 import { cn } from "@/lib/utils";
+import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
+
 
 const STEPS = ["basics", "priority", "schedule", "link", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
 
-interface SubDraft {
-  title: string;
-  hoursPerWeek?: number;
-  endDate?: string;
-}
+type SubDraft = SubtaskDraft;
 
 interface Props {
   open: boolean;
@@ -53,6 +51,8 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const [goalId, setGoalId] = useState<string>("");
   const [subGoalId, setSubGoalId] = useState<string>("");
   const [subs, setSubs] = useState<SubDraft[]>([]);
+  const [subEditorOpen, setSubEditorOpen] = useState(false);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const stepIdx = STEPS.indexOf(step);
   const selectedGoal = useMemo(() => goals.find((g) => g.id === goalId), [goals, goalId]);
@@ -69,6 +69,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     setGoalId("");
     setSubGoalId("");
     setSubs([]);
+    setEditIdx(null);
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -79,13 +80,15 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const next = () => setStep(STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]);
   const back = () => setStep(STEPS[Math.max(stepIdx - 1, 0)]);
 
+  const scheduleOk = isDaily ? !!(startDate && endDate) : !!dueDate;
   const canNext =
     (step === "basics" && title.trim().length > 0) ||
     step === "priority" ||
-    step === "schedule" ||
-    (step === "link" && goalId && (isDaily || subGoalId)) ||
+    (step === "schedule" && scheduleOk) ||
+    (step === "link" && !!goalId && (isDaily || !!subGoalId)) ||
     step === "subtasks" ||
     step === "done";
+
 
   const save = () => {
     addTask({
@@ -99,14 +102,16 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
       subGoalId: isDaily ? undefined : subGoalId || undefined,
       goalId: isDaily ? goalId || undefined : undefined,
       subtasks: subs
-        .filter((s) => s.title.trim())
+        .filter((s) => s.title.trim() && s.endDate)
         .map((s) => ({
           id: Math.random().toString(36).slice(2, 10),
           title: s.title.trim(),
           done: false,
-          hoursPerWeek: s.hoursPerWeek,
           endDate: s.endDate,
+          priority: s.priority,
+          description: s.description,
         })),
+
     });
     setStep("done");
   };
@@ -316,77 +321,80 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
             <div className="space-y-4">
               <div>
                 <h2 className="font-display text-lg font-semibold">Sub-tasks (optional)</h2>
-                <p className="text-xs text-muted-foreground">Break this down further.</p>
+                <p className="text-xs text-muted-foreground">
+                  Break this down further. Each subtask has the same fields as a task.
+                </p>
               </div>
               <div className="space-y-2">
+                {subs.length === 0 && (
+                  <p className="rounded-md border bg-muted/30 p-3 text-xs italic text-muted-foreground">
+                    No sub-tasks yet.
+                  </p>
+                )}
                 {subs.map((s, i) => (
-                  <div key={i} className="rounded-lg border bg-card/50 p-2">
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder={`Sub-task ${i + 1}`}
-                        value={s.title}
-                        onChange={(e) =>
-                          setSubs((cur) =>
-                            cur.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)),
-                          )
-                        }
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSubs((cur) => cur.filter((_, j) => j !== i))}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  <div
+                    key={i}
+                    className="flex items-start gap-2 rounded-lg border bg-card/50 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{s.title}</div>
+                      <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-muted-foreground">
+                        <span>Due {s.endDate}</span>
+                        <span className="capitalize">{s.priority}</span>
+                      </div>
                     </div>
-                    <div className="mt-2 flex gap-2">
-                      <Input
-                        type="number"
-                        step="0.5"
-                        min="0"
-                        placeholder="h/wk"
-                        value={s.hoursPerWeek ?? ""}
-                        onChange={(e) =>
-                          setSubs((cur) =>
-                            cur.map((x, j) =>
-                              j === i
-                                ? {
-                                    ...x,
-                                    hoursPerWeek: e.target.value
-                                      ? Number(e.target.value)
-                                      : undefined,
-                                  }
-                                : x,
-                            ),
-                          )
-                        }
-                        className="w-24"
-                      />
-                      <Input
-                        type="date"
-                        value={s.endDate ?? ""}
-                        onChange={(e) =>
-                          setSubs((cur) =>
-                            cur.map((x, j) =>
-                              j === i ? { ...x, endDate: e.target.value || undefined } : x,
-                            ),
-                          )
-                        }
-                        className="flex-1"
-                      />
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        setEditIdx(i);
+                        setSubEditorOpen(true);
+                      }}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => setSubs((cur) => cur.filter((_, j) => j !== i))}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 ))}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setSubs((cur) => [...cur, { title: "" }])}
+                  onClick={() => {
+                    setEditIdx(null);
+                    setSubEditorOpen(true);
+                  }}
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" /> Add sub-task
                 </Button>
               </div>
+              <SubtaskFormDialog
+                open={subEditorOpen}
+                onOpenChange={(o) => {
+                  setSubEditorOpen(o);
+                  if (!o) setEditIdx(null);
+                }}
+                title={editIdx === null ? "New subtask" : "Edit subtask"}
+                initial={editIdx !== null ? subs[editIdx] : undefined}
+                onSubmit={(d) => {
+                  setSubs((cur) =>
+                    editIdx === null
+                      ? [...cur, d]
+                      : cur.map((x, j) => (j === editIdx ? d : x)),
+                  );
+                }}
+              />
             </div>
           )}
+
+
 
           {step === "done" && (
             <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">

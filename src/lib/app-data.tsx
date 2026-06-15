@@ -57,6 +57,8 @@ export interface SubTask {
   plannedHours?: number;
   spentHours?: number;
   recurrence?: Recurrence;
+  priority?: "low" | "medium" | "high";
+  description?: string;
 }
 
 export interface Task {
@@ -163,6 +165,8 @@ function normalizeSubTask(raw: any): SubTask {
     recurrence: ["none", "daily", "weekly", "monthly", "yearly"].includes(raw?.recurrence)
       ? raw.recurrence
       : "none",
+    priority: PRIORITIES.includes(raw?.priority) ? raw.priority : undefined,
+    description: typeof raw?.description === "string" ? raw.description : undefined,
   };
 }
 
