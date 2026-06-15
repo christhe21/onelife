@@ -178,19 +178,21 @@ export function AddToScheduleDialog({
         </DialogHeader>
 
         <div className="min-w-0 space-y-3">
-          <div className="relative min-w-0">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              autoFocus
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setSelected(null);
-              }}
-              placeholder="Search tasks & subtasks…"
-              className="pl-8 text-base"
-            />
-          </div>
+          {!preselect && (
+            <div className="relative min-w-0">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                autoFocus
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSelected(null);
+                }}
+                placeholder="Search tasks & subtasks…"
+                className="pl-8 text-base"
+              />
+            </div>
+          )}
 
           {selected ? (
             <div className="flex min-w-0 items-start gap-2 rounded-md border bg-muted/40 px-2 py-1.5 text-sm">
@@ -210,14 +212,20 @@ export function AddToScheduleDialog({
                   {formatHours(remaining)} / {formatHours(selected.plannedHours!)} left
                 </span>
               )}
-              <button
-                onClick={() => setSelected(null)}
-                className="shrink-0 rounded p-1 text-muted-foreground hover:bg-background hover:text-foreground"
-                aria-label="Clear selection"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+              {!preselect && (
+                <button
+                  onClick={() => setSelected(null)}
+                  className="shrink-0 rounded p-1 text-muted-foreground hover:bg-background hover:text-foreground"
+                  aria-label="Clear selection"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
+          ) : preselect ? (
+            <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              Loading item…
+            </p>
           ) : (
             <div className="max-h-56 min-w-0 overflow-y-auto rounded-md border">
               {filtered.length === 0 ? (
@@ -256,6 +264,7 @@ export function AddToScheduleDialog({
               )}
             </div>
           )}
+
 
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <label className="min-w-0 space-y-1">
