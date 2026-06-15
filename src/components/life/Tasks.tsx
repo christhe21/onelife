@@ -265,11 +265,10 @@ function SubtasksPanel({ task }: { task: Task }) {
         onOpenChange={(o) => !o && setSchedFor(null)}
         preselect={schedFor ?? undefined}
       />
-      {/* suppress unused */}
-      {false && updateSubtask && null}
     </div>
   );
 }
+
 
 
 function AddTaskBar() {
