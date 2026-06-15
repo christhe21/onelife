@@ -428,6 +428,17 @@ function TaskRow({ task }: { task: Task }) {
               </div>
             )}
           </button>
+          {canSchedule && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="mt-0.5 h-8 w-8 shrink-0"
+              title="Schedule on calendar"
+              onClick={() => setSchedOpen(true)}
+            >
+              <Calendar className="h-4 w-4" />
+            </Button>
+          )}
           <Popover>
             <PopoverTrigger asChild>
               <Button size="icon" variant="ghost" className="-mr-1 mt-0.5 h-8 w-8 shrink-0">
@@ -436,6 +447,7 @@ function TaskRow({ task }: { task: Task }) {
             </PopoverTrigger>
             <PopoverContent align="end" className="w-44 p-1">
               <EditTaskDialog task={task}>
+
                 <button className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted">
                   <Pencil className="h-3.5 w-3.5" /> Edit
                 </button>
