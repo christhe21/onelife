@@ -183,104 +183,92 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
 
 function SubtasksPanel({ task }: { task: Task }) {
   const { addSubtask, updateSubtask, toggleSubtask, deleteSubtask } = useAppData();
-  const [title, setTitle] = useState("");
-  const [schedFor, setSchedFor] = useState<Set<string>>(new Set());
-
-  const toggleSched = (id: string) => {
-    const n = new Set(schedFor);
-    if (n.has(id)) n.delete(id);
-    else n.add(id);
-    setSchedFor(n);
-  };
-
-  const add = () => {
-    if (!title.trim()) return;
-    addSubtask(task.id, { title: title.trim() });
-    setTitle("");
-  };
+  const [addOpen, setAddOpen] = useState(false);
+  const [schedFor, setSchedFor] = useState<{ taskId: string; subId: string } | null>(null);
 
   return (
     <div className="border-t bg-muted/30 px-3 py-2.5">
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {task.subtasks.length === 0 && (
           <p className="text-xs italic text-muted-foreground">No sub-tasks yet.</p>
         )}
-        {task.subtasks.map((s) => {
-          const open = schedFor.has(s.id) || s.hoursPerWeek != null || s.endDate != null;
-          return (
-            <div key={s.id} className="rounded border bg-background px-2 py-1.5">
-              <div className="flex items-center gap-2">
-                <Checkbox checked={s.done} onCheckedChange={() => toggleSubtask(task.id, s.id)} />
-                {s.recurrence && s.recurrence !== "none" && (
-                  <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                )}
-                <Input
-                  value={s.title}
-                  onChange={(e) => updateSubtask(task.id, s.id, { title: e.target.value })}
-                  className={`h-7 flex-1 border-0 px-1 text-sm focus-visible:ring-1 ${s.done ? "line-through text-muted-foreground" : ""}`}
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6"
-                  onClick={() => toggleSched(s.id)}
-                  title="Schedule"
-                >
-                  <Calendar className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6"
-                  onClick={() => deleteSubtask(task.id, s.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              {open && (
-                <div className="mt-1.5 flex items-center gap-2 pl-7">
-                  <Input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    placeholder="h/wk"
-                    value={s.hoursPerWeek ?? ""}
-                    onChange={(e) =>
-                      updateSubtask(task.id, s.id, {
-                        hoursPerWeek: e.target.value ? Number(e.target.value) : undefined,
-                      })
-                    }
-                    className="h-7 w-20 text-xs"
-                  />
-                  <Input
-                    type="date"
-                    value={s.endDate ?? ""}
-                    onChange={(e) =>
-                      updateSubtask(task.id, s.id, { endDate: e.target.value || undefined })
-                    }
-                    className="h-7 flex-1 text-xs"
-                  />
-                </div>
+        {task.subtasks.map((s) => (
+          <div key={s.id} className="rounded border bg-background px-2 py-1.5">
+            <div className="flex items-center gap-2">
+              <Checkbox checked={s.done} onCheckedChange={() => toggleSubtask(task.id, s.id)} />
+              {s.recurrence && s.recurrence !== "none" && (
+                <Repeat className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               )}
+              <div className="min-w-0 flex-1">
+                <div
+                  className={`truncate text-sm ${s.done ? "line-through text-muted-foreground" : ""}`}
+                >
+                  {s.title}
+                </div>
+                {(s.endDate || s.priority) && (
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+                    {s.endDate && (
+                      <span className="inline-flex items-center gap-0.5">
+                        <Calendar className="h-3 w-3" />
+                        {s.endDate}
+                      </span>
+                    )}
+                    {s.priority && <span className="capitalize">{s.priority}</span>}
+                  </div>
+                )}
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => setSchedFor({ taskId: task.id, subId: s.id })}
+                title="Schedule on calendar"
+              >
+                <Calendar className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => deleteSubtask(task.id, s.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
-      <div className="mt-2 flex gap-2">
-        <Input
-          placeholder="Add sub-task..."
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-          className="h-8 flex-1 text-sm"
-        />
-        <Button size="sm" onClick={add}>
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
-      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-2 w-full"
+        onClick={() => setAddOpen(true)}
+      >
+        <Plus className="mr-1 h-3.5 w-3.5" /> Add subtask
+      </Button>
+      <SubtaskFormDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSubmit={(d) => {
+          addSubtask(task.id, {
+            title: d.title,
+            endDate: d.endDate,
+            priority: d.priority,
+            description: d.description,
+          });
+        }}
+      />
+      <AddToScheduleDialog
+        open={!!schedFor}
+        onOpenChange={(o) => !o && setSchedFor(null)}
+        preselect={schedFor ?? undefined}
+      />
+      {/* suppress unused */}
+      {false && updateSubtask && null}
     </div>
   );
 }
+
 
 function AddTaskBar() {
   const { addTask, goals } = useAppData();
