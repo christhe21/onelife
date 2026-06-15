@@ -57,6 +57,8 @@ export interface SubTask {
   plannedHours?: number;
   spentHours?: number;
   recurrence?: Recurrence;
+  priority?: "low" | "medium" | "high";
+  description?: string;
 }
 
 export interface Task {
