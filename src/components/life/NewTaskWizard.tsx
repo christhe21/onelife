@@ -21,11 +21,7 @@ import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
 const STEPS = ["basics", "priority", "schedule", "link", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
 
-interface SubDraft {
-  title: string;
-  hoursPerWeek?: number;
-  endDate?: string;
-}
+type SubDraft = SubtaskDraft;
 
 interface Props {
   open: boolean;
