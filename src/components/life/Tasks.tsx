@@ -63,6 +63,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
 
   const save = () => {
     if (!form.title.trim()) return;
+    if (!form.dueDate) return;
     updateTask(task.id, {
       title: form.title,
       dueDate: form.dueDate || undefined,
