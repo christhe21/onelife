@@ -122,6 +122,19 @@ export function AddToScheduleDialog({
     setPlannedHoursStr(i.plannedHours != null ? String(i.plannedHours) : "");
   };
 
+  // Apply preselect on open
+  useEffect(() => {
+    if (!open || !preselect) return;
+    const match = flat.find(
+      (i) =>
+        i.taskId === preselect.taskId &&
+        (preselect.subId ? i.subId === preselect.subId : i.kind === "task"),
+    );
+    if (match) onPick(match);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, preselect?.taskId, preselect?.subId]);
+
+
   const submit = () => {
     if (!selected) return;
     const startIso = hmToTodayISO(from, defaultDate);
