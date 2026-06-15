@@ -469,9 +469,17 @@ function TaskRow({ task }: { task: Task }) {
         </div>
         {open && <SubtasksPanel task={task} />}
       </CardContent>
+      {canSchedule && (
+        <AddToScheduleDialog
+          open={schedOpen}
+          onOpenChange={setSchedOpen}
+          preselect={{ taskId: task.id }}
+        />
+      )}
     </Card>
   );
 }
+
 
 export function Tasks() {
   const { tasks, goals } = useAppData();
