@@ -362,6 +362,9 @@ function TaskRow({ task }: { task: Task }) {
   const { tasks: _t, goals, toggleTask, deleteTask } = useAppData();
   void _t;
   const [open, setOpen] = useState(false);
+  const [schedOpen, setSchedOpen] = useState(false);
+  const canSchedule = task.subtasks.length === 0;
+
 
   const today = new Date().toISOString().slice(0, 10);
   const overdue = !task.done && task.dueDate && task.dueDate < today;
