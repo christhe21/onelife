@@ -44,10 +44,12 @@ export function AddToScheduleDialog({
   open,
   onOpenChange,
   defaultDate,
+  preselect,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   defaultDate?: string;
+  preselect?: { taskId: string; subId?: string };
 }) {
   const { tasks, goals, skills, updateTask, updateSubtask } = useAppData();
   const [query, setQuery] = useState("");
