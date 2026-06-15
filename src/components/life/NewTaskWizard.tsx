@@ -51,6 +51,8 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const [goalId, setGoalId] = useState<string>("");
   const [subGoalId, setSubGoalId] = useState<string>("");
   const [subs, setSubs] = useState<SubDraft[]>([]);
+  const [subEditorOpen, setSubEditorOpen] = useState(false);
+  const [editIdx, setEditIdx] = useState<number | null>(null);
 
   const stepIdx = STEPS.indexOf(step);
   const selectedGoal = useMemo(() => goals.find((g) => g.id === goalId), [goals, goalId]);
@@ -67,6 +69,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     setGoalId("");
     setSubGoalId("");
     setSubs([]);
+    setEditIdx(null);
   };
 
   const handleOpenChange = (o: boolean) => {
@@ -77,13 +80,15 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const next = () => setStep(STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]);
   const back = () => setStep(STEPS[Math.max(stepIdx - 1, 0)]);
 
+  const scheduleOk = isDaily ? !!(startDate && endDate) : !!dueDate;
   const canNext =
     (step === "basics" && title.trim().length > 0) ||
     step === "priority" ||
-    step === "schedule" ||
-    (step === "link" && goalId && (isDaily || subGoalId)) ||
+    (step === "schedule" && scheduleOk) ||
+    (step === "link" && !!goalId && (isDaily || !!subGoalId)) ||
     step === "subtasks" ||
     step === "done";
+
 
   const save = () => {
     addTask({
