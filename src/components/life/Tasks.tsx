@@ -184,7 +184,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
 }
 
 function SubtasksPanel({ task }: { task: Task }) {
-  const { addSubtask, updateSubtask, toggleSubtask, deleteSubtask } = useAppData();
+  const { addSubtask, toggleSubtask, deleteSubtask } = useAppData();
   const [addOpen, setAddOpen] = useState(false);
   const [schedFor, setSchedFor] = useState<{ taskId: string; subId: string } | null>(null);
 
