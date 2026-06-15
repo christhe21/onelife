@@ -95,7 +95,9 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Due</Label>
+              <Label>
+                Due <span className="text-red-500">*</span>
+              </Label>
               <Input
                 type="date"
                 value={form.dueDate}
