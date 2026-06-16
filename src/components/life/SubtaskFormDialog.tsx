@@ -128,10 +128,20 @@ export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title
               </Label>
               <Input
                 type="date"
+                min={minDate}
+                max={maxDate}
                 value={form.endDate}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
               />
+              {dateOutOfRange && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  Must be {minDate ? `on/after ${minDate}` : ""}
+                  {minDate && maxDate ? " and " : ""}
+                  {maxDate ? `on/before ${maxDate}` : ""}.
+                </p>
+              )}
             </div>
+
           </div>
         </div>
         <DialogFooter className="mt-1 flex flex-col-reverse gap-2 sm:flex-row">
