@@ -5,10 +5,7 @@
   "skillName": "Piano",
   "creatorName": "MelodyMaker",
   "verified": true,
-  "resources": [
-    "https://www.musictheory.net/",
-    "https://www.youtube.com/user/pianoteofficial"
-  ],
+  "resources": ["https://www.musictheory.net/", "https://www.youtube.com/user/pianoteofficial"],
   "advice": "Practice 15-20 minutes every single day rather than 2 hours once a week. Muscle memory builds through consistent daily repetition.",
   "durationDays": 30,
   "subGoals": [

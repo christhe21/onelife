@@ -35,14 +35,21 @@ interface Props {
   maxDate?: string;
 }
 
-
 function addDaysIso(days: number) {
   const d = new Date();
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
 
-export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title = "New subtask", minDate, maxDate }: Props) {
+export function SubtaskFormDialog({
+  open,
+  onOpenChange,
+  initial,
+  onSubmit,
+  title = "New subtask",
+  minDate,
+  maxDate,
+}: Props) {
   const [form, setForm] = useState<SubtaskDraft>({
     title: "",
     description: "",
@@ -67,7 +74,6 @@ export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title
   const valid = form.title.trim().length > 0 && form.endDate.length > 0 && !dateOutOfRange;
 
   const save = () => {
-
     if (!valid) return;
     onSubmit({
       title: form.title.trim(),
@@ -141,7 +147,6 @@ export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title
                 </p>
               )}
             </div>
-
           </div>
         </div>
         <DialogFooter className="mt-1 flex flex-col-reverse gap-2 sm:flex-row">

@@ -5,10 +5,7 @@
   "skillName": "DSA",
   "creatorName": "AlgoExpert",
   "verified": true,
-  "resources": [
-    "https://leetcode.com/",
-    "https://neetcode.io/roadmap"
-  ],
+  "resources": ["https://leetcode.com/", "https://neetcode.io/roadmap"],
   "advice": "Consistency is key. Don't just read solutions; try to solve them for at least 30 minutes before looking at hints. Understand the time and space complexity of every approach.",
   "durationDays": 90,
   "subGoals": [

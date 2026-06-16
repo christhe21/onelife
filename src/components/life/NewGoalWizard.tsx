@@ -152,7 +152,6 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     setStep("tasks");
   };
 
-
   const goToSubtasks = () => {
     // ensure goal exists, but tasks are persisted on the final step so we can attach subtasks
     commitGoal();
@@ -382,7 +381,6 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                   </p>
                 )}
               </div>
-
             </div>
           )}
 

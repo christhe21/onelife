@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Quote, CalendarDays } from "lucide-react";
 import { useAppData, type Task } from "@/lib/app-data";
 import { cn } from "@/lib/utils";
+import { useFrierenVocabulary } from "@/lib/frieren";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -22,8 +23,15 @@ const QUOTE = {
   author: "Mahatma Gandhi",
 };
 
+const FRIEREN_QUOTE = {
+  text: "The greatest joy of magic lies in searching for it.",
+  author: "Frieren",
+};
+
 export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
   const { tasks, goals, skills, settings, toggleTask } = useAppData();
+  const vocab = useFrierenVocabulary();
+  const quote = vocab.isFrieren ? FRIEREN_QUOTE : QUOTE;
   const today = todayISO();
   const name = settings.userName?.trim();
 
@@ -83,10 +91,10 @@ export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
         </div>
         <CardContent className="pt-8 pb-6 px-8 relative z-10 text-center">
           <p className="text-lg md:text-xl font-medium font-display italic text-foreground/80 leading-relaxed max-w-2xl mx-auto">
-            "{QUOTE.text}"
+            "{quote.text}"
           </p>
           <p className="mt-4 text-sm font-semibold text-primary/80 uppercase tracking-widest">
-            — {QUOTE.author}
+            — {quote.author}
           </p>
         </CardContent>
       </Card>
@@ -95,17 +103,19 @@ export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
         <Card>
           <CardContent className="p-12 text-center">
             <p className="text-muted-foreground">
-              You don't have any tasks for today. Time to relax or plan ahead!
+              {vocab.isFrieren
+                ? "A quiet day. Rest, and prepare for what lies ahead."
+                : `You don't have any ${vocab.tasks.toLowerCase()} for today. Time to relax or plan ahead!`}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               {onGoTasks && (
                 <Button variant="default" onClick={onGoTasks}>
-                  Open task list <ArrowRight className="ml-2 h-4 w-4" />
+                  Open {vocab.task.toLowerCase()} list <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
               {onGoGoals && (
                 <Button variant="outline" onClick={onGoGoals}>
-                  Go to goals
+                  Go to {vocab.goals.toLowerCase()}
                 </Button>
               )}
             </div>
@@ -117,7 +127,7 @@ export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
           <Card className="h-fit min-w-0">
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Daily Tasks</CardTitle>
+                <CardTitle className="text-lg">Daily {vocab.tasks}</CardTitle>
                 <Badge variant="secondary" className="rounded-full">
                   {dueToday.length}
                 </Badge>
@@ -145,7 +155,9 @@ export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
           <Card className="h-fit min-w-0">
             <CardHeader className="pb-3 border-b">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg text-muted-foreground">Pending Tasks</CardTitle>
+                <CardTitle className="text-lg text-muted-foreground">
+                  Pending {vocab.tasks}
+                </CardTitle>
                 <Badge variant="outline" className="rounded-full">
                   {pending.length}
                 </Badge>
