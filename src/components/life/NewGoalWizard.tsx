@@ -583,10 +583,11 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
             </Button>
           )}
           {step === "milestones" && (
-            <Button size="sm" onClick={saveMilestones}>
+            <Button size="sm" onClick={saveMilestones} disabled={!milestonesValid}>
               Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </Button>
           )}
+
           {step === "tasks" && (
             <Button size="sm" onClick={goToSubtasks}>
               Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
