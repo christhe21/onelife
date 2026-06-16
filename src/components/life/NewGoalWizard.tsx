@@ -376,7 +376,13 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" /> Add milestone
                 </Button>
+                {!milestonesValid && (
+                  <p className="text-[11px] text-destructive">
+                    Milestone dates must be on or before the goal target ({targetDate}).
+                  </p>
+                )}
               </div>
+
             </div>
           )}
 
