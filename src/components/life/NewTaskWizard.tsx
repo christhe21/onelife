@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
 
 
-const STEPS = ["basics", "priority", "schedule", "link", "subtasks", "done"] as const;
+const STEPS = ["basics", "priority", "link", "schedule", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
 
 type SubDraft = SubtaskDraft;
