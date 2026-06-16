@@ -145,16 +145,17 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
               <ListChecks className="h-4 w-4 text-primary" /> New task
             </DialogTitle>
             <div className="flex items-center gap-1.5">
-              {STEPS.map((s, i) => (
+              {visibleSteps.map((s, i) => (
                 <span
                   key={s}
                   className={cn(
                     "h-1.5 w-5 rounded-full transition-colors",
-                    i <= stepIdx ? "bg-primary" : "bg-muted",
+                    i <= visibleIdx ? "bg-primary" : "bg-muted",
                   )}
                 />
               ))}
             </div>
+
             <Button
               variant="ghost"
               size="sm"
