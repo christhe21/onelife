@@ -228,17 +228,24 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
               <div>
                 <h2 className="font-display text-lg font-semibold">Schedule</h2>
                 <p className="text-xs text-muted-foreground">
-                  One-off due date or a daily recurring task.
+                  One-off due date or a daily recurring task. Must fit within the goal&apos;s
+                  timeline{selectedGoal ? ` (until ${selectedGoal.targetDate})` : ""}.
                 </p>
               </div>
               <div className="flex items-center justify-between rounded-xl border bg-card/50 p-3">
                 <div>
                   <div className="text-sm font-medium">Daily task</div>
                   <div className="text-[11px] text-muted-foreground">
-                    Recurs every day between start and end.
+                    Recurs every day between start and end. No subtasks allowed.
                   </div>
                 </div>
-                <Switch checked={isDaily} onCheckedChange={setIsDaily} />
+                <Switch
+                  checked={isDaily}
+                  onCheckedChange={(v) => {
+                    setIsDaily(v);
+                    if (v) setSubs([]);
+                  }}
+                />
               </div>
 
               {!isDaily ? (
@@ -246,32 +253,52 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                   <Label className="text-xs">Due date</Label>
                   <Input
                     type="date"
+                    min={minDate}
+                    max={goalMax}
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
                   />
+                  {!dueInRange && (
+                    <p className="mt-1 text-[11px] text-destructive">
+                      Must be between {minDate} and {goalMax}.
+                    </p>
+                  )}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">Start date</Label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Start date</Label>
+                      <Input
+                        type="date"
+                        min={minDate}
+                        max={goalMax}
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">End date</Label>
+                      <Input
+                        type="date"
+                        min={startDate || minDate}
+                        max={goalMax}
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-xs">End date</Label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
+                  {(!dailyStartInRange || !dailyEndInRange || (startDate && endDate && startDate > endDate)) && (
+                    <p className="text-[11px] text-destructive">
+                      Dates must be between {minDate} and {goalMax}, and end ≥ start.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           )}
+
+
 
           {step === "link" && (
             <div className="space-y-4">
