@@ -31,7 +31,10 @@ interface Props {
   initial?: Partial<SubtaskDraft>;
   onSubmit: (draft: SubtaskDraft) => void;
   title?: string;
+  minDate?: string;
+  maxDate?: string;
 }
+
 
 function addDaysIso(days: number) {
   const d = new Date();
