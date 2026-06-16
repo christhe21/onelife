@@ -31,7 +31,10 @@ interface Props {
   initial?: Partial<SubtaskDraft>;
   onSubmit: (draft: SubtaskDraft) => void;
   title?: string;
+  minDate?: string;
+  maxDate?: string;
 }
+
 
 function addDaysIso(days: number) {
   const d = new Date();
@@ -39,7 +42,7 @@ function addDaysIso(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title = "New subtask" }: Props) {
+export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title = "New subtask", minDate, maxDate }: Props) {
   const [form, setForm] = useState<SubtaskDraft>({
     title: "",
     description: "",
@@ -58,9 +61,13 @@ export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title
     }
   }, [open, initial?.title, initial?.description, initial?.priority, initial?.endDate]);
 
-  const valid = form.title.trim().length > 0 && form.endDate.length > 0;
+  const dateOutOfRange =
+    !!form.endDate &&
+    ((!!minDate && form.endDate < minDate) || (!!maxDate && form.endDate > maxDate));
+  const valid = form.title.trim().length > 0 && form.endDate.length > 0 && !dateOutOfRange;
 
   const save = () => {
+
     if (!valid) return;
     onSubmit({
       title: form.title.trim(),
@@ -121,10 +128,20 @@ export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title
               </Label>
               <Input
                 type="date"
+                min={minDate}
+                max={maxDate}
                 value={form.endDate}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
               />
+              {dateOutOfRange && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  Must be {minDate ? `on/after ${minDate}` : ""}
+                  {minDate && maxDate ? " and " : ""}
+                  {maxDate ? `on/before ${maxDate}` : ""}.
+                </p>
+              )}
             </div>
+
           </div>
         </div>
         <DialogFooter className="mt-1 flex flex-col-reverse gap-2 sm:flex-row">

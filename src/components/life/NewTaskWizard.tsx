@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ListChecks, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
 
 
-const STEPS = ["basics", "priority", "schedule", "link", "subtasks", "done"] as const;
+const STEPS = ["basics", "priority", "link", "schedule", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
 
 type SubDraft = SubtaskDraft;
@@ -54,7 +54,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const [subEditorOpen, setSubEditorOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
-  const stepIdx = STEPS.indexOf(step);
+  // visibleIdx defined below after isDaily-aware visibleSteps memo
   const selectedGoal = useMemo(() => goals.find((g) => g.id === goalId), [goals, goalId]);
 
   const reset = () => {
@@ -77,10 +77,28 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     if (!o) setTimeout(reset, 200);
   };
 
-  const next = () => setStep(STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]);
-  const back = () => setStep(STEPS[Math.max(stepIdx - 1, 0)]);
+  // Daily tasks skip the subtasks step entirely.
+  const visibleSteps = useMemo<readonly Step[]>(
+    () => (isDaily ? (STEPS.filter((s) => s !== "subtasks") as Step[]) : STEPS),
+    [isDaily],
+  );
+  const visibleIdx = visibleSteps.indexOf(step);
+  const next = () =>
+    setStep(visibleSteps[Math.min(visibleIdx + 1, visibleSteps.length - 1)]);
+  const back = () => setStep(visibleSteps[Math.max(visibleIdx - 1, 0)]);
 
-  const scheduleOk = isDaily ? !!(startDate && endDate) : !!dueDate;
+  const goalMin = selectedGoal?.startDate;
+  const goalMax = selectedGoal?.targetDate;
+  const today = todayIso();
+  const minDate = goalMin && goalMin > today ? goalMin : today;
+  const dueInRange = !dueDate || ((!goalMax || dueDate <= goalMax) && dueDate >= minDate);
+  const dailyStartInRange =
+    !startDate || ((!goalMax || startDate <= goalMax) && startDate >= minDate);
+  const dailyEndInRange =
+    !endDate || ((!goalMax || endDate <= goalMax) && endDate >= minDate);
+  const scheduleOk = isDaily
+    ? !!(startDate && endDate) && dailyStartInRange && dailyEndInRange && startDate <= endDate
+    : !!dueDate && dueInRange;
   const canNext =
     (step === "basics" && title.trim().length > 0) ||
     step === "priority" ||
@@ -88,6 +106,37 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     (step === "link" && !!goalId && (isDaily || !!subGoalId)) ||
     step === "subtasks" ||
     step === "done";
+
+  // When entering the schedule step (or when the picked goal changes), clamp
+  // the defaults to fit within the goal's [start, target] window so the user
+  // never starts out-of-range.
+  useEffect(() => {
+    if (step !== "schedule" || !selectedGoal) return;
+    const gMin = minDate;
+    const gMax = goalMax!;
+    if (!isDaily) {
+      setDueDate((d) => {
+        if (!d) return gMin <= gMax ? gMin : gMax;
+        if (d > gMax) return gMax;
+        if (d < gMin) return gMin;
+        return d;
+      });
+    } else {
+      setStartDate((d) => {
+        if (!d) return gMin <= gMax ? gMin : gMax;
+        if (d > gMax) return gMax;
+        if (d < gMin) return gMin;
+        return d;
+      });
+      setEndDate((d) => {
+        if (!d) return gMax;
+        if (d > gMax) return gMax;
+        if (d < gMin) return gMin;
+        return d;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, goalId, isDaily]);
 
 
   const save = () => {
@@ -125,16 +174,17 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
               <ListChecks className="h-4 w-4 text-primary" /> New task
             </DialogTitle>
             <div className="flex items-center gap-1.5">
-              {STEPS.map((s, i) => (
+              {visibleSteps.map((s, i) => (
                 <span
                   key={s}
                   className={cn(
                     "h-1.5 w-5 rounded-full transition-colors",
-                    i <= stepIdx ? "bg-primary" : "bg-muted",
+                    i <= visibleIdx ? "bg-primary" : "bg-muted",
                   )}
                 />
               ))}
             </div>
+
             <Button
               variant="ghost"
               size="sm"
@@ -208,17 +258,24 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
               <div>
                 <h2 className="font-display text-lg font-semibold">Schedule</h2>
                 <p className="text-xs text-muted-foreground">
-                  One-off due date or a daily recurring task.
+                  One-off due date or a daily recurring task. Must fit within the goal&apos;s
+                  timeline{selectedGoal ? ` (until ${selectedGoal.targetDate})` : ""}.
                 </p>
               </div>
               <div className="flex items-center justify-between rounded-xl border bg-card/50 p-3">
                 <div>
                   <div className="text-sm font-medium">Daily task</div>
                   <div className="text-[11px] text-muted-foreground">
-                    Recurs every day between start and end.
+                    Recurs every day between start and end. No subtasks allowed.
                   </div>
                 </div>
-                <Switch checked={isDaily} onCheckedChange={setIsDaily} />
+                <Switch
+                  checked={isDaily}
+                  onCheckedChange={(v) => {
+                    setIsDaily(v);
+                    if (v) setSubs([]);
+                  }}
+                />
               </div>
 
               {!isDaily ? (
@@ -226,32 +283,52 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                   <Label className="text-xs">Due date</Label>
                   <Input
                     type="date"
+                    min={minDate}
+                    max={goalMax}
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
                   />
+                  {!dueInRange && (
+                    <p className="mt-1 text-[11px] text-destructive">
+                      Must be between {minDate} and {goalMax}.
+                    </p>
+                  )}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">Start date</Label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Start date</Label>
+                      <Input
+                        type="date"
+                        min={minDate}
+                        max={goalMax}
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">End date</Label>
+                      <Input
+                        type="date"
+                        min={startDate || minDate}
+                        max={goalMax}
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-xs">End date</Label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
+                  {(!dailyStartInRange || !dailyEndInRange || (startDate && endDate && startDate > endDate)) && (
+                    <p className="text-[11px] text-destructive">
+                      Dates must be between {minDate} and {goalMax}, and end ≥ start.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
           )}
+
+
 
           {step === "link" && (
             <div className="space-y-4">
@@ -383,6 +460,8 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 }}
                 title={editIdx === null ? "New subtask" : "Edit subtask"}
                 initial={editIdx !== null ? subs[editIdx] : undefined}
+                minDate={minDate}
+                maxDate={goalMax}
                 onSubmit={(d) => {
                   setSubs((cur) =>
                     editIdx === null
@@ -391,6 +470,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                   );
                 }}
               />
+
             </div>
           )}
 
@@ -414,12 +494,12 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 variant="ghost"
                 size="sm"
                 onClick={back}
-                disabled={stepIdx === 0}
+                disabled={visibleIdx === 0}
               >
                 <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Back
               </Button>
-              {step === "subtasks" ? (
-                <Button size="sm" onClick={save}>
+              {step === "subtasks" || (isDaily && step === "schedule") ? (
+                <Button size="sm" onClick={save} disabled={!scheduleOk || !goalId}>
                   Create task <Check className="ml-1 h-3.5 w-3.5" />
                 </Button>
               ) : (
@@ -428,6 +508,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 </Button>
               )}
             </>
+
           ) : (
             <>
               <Button

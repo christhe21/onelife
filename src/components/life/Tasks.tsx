@@ -189,9 +189,18 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
 }
 
 function SubtasksPanel({ task }: { task: Task }) {
-  const { addSubtask, toggleSubtask, deleteSubtask } = useAppData();
+  const { addSubtask, toggleSubtask, deleteSubtask, goals } = useAppData();
   const [addOpen, setAddOpen] = useState(false);
   const [schedFor, setSchedFor] = useState<{ taskId: string; subId: string } | null>(null);
+
+  const isDaily = task.recurrence === "daily";
+  const parentGoal =
+    goals.find((g) => g.subGoals.some((sg) => sg.id === task.subGoalId)) ??
+    goals.find((g) => g.id === task.goalId);
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const minDate =
+    parentGoal?.startDate && parentGoal.startDate > todayStr ? parentGoal.startDate : todayStr;
+  const maxDate = parentGoal?.targetDate;
 
   return (
     <div className="border-t bg-muted/30 px-3 py-2.5">
@@ -245,17 +254,25 @@ function SubtasksPanel({ task }: { task: Task }) {
           </div>
         ))}
       </div>
-      <Button
-        size="sm"
-        variant="outline"
-        className="mt-2 w-full"
-        onClick={() => setAddOpen(true)}
-      >
-        <Plus className="mr-1 h-3.5 w-3.5" /> Add subtask
-      </Button>
+      {isDaily ? (
+        <p className="mt-2 text-[11px] italic text-muted-foreground">
+          Daily tasks can&apos;t have sub-tasks.
+        </p>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          className="mt-2 w-full"
+          onClick={() => setAddOpen(true)}
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" /> Add subtask
+        </Button>
+      )}
       <SubtaskFormDialog
         open={addOpen}
         onOpenChange={setAddOpen}
+        minDate={minDate}
+        maxDate={maxDate}
         onSubmit={(d) => {
           addSubtask(task.id, {
             title: d.title,
@@ -273,6 +290,7 @@ function SubtasksPanel({ task }: { task: Task }) {
     </div>
   );
 }
+
 
 
 

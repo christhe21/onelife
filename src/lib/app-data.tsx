@@ -798,14 +798,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     addSubGoal: (goalId, title, targetDate) => {
       const id = uid();
       setGoals((cur) =>
-        cur.map((g) =>
-          g.id === goalId
-            ? { ...g, subGoals: [...g.subGoals, { id, title, targetDate, done: false }] }
-            : g,
-        ),
+        cur.map((g) => {
+          if (g.id !== goalId) return g;
+          let clamped = targetDate;
+          if (clamped) {
+            if (g.targetDate && clamped > g.targetDate) clamped = g.targetDate;
+            if (g.startDate && clamped < g.startDate) clamped = g.startDate;
+          }
+          return { ...g, subGoals: [...g.subGoals, { id, title, targetDate: clamped, done: false }] };
+        }),
       );
       return id;
     },
+
     ensureDefaultMilestone: (goalId) => {
       const existing = goals.find((g) => g.id === goalId);
       const first = existing?.subGoals[0];

@@ -138,7 +138,12 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     setStep("milestones");
   };
 
+  const milestonesValid = milestones.every(
+    (m) => !m.date || (m.date <= targetDate && m.date >= today),
+  );
+
   const saveMilestones = () => {
+    if (!milestonesValid) return;
     const id = commitGoal();
     milestones
       .filter((m) => m.title.trim())
@@ -146,6 +151,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     setMilestones([]); // clear so back/forward doesn't double-add
     setStep("tasks");
   };
+
 
   const goToSubtasks = () => {
     // ensure goal exists, but tasks are persisted on the final step so we can attach subtasks
@@ -343,6 +349,8 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                     <Input
                       type="date"
                       className="sm:w-44"
+                      min={today}
+                      max={targetDate}
                       value={m.date}
                       onChange={(e) =>
                         setMilestones((cur) =>
@@ -350,6 +358,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                         )
                       }
                     />
+
                     <Button
                       variant="ghost"
                       size="icon"
@@ -367,7 +376,13 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                 >
                   <Plus className="mr-1 h-3.5 w-3.5" /> Add milestone
                 </Button>
+                {!milestonesValid && (
+                  <p className="text-[11px] text-destructive">
+                    Milestone dates must be on or before the goal target ({targetDate}).
+                  </p>
+                )}
               </div>
+
             </div>
           )}
 
@@ -568,10 +583,11 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
             </Button>
           )}
           {step === "milestones" && (
-            <Button size="sm" onClick={saveMilestones}>
+            <Button size="sm" onClick={saveMilestones} disabled={!milestonesValid}>
               Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </Button>
           )}
+
           {step === "tasks" && (
             <Button size="sm" onClick={goToSubtasks}>
               Continue <ArrowRight className="ml-1 h-3.5 w-3.5" />
