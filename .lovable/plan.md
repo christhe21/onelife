@@ -1,47 +1,38 @@
-# Tasks & Subtasks: Required Fields + Unified Scheduling
+## Plan
 
-## Goals
+### 1. Milestone dates can't exceed goal target date
 
-1. Every task and every subtask requires the same core fields — **title** and **deadline (due date)**.
-2. Subtask creation uses the same form/fields as tasks (just linked to a parent under the hood).
-3. A **Schedule** button on each item opens the calendar's scheduler modal (existing `AddToScheduleDialog`) prefilled with that item, where the user picks date + from/till time. After saving, the block appears in the calendar.
-4. **Visibility rule:** a parent task with one or more subtasks does NOT show the Schedule button on the parent — only its subtasks do. A task with zero subtasks shows the Schedule button on itself.
+**Files:** `src/components/life/NewGoalWizard.tsx`, `src/components/life/Goals.tsx`, `src/lib/app-data.tsx`
 
-## Changes
+- In `NewGoalWizard` milestones step: set `max={targetDate}` and `min={today}` on each milestone date input; on blur, clamp to `targetDate` if exceeded. Disable "Save milestones / Next" if any milestone date is empty or `> targetDate`. Show inline error: "Must be on or before goal target date".
+- In `Goals.tsx` `GoalCard` add-milestone inputs (and the inline sub-goal date input): apply same `max={goal.targetDate}`, `min={goal.startDate}` and block submit when out of range.
+- In `app-data.tsx` `addSubGoal` / `updateSubGoal`: clamp `targetDate` so it is never `> goal.targetDate` and never `< goal.startDate` as a safety net.
 
-### 1. `NewTaskWizard.tsx` — required fields + better subtask step
-- Make the **due date** required for non-daily tasks (block "Next" on the Schedule step if empty; current logic already pre-fills, just enforce non-empty).
-- Replace the inline 3-input subtask rows with a **mini sub-form** that mirrors the task fields:
-  - Title (required)
-  - Description (optional)
-  - Priority (low/medium/high, default medium)
-  - Deadline / due date (required)
-  - Sub-tasks are saved with `{ title, endDate (deadline), ... }`.
-- Block "Create task" if any added subtask is missing title or deadline.
-- Parent linkage is implicit (subtasks belong to the task being created).
+### 2. Reorder task creation: goal/milestone BEFORE due date
 
-### 2. `Tasks.tsx` — `SubtasksPanel` rewrite
-- Replace the freeform "Add sub-task" input with an **"+ Add subtask"** button that opens a small modal (same shape as the wizard's subtask form: title, description, priority, deadline — all required except description).
-- Each subtask row shows: checkbox, title, deadline pill, then a **Schedule** icon button and a Delete button.
-- Remove the old inline h/wk + date row that appeared on click.
+**Files:** `src/components/life/NewTaskWizard.tsx`, `src/components/life/SubtaskFormDialog.tsx`, `src/components/life/Tasks.tsx`
 
-### 3. Per-item Schedule button
-Add a single shared dialog instance per `CalendarView` is overkill — instead reuse the existing `AddToScheduleDialog` from `Tasks.tsx`:
+- Change `NewTaskWizard` `STEPS` order from `[basics, priority, schedule, link, subtasks, done]` to **`[basics, priority, link, schedule, subtasks, done]`**.
+- On the schedule step, once a goal (and milestone, when not daily) is selected, constrain the due date / start / end inputs:
+  - `min` = today, `max` = selected goal's `targetDate` (and `min` not earlier than the goal's `startDate` for daily start; `endDate` capped at goal target).
+  - If the user-chosen date falls outside the goal range, show inline error and disable Next.
+  - When entering the schedule step, default `dueDate` to `min(today+1, goal.targetDate)` and `endDate` to `min(today+30, goal.targetDate)` so defaults are always valid.
+- `SubtaskFormDialog`: accept new optional props `minDate` / `maxDate` for the deadline input. Wire `Tasks.tsx`'s `SubtasksPanel` to pass the parent task's goal range (resolved via `task.subGoalId` → goal, or `task.goalId`) so subtask deadlines also can't exceed the goal. Block save when out of range.
+- In the wizard's subtasks step, pass the currently selected `goalId`'s `targetDate` as `maxDate` to `SubtaskFormDialog`.
 
-- Extend `AddToScheduleDialog` props with an optional `preselect?: { taskId: string; subId?: string }`. When provided, the dialog skips the search list and locks the selection to that item (chip with X removed or disabled).
-- In `TaskRow`: render the Schedule button **only when `task.subtasks.length === 0`**. Clicking it opens `AddToScheduleDialog` with `preselect={{ taskId: task.id }}` and `defaultDate` = today (or task.dueDate).
-- In `SubtasksPanel`: each subtask row's Schedule button opens `AddToScheduleDialog` with `preselect={{ taskId, subId }}`.
-- The dialog already writes `startDate`/`endDate` via `updateTask`/`updateSubtask`, which is what `CalendarView` reads to render events — so scheduled items appear in the calendar automatically with no calendar-side changes.
+### 3. Daily tasks cannot have subtasks
 
-### 4. `EditTaskDialog` — minor
-- Mark the Due field as required (asterisk + disable Save when empty).
+**Files:** `src/components/life/NewTaskWizard.tsx`, `src/components/life/Tasks.tsx`
 
-## Out of scope
-- No changes to `CalendarView` rendering, drag/drop, or recurrence projection.
-- No data migration: existing tasks/subtasks without a deadline keep working; required-field enforcement applies only to new creates/edits going forward.
-- Daily-recurring tasks continue to use Start/End instead of a single deadline (unchanged).
+- In `NewTaskWizard`: when `isDaily === true`, skip the `subtasks` step entirely (jump from `link` straight to the create action). Clear `subs` whenever `isDaily` is toggled on. Adjust the progress dots and the "Create task" button placement so it appears on the `link` step when daily.
+- In `Tasks.tsx` `SubtasksPanel` / `TaskRow`: hide the "Add subtask" button when `task.recurrence === "daily"`. If a daily task somehow has subtasks (legacy), still render them read-only but disable add.
+- In `EditTaskDialog` (if it exposes a recurrence toggle): same rule — hide subtask UI for daily.
 
-## Technical notes
-- `SubTask` already has `endDate` — reuse it as the deadline field (no schema change).
-- `AddToScheduleDialog` already accepts `defaultDate`; add `preselect` and, when set, initialize `selected` from `flat` on open and hide the search UI.
-- No changes to `app-data.tsx` types beyond possibly storing subtask `priority` — if we want priority on subtasks, add `priority?: "low"|"medium"|"high"` to `SubTask` and `normalizeSubTask`. (Confirm in build step.)
+### Out of scope
+- No data migration for existing milestones already past target date.
+- No changes to calendar rendering or recurrence projection.
+
+### Technical notes
+- Date comparisons use string `YYYY-MM-DD` (lexicographic compare is correct for ISO dates).
+- Clamping helper: `const clampDate = (d, min, max) => d < min ? min : d > max ? max : d;` — colocate in `src/lib/utils.ts`.
+- The wizard's `canNext` for the new `schedule` step also requires the chosen date(s) to be within the selected goal's range.
