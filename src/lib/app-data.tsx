@@ -90,7 +90,7 @@ export interface BucketItem {
 export type TextScale = "sm" | "base" | "lg" | "xl";
 
 export type ThemeMode = "light" | "dark" | "system";
-export type ThemeColor = "sage" | "ocean" | "sunset" | "lavender" | "monochrome";
+export type ThemeColor = "sage" | "ocean" | "sunset" | "lavender" | "monochrome" | "frieren";
 
 export interface Settings {
   birthYear?: number;
