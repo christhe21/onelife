@@ -138,7 +138,12 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     setStep("milestones");
   };
 
+  const milestonesValid = milestones.every(
+    (m) => !m.date || (m.date <= targetDate && m.date >= today),
+  );
+
   const saveMilestones = () => {
+    if (!milestonesValid) return;
     const id = commitGoal();
     milestones
       .filter((m) => m.title.trim())
@@ -146,6 +151,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
     setMilestones([]); // clear so back/forward doesn't double-add
     setStep("tasks");
   };
+
 
   const goToSubtasks = () => {
     // ensure goal exists, but tasks are persisted on the final step so we can attach subtasks
