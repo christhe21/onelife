@@ -510,13 +510,20 @@ function GoalCard({ goal }: { goal: Goal }) {
                 <Input
                   type="date"
                   className="w-40"
+                  min={goal.startDate}
+                  max={goal.targetDate}
                   value={subDate}
                   onChange={(e) => setSubDate(e.target.value)}
                 />
                 <Button
                   size="sm"
+                  disabled={
+                    !subTitle.trim() ||
+                    (!!subDate && (subDate > goal.targetDate || subDate < goal.startDate))
+                  }
                   onClick={() => {
                     if (!subTitle.trim()) return;
+                    if (subDate && (subDate > goal.targetDate || subDate < goal.startDate)) return;
                     addSubGoal(goal.id, subTitle, subDate || undefined);
                     setSubTitle("");
                     setSubDate("");
@@ -525,6 +532,12 @@ function GoalCard({ goal }: { goal: Goal }) {
                   Add
                 </Button>
               </div>
+              {subDate && (subDate > goal.targetDate || subDate < goal.startDate) && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  Date must be between {goal.startDate} and {goal.targetDate}.
+                </p>
+              )}
+
             </div>
             <div>
               <Label className="text-xs">Quick-add task linked to this goal</Label>
