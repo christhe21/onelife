@@ -349,6 +349,8 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                     <Input
                       type="date"
                       className="sm:w-44"
+                      min={today}
+                      max={targetDate}
                       value={m.date}
                       onChange={(e) =>
                         setMilestones((cur) =>
@@ -356,6 +358,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                         )
                       }
                     />
+
                     <Button
                       variant="ghost"
                       size="icon"
