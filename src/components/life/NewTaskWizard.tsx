@@ -107,7 +107,36 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     step === "subtasks" ||
     step === "done";
 
-
+  // When entering the schedule step (or when the picked goal changes), clamp
+  // the defaults to fit within the goal's [start, target] window so the user
+  // never starts out-of-range.
+  useEffect(() => {
+    if (step !== "schedule" || !selectedGoal) return;
+    const gMin = minDate;
+    const gMax = goalMax!;
+    if (!isDaily) {
+      setDueDate((d) => {
+        if (!d) return gMin <= gMax ? gMin : gMax;
+        if (d > gMax) return gMax;
+        if (d < gMin) return gMin;
+        return d;
+      });
+    } else {
+      setStartDate((d) => {
+        if (!d) return gMin <= gMax ? gMin : gMax;
+        if (d > gMax) return gMax;
+        if (d < gMin) return gMin;
+        return d;
+      });
+      setEndDate((d) => {
+        if (!d) return gMax;
+        if (d > gMax) return gMax;
+        if (d < gMin) return gMin;
+        return d;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, goalId, isDaily]);
 
 
   const save = () => {
