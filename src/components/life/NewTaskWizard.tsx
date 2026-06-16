@@ -54,7 +54,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const [subEditorOpen, setSubEditorOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
-  const stepIdx = STEPS.indexOf(step);
+  // visibleIdx defined below after isDaily-aware visibleSteps memo
   const selectedGoal = useMemo(() => goals.find((g) => g.id === goalId), [goals, goalId]);
 
   const reset = () => {
