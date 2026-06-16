@@ -31,6 +31,10 @@ const THEME_COLORS: { id: ThemeColor; label: string; primary: string; secondary:
   { id: "monochrome", label: "Monochrome", primary: "bg-[#171717]", secondary: "bg-[#a3a3a3]" },
 ];
 
+const SPECIAL_THEMES: { id: ThemeColor; label: string; primary: string; secondary: string }[] = [
+  { id: "frieren", label: "Frieren (Beyond Journey's End)", primary: "bg-[#f1eee4]", secondary: "bg-[#4da8a3]" },
+];
+
 export function SettingsView() {
   const { settings, updateSettings } = useAppData();
   const current: TextScale = settings.textScale ?? "base";
@@ -105,6 +109,30 @@ export function SettingsView() {
             <Label className="text-sm font-medium">Color Theme</Label>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {THEME_COLORS.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => updateSettings({ themeColor: c.id })}
+                  className={
+                    "flex items-center gap-3 rounded-xl border p-3 text-left transition " +
+                    ((settings.themeColor ?? "sage") === c.id
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                      : "hover:border-primary/40 hover:bg-muted/40")
+                  }
+                >
+                  <div className="flex h-8 w-8 shrink-0 overflow-hidden rounded-full border shadow-sm">
+                    <div className={`h-full w-1/2 ${c.primary}`} />
+                    <div className={`h-full w-1/2 ${c.secondary}`} />
+                  </div>
+                  <span className="text-xs font-medium leading-tight text-foreground">{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">Special Themes</Label>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {SPECIAL_THEMES.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => updateSettings({ themeColor: c.id })}
