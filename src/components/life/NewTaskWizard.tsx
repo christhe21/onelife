@@ -430,6 +430,8 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 }}
                 title={editIdx === null ? "New subtask" : "Edit subtask"}
                 initial={editIdx !== null ? subs[editIdx] : undefined}
+                minDate={minDate}
+                maxDate={goalMax}
                 onSubmit={(d) => {
                   setSubs((cur) =>
                     editIdx === null
@@ -438,6 +440,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                   );
                 }}
               />
+
             </div>
           )}
 
