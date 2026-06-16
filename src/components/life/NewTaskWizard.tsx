@@ -464,12 +464,12 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 variant="ghost"
                 size="sm"
                 onClick={back}
-                disabled={stepIdx === 0}
+                disabled={visibleIdx === 0}
               >
                 <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Back
               </Button>
-              {step === "subtasks" ? (
-                <Button size="sm" onClick={save}>
+              {step === "subtasks" || (isDaily && step === "schedule") ? (
+                <Button size="sm" onClick={save} disabled={!scheduleOk || !goalId}>
                   Create task <Check className="ml-1 h-3.5 w-3.5" />
                 </Button>
               ) : (
@@ -478,6 +478,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 </Button>
               )}
             </>
+
           ) : (
             <>
               <Button
