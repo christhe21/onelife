@@ -77,10 +77,28 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     if (!o) setTimeout(reset, 200);
   };
 
-  const next = () => setStep(STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]);
-  const back = () => setStep(STEPS[Math.max(stepIdx - 1, 0)]);
+  // Daily tasks skip the subtasks step entirely.
+  const visibleSteps = useMemo<readonly Step[]>(
+    () => (isDaily ? (STEPS.filter((s) => s !== "subtasks") as Step[]) : STEPS),
+    [isDaily],
+  );
+  const visibleIdx = visibleSteps.indexOf(step);
+  const next = () =>
+    setStep(visibleSteps[Math.min(visibleIdx + 1, visibleSteps.length - 1)]);
+  const back = () => setStep(visibleSteps[Math.max(visibleIdx - 1, 0)]);
 
-  const scheduleOk = isDaily ? !!(startDate && endDate) : !!dueDate;
+  const goalMin = selectedGoal?.startDate;
+  const goalMax = selectedGoal?.targetDate;
+  const today = todayIso();
+  const minDate = goalMin && goalMin > today ? goalMin : today;
+  const dueInRange = !dueDate || ((!goalMax || dueDate <= goalMax) && dueDate >= minDate);
+  const dailyStartInRange =
+    !startDate || ((!goalMax || startDate <= goalMax) && startDate >= minDate);
+  const dailyEndInRange =
+    !endDate || ((!goalMax || endDate <= goalMax) && endDate >= minDate);
+  const scheduleOk = isDaily
+    ? !!(startDate && endDate) && dailyStartInRange && dailyEndInRange && startDate <= endDate
+    : !!dueDate && dueInRange;
   const canNext =
     (step === "basics" && title.trim().length > 0) ||
     step === "priority" ||
@@ -88,6 +106,8 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     (step === "link" && !!goalId && (isDaily || !!subGoalId)) ||
     step === "subtasks" ||
     step === "done";
+
+
 
 
   const save = () => {
