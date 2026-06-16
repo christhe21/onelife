@@ -42,7 +42,7 @@ function addDaysIso(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title = "New subtask" }: Props) {
+export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title = "New subtask", minDate, maxDate }: Props) {
   const [form, setForm] = useState<SubtaskDraft>({
     title: "",
     description: "",
@@ -61,9 +61,13 @@ export function SubtaskFormDialog({ open, onOpenChange, initial, onSubmit, title
     }
   }, [open, initial?.title, initial?.description, initial?.priority, initial?.endDate]);
 
-  const valid = form.title.trim().length > 0 && form.endDate.length > 0;
+  const dateOutOfRange =
+    !!form.endDate &&
+    ((!!minDate && form.endDate < minDate) || (!!maxDate && form.endDate > maxDate));
+  const valid = form.title.trim().length > 0 && form.endDate.length > 0 && !dateOutOfRange;
 
   const save = () => {
+
     if (!valid) return;
     onSubmit({
       title: form.title.trim(),
