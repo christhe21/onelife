@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useAppData } from "@/lib/app-data";
+import { getMusicTracks } from "@/lib/music";
 
-// Royalty-free ambient/fantasy loop (Pixabay CDN — free for commercial use, no attribution).
-const TRACK_URL =
+// Fallback track if no custom ones exist
+const DEFAULT_TRACK_URL =
   "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1718e0a8a3.mp3?filename=relaxing-145038.mp3";
 
 /**
@@ -13,6 +14,11 @@ const TRACK_URL =
 export function FrierenAmbience() {
   const { settings } = useAppData();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const tracks = useMemo(() => getMusicTracks(), []);
+
+  const currentTrackUrl = settings.frierenMusicTrack
+    || (tracks.length > 0 ? tracks[0].url : DEFAULT_TRACK_URL);
 
   const enabled =
     settings.themeColor === "frieren" && (settings.frierenMusic ?? true);
@@ -51,13 +57,14 @@ export function FrierenAmbience() {
       el.pause();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, currentTrackUrl]);
 
   if (!enabled) return null;
   return (
     <audio
+      key={currentTrackUrl} // Force remount if track changes to ensure clean load
       ref={audioRef}
-      src={TRACK_URL}
+      src={currentTrackUrl}
       loop
       preload="auto"
       aria-hidden="true"

@@ -107,6 +107,7 @@ export interface Settings {
   frierenMusic?: boolean;
   frierenMusicVolume?: number; // 0–100
   frierenSfx?: boolean;
+  frierenMusicTrack?: string;
 }
 
 
@@ -280,6 +281,10 @@ function normalizeAppData(raw: any): AppData {
           reminderLeadMinutes:
             typeof raw.settings.reminderLeadMinutes === "number"
               ? raw.settings.reminderLeadMinutes
+              : undefined,
+          frierenMusicTrack:
+            typeof raw.settings.frierenMusicTrack === "string"
+              ? raw.settings.frierenMusicTrack
               : undefined,
         }
       : undefined;
@@ -596,6 +601,10 @@ function loadInitial(): Stored {
             frierenSfx:
               typeof parsed.settings.frierenSfx === "boolean"
                 ? parsed.settings.frierenSfx
+                : undefined,
+            frierenMusicTrack:
+              typeof parsed.settings.frierenMusicTrack === "string"
+                ? parsed.settings.frierenMusicTrack
                 : undefined,
           }
         : {};
