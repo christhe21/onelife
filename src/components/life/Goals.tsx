@@ -38,6 +38,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { progressFor, useAppData, type GoalStatus, type SkillId, type Goal } from "@/lib/app-data";
+import { useFrierenVocabulary } from "@/lib/frieren";
+
 
 const STATUS_LABEL: Record<GoalStatus, string> = {
   not_started: "Not started",
@@ -582,9 +584,11 @@ function GoalCard({ goal }: { goal: Goal }) {
 
 export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
   const { goals, skills } = useAppData();
+  const vocab = useFrierenVocabulary();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<SkillId | "all">("all");
   const filtered = filter === "all" ? goals : goals.filter((g) => g.skill === filter);
+
 
   return (
     <div className="space-y-4">

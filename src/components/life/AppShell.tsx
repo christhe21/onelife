@@ -15,8 +15,21 @@ import {
   Store,
 } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
+import { FrierenAmbience } from "@/components/life/FrierenAmbience";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useThemedIcon, type FrierenIconKey } from "@/lib/frieren-icons";
+
+const TAB_TO_ICON_KEY: Partial<Record<TabId, FrierenIconKey>> = {
+  goals: "goal",
+  tasks: "task",
+  skills: "skill",
+  today: "today",
+  calendar: "calendar",
+  settings: "settings",
+};
+
+
 
 export type TabId =
   | "dashboard"
@@ -57,7 +70,9 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <FrierenAmbience />
       <div className="flex">
+
         {/* Desktop sidebar */}
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex">
           <Brand />
@@ -91,7 +106,7 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
               </Button>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <active.icon className="h-4 w-4 text-primary" />
+                  <ThemedTabIcon id={active.id} fallback={active.icon} className="h-4 w-4 text-primary" />
                   <h1 className="font-display text-lg font-semibold tracking-tight">
                     {active.label}
                   </h1>
@@ -203,7 +218,6 @@ function NavButton({
   onClick: () => void;
   count?: number;
 }) {
-  const Icon = item.icon;
   return (
     <button
       onClick={onClick}
@@ -214,10 +228,13 @@ function NavButton({
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
-      <Icon
+      <ThemedTabIcon
+        id={item.id}
+        fallback={item.icon}
         className={cn("h-4 w-4", active ? "" : "text-muted-foreground group-hover:text-foreground")}
       />
       <span className="flex-1 text-left">{item.label}</span>
+
       {count !== undefined && count > 0 && (
         <span
           className={cn(
@@ -233,3 +250,21 @@ function NavButton({
     </button>
   );
 }
+
+function ThemedTabIcon({
+  id,
+  fallback,
+  className,
+}: {
+  id: TabId;
+  fallback: typeof Menu;
+  className?: string;
+}) {
+  const key = TAB_TO_ICON_KEY[id];
+  const Icon = useThemedIcon(fallback, key ?? "goal");
+  // If no Frieren mapping for this tab, useThemedIcon will still return fallback when not in Frieren.
+  // When in Frieren but no key, fall back to the default icon.
+  const Final = key ? Icon : fallback;
+  return <Final className={className} />;
+}
+
