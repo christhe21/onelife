@@ -4,10 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Bell, BellOff, Type } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Bell, BellOff, Type, Music, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppData, type TextScale, type ThemeMode, type ThemeColor } from "@/lib/app-data";
+import { celebrate } from "@/lib/celebrate";
 import { Palette, Moon } from "lucide-react";
+
 
 const SCALES: { id: TextScale; label: string; size: string; px: number }[] = [
   { id: "sm", label: "Compact", size: "14px", px: 14 },
