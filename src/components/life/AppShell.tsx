@@ -106,7 +106,7 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
               </Button>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <active.icon className="h-4 w-4 text-primary" />
+                  <ThemedTabIcon id={active.id} fallback={active.icon} className="h-4 w-4 text-primary" />
                   <h1 className="font-display text-lg font-semibold tracking-tight">
                     {active.label}
                   </h1>
@@ -218,7 +218,6 @@ function NavButton({
   onClick: () => void;
   count?: number;
 }) {
-  const Icon = item.icon;
   return (
     <button
       onClick={onClick}
@@ -229,10 +228,13 @@ function NavButton({
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
-      <Icon
+      <ThemedTabIcon
+        id={item.id}
+        fallback={item.icon}
         className={cn("h-4 w-4", active ? "" : "text-muted-foreground group-hover:text-foreground")}
       />
       <span className="flex-1 text-left">{item.label}</span>
+
       {count !== undefined && count > 0 && (
         <span
           className={cn(
