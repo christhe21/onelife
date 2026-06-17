@@ -10,6 +10,14 @@ import { toast } from "sonner";
 import { useAppData, type TextScale, type ThemeMode, type ThemeColor } from "@/lib/app-data";
 import { celebrate } from "@/lib/celebrate";
 import { Palette, Moon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getMusicTracks } from "@/lib/music";
 
 
 const SCALES: { id: TextScale; label: string; size: string; px: number }[] = [
@@ -82,6 +90,8 @@ export function SettingsView() {
     ],
     [],
   );
+
+  const musicTracks = useMemo(() => getMusicTracks(), []);
 
   return (
     <div className="space-y-6">
@@ -179,15 +189,44 @@ export function SettingsView() {
               starts after your first click or keypress on the page.
             </p>
 
-            <div className="flex items-center justify-between rounded-xl border p-3">
-              <div className="min-w-0">
-                <Label className="text-sm">Background music</Label>
-                <p className="text-xs text-muted-foreground">Loops quietly while you work.</p>
+            <div className="flex flex-col gap-3 rounded-xl border p-3">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0">
+                  <Label className="text-sm">Background music</Label>
+                  <p className="text-xs text-muted-foreground">Loops quietly while you work.</p>
+                </div>
+                <Switch
+                  checked={settings.frierenMusic ?? true}
+                  onCheckedChange={(v) => updateSettings({ frierenMusic: v })}
+                />
               </div>
-              <Switch
-                checked={settings.frierenMusic ?? true}
-                onCheckedChange={(v) => updateSettings({ frierenMusic: v })}
-              />
+
+              {(settings.frierenMusic ?? true) && musicTracks.length > 0 && (
+                <div className="space-y-1.5 pt-2 border-t">
+                  <Label className="text-xs text-muted-foreground">Track Selection</Label>
+                  <Select
+                    value={settings.frierenMusicTrack || musicTracks[0].url}
+                    onValueChange={(v) => updateSettings({ frierenMusicTrack: v })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a track" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {musicTracks.map((t) => (
+                        <SelectItem key={t.url} value={t.url}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {(settings.frierenMusic ?? true) && musicTracks.length === 0 && (
+                <p className="text-xs text-muted-foreground pt-2 border-t">
+                  Add MP3/WAV files to <code>public/music/</code> to select tracks.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2 rounded-xl border p-3">
