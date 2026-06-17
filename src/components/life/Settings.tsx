@@ -166,6 +166,77 @@ export function SettingsView() {
         </CardContent>
       </Card>
 
+      {settings.themeColor === "frieren" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Music className="h-4 w-4 text-primary" /> Frieren ambience
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <p className="text-sm text-muted-foreground">
+              Soft fantasy ambience and gentle chimes to mark each step of your journey. Audio
+              starts after your first click or keypress on the page.
+            </p>
+
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <div className="min-w-0">
+                <Label className="text-sm">Background music</Label>
+                <p className="text-xs text-muted-foreground">Loops quietly while you work.</p>
+              </div>
+              <Switch
+                checked={settings.frierenMusic ?? true}
+                onCheckedChange={(v) => updateSettings({ frierenMusic: v })}
+              />
+            </div>
+
+            <div className="space-y-2 rounded-xl border p-3">
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2 text-sm">
+                  <Volume2 className="h-3.5 w-3.5" /> Music volume
+                </Label>
+                <span className="text-xs text-muted-foreground">
+                  {settings.frierenMusicVolume ?? 25}%
+                </span>
+              </div>
+              <Slider
+                value={[settings.frierenMusicVolume ?? 25]}
+                min={0}
+                max={100}
+                step={5}
+                onValueChange={([v]) => updateSettings({ frierenMusicVolume: v })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <div className="min-w-0">
+                <Label className="text-sm">Completion chimes & confetti</Label>
+                <p className="text-xs text-muted-foreground">
+                  Plays when you finish a task, milestone, or quest.
+                </p>
+              </div>
+              <Switch
+                checked={settings.frierenSfx ?? true}
+                onCheckedChange={(v) => updateSettings({ frierenSfx: v })}
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => celebrate("task")}>
+                Test task chime
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => celebrate("milestone")}>
+                Test milestone
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => celebrate("goal")}>
+                Test quest finale
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
