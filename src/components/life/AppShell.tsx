@@ -18,6 +18,17 @@ import { ExportImport } from "@/components/life/ExportImport";
 import { FrierenAmbience } from "@/components/life/FrierenAmbience";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useThemedIcon, type FrierenIconKey } from "@/lib/frieren-icons";
+
+const TAB_TO_ICON_KEY: Partial<Record<TabId, FrierenIconKey>> = {
+  goals: "goal",
+  tasks: "task",
+  skills: "skill",
+  today: "today",
+  calendar: "calendar",
+  settings: "settings",
+};
+
 
 
 export type TabId =
