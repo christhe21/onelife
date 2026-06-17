@@ -1,40 +1,74 @@
-## Plan
+## 1. Fix Goals crash
 
-### 1. Milestone dates can't exceed goal target date
+**File:** `src/components/life/Goals.tsx`
 
-**Files:** `src/components/life/NewGoalWizard.tsx`, `src/components/life/Goals.tsx`, `src/lib/app-data.tsx`
+`vocab.skills`, `vocab.goal`, `vocab.isFrieren`, `vocab.goals` are referenced at lines 599/620/626/628 but `vocab` is never defined → `ReferenceError` whenever those code paths render (skill filter dropdown / "New goal" button / empty state). In Frieren mode the empty-state branch is hit more often, which is why the user notices it there.
 
-- In `NewGoalWizard` milestones step: set `max={targetDate}` and `min={today}` on each milestone date input; on blur, clamp to `targetDate` if exceeded. Disable "Save milestones / Next" if any milestone date is empty or `> targetDate`. Show inline error: "Must be on or before goal target date".
-- In `Goals.tsx` `GoalCard` add-milestone inputs (and the inline sub-goal date input): apply same `max={goal.targetDate}`, `min={goal.startDate}` and block submit when out of range.
-- In `app-data.tsx` `addSubGoal` / `updateSubGoal`: clamp `targetDate` so it is never `> goal.targetDate` and never `< goal.startDate` as a safety net.
+- Import `useFrierenVocabulary` from `@/lib/frieren` and call `const vocab = useFrierenVocabulary();` inside the component that owns those JSX nodes (the goals list view component near line ~590).
+- Quick audit of other Frieren consumers (`Tasks.tsx`, `Today.tsx`, `EmptyStateHero.tsx`) to confirm `vocab` is defined wherever it's used.
 
-### 2. Reorder task creation: goal/milestone BEFORE due date
+## 2. Background music when Frieren theme is active
 
-**Files:** `src/components/life/NewTaskWizard.tsx`, `src/components/life/SubtaskFormDialog.tsx`, `src/components/life/Tasks.tsx`
+**Files:** new `src/components/life/FrierenAmbience.tsx`, `src/components/life/AppShell.tsx`, `src/lib/app-data.tsx` (settings), `src/components/life/Settings.tsx`
 
-- Change `NewTaskWizard` `STEPS` order from `[basics, priority, schedule, link, subtasks, done]` to **`[basics, priority, link, schedule, subtasks, done]`**.
-- On the schedule step, once a goal (and milestone, when not daily) is selected, constrain the due date / start / end inputs:
-  - `min` = today, `max` = selected goal's `targetDate` (and `min` not earlier than the goal's `startDate` for daily start; `endDate` capped at goal target).
-  - If the user-chosen date falls outside the goal range, show inline error and disable Next.
-  - When entering the schedule step, default `dueDate` to `min(today+1, goal.targetDate)` and `endDate` to `min(today+30, goal.targetDate)` so defaults are always valid.
-- `SubtaskFormDialog`: accept new optional props `minDate` / `maxDate` for the deadline input. Wire `Tasks.tsx`'s `SubtasksPanel` to pass the parent task's goal range (resolved via `task.subGoalId` → goal, or `task.goalId`) so subtask deadlines also can't exceed the goal. Block save when out of range.
-- In the wizard's subtasks step, pass the currently selected `goalId`'s `targetDate` as `maxDate` to `SubtaskFormDialog`.
+- Use a royalty-free fantasy/ambient track from a CC0 source (e.g. Pixabay / Free Music Archive). I'll embed a single short loop URL (Pixabay music CDN, ~1–2 MB, license: free for use). If the URL ever 404s, the player just stays silent.
+- New `FrierenAmbience` component, mounted once in `AppShell`:
+  - Renders an `<audio loop>` referencing the track URL.
+  - Only mounts when `settings.themeColor === "frieren"` AND `settings.frierenMusic !== false`.
+  - Autoplay is gated on first user gesture (browsers block silent autoplay): attach a one-shot `pointerdown`/`keydown` listener that calls `.play()`, then removes itself.
+  - Volume defaults to `0.25`; respects a mute toggle from settings.
+- Extend `Settings`: add a "Frieren ambience" card (only visible when theme is Frieren) with:
+  - Toggle: Play background music (`frierenMusic`).
+  - Slider: Volume (`frierenMusicVolume`, 0–100, default 25).
+  - Toggle: Sound effects (`frierenSfx`, default on).
+- Persist `frierenMusic`, `frierenMusicVolume`, `frierenSfx` in the existing settings store (`app-data.tsx`).
 
-### 3. Daily tasks cannot have subtasks
+## 3. SFX + confetti on completion (Frieren only)
 
-**Files:** `src/components/life/NewTaskWizard.tsx`, `src/components/life/Tasks.tsx`
+**Files:** new `src/lib/celebrate.ts`, edits in `src/components/life/Tasks.tsx`, `src/components/life/Goals.tsx`, plus the milestone-toggle path in `Goals.tsx`.
 
-- In `NewTaskWizard`: when `isDaily === true`, skip the `subtasks` step entirely (jump from `link` straight to the create action). Clear `subs` whenever `isDaily` is toggled on. Adjust the progress dots and the "Create task" button placement so it appears on the `link` step when daily.
-- In `Tasks.tsx` `SubtasksPanel` / `TaskRow`: hide the "Add subtask" button when `task.recurrence === "daily"`. If a daily task somehow has subtasks (legacy), still render them read-only but disable add.
-- In `EditTaskDialog` (if it exposes a recurrence toggle): same rule — hide subtask UI for daily.
+- Add `canvas-confetti` (~3 KB) via `bun add canvas-confetti @types/canvas-confetti`.
+- `celebrate.ts` exports `celebrate(kind: "task" | "milestone" | "goal")`:
+  - No-op unless `settings.themeColor === "frieren"` and `settings.frierenSfx !== false` (read from a small subscribe-to-localStorage helper to avoid having to wire React context everywhere; the store is already in localStorage).
+  - Confetti scaling:
+    - task → ~40 particles, 1 burst.
+    - milestone → ~80 particles, 2 bursts.
+    - goal → 150+ particles, 3 staggered bursts from both sides (classic Frieren-gold palette `#caa766`, `#f1eee4`, `#4da8a3`).
+  - Plays an `<Audio>` chime from a royalty-free CDN URL per kind (`task.mp3`, `milestone.mp3`, `goal.mp3`). Cached in a module-level `Map<string, HTMLAudioElement>`; new instance is `.cloneNode()`'d per fire so overlapping plays work. Volume `0.4`.
+- Call sites:
+  - `Tasks.tsx`: when a task or subtask transitions from incomplete → complete, call `celebrate("task")`. Only on the off→on edge.
+  - `Goals.tsx`: when a milestone is marked complete, `celebrate("milestone")`; when a whole goal is marked complete (or its progress hits 100%), `celebrate("goal")`.
 
-### Out of scope
+## 4. Frieren-themed icon swap
 
-- No data migration for existing milestones already past target date.
-- No changes to calendar rendering or recurrence projection.
+**File:** new `src/lib/frieren-icons.tsx`, edits in `AppShell.tsx` (nav icons) and section headers in `Goals.tsx`, `Tasks.tsx`, `Skills.tsx`, `Today.tsx`, `Dashboard.tsx`.
 
-### Technical notes
+- Curated lucide swap (frieren-on → right column):
 
-- Date comparisons use string `YYYY-MM-DD` (lexicographic compare is correct for ISO dates).
-- Clamping helper: `const clampDate = (d, min, max) => d < min ? min : d > max ? max : d;` — colocate in `src/lib/utils.ts`.
-- The wizard's `canNext` for the new `schedule` step also requires the chosen date(s) to be within the selected goal's range.
+  ```text
+  Goals (Target)        → Sparkles
+  Tasks (CheckSquare)   → ScrollText
+  Milestones (Flag)     → MapPin
+  Skills (Brain)        → BookOpen
+  Streak (Flame)        → Footprints
+  Today (Sun)           → Moon
+  Calendar (Calendar)   → CalendarHeart
+  Settings (Settings)   → Wand2
+  Completed (CheckCircle)→ Star
+  ```
+
+- Implementation: `frieren-icons.tsx` exports `useThemedIcon(defaultIcon: LucideIcon, key: string): LucideIcon`. It reads `settings.themeColor` from `useAppData` and returns the Frieren-mapped icon when active, else the default.
+  - Each consumer changes `<Target className="…" />` to `const GoalIcon = useThemedIcon(Target, "goal"); <GoalIcon className="…" />`.
+- Keep all existing icon classes/sizes intact — only the glyph swaps.
+
+## Out of scope
+
+- Generating bespoke SVG art for icons (deferred; lucide swap only).
+- Persisting/synchronizing music playback across route changes (single mount in AppShell is enough).
+- New theme variants beyond Frieren.
+
+## Technical notes
+
+- Music + SFX URLs are external CDN links. We won't bundle audio files. If a URL fails to load, the player logs once and stays silent — no UI error toast (background ambience should never be intrusive).
+- Confetti uses `requestAnimationFrame`; safe during SSR because the helper bails when `typeof window === "undefined"`.
+- The SSR hydration warning currently in the logs is unrelated (it's about a stray `<section>` from an earlier render) and is not introduced or fixed by this plan.
