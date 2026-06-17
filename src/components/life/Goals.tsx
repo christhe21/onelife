@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { progressFor, useAppData, type GoalStatus, type SkillId, type Goal } from "@/lib/app-data";
 import { useFrierenVocabulary } from "@/lib/frieren";
-import { celebrate } from "@/lib/celebrate";
+
 
 const STATUS_LABEL: Record<GoalStatus, string> = {
   not_started: "Not started",
