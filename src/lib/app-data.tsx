@@ -845,11 +845,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           const subGoals = g.subGoals.map((s) => (s.id === subId ? { ...s, done: !s.done } : s));
           const wasCompleting = subGoals.find((s) => s.id === subId)?.done;
           cascade = !!wasCompleting;
+          if (wasCompleting) celebrate("milestone");
           const status: GoalStatus =
             g.status === "not_started" && wasCompleting ? "in_progress" : g.status;
           return { ...g, subGoals, status };
         }),
       );
+
       // Cascade-close: when a milestone closes, mark every open task (and its subtasks)
       // linked to that milestone as done.
       if (cascade) {
@@ -912,11 +914,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             goalDelta = nowDone ? delta : -delta;
             goalIdForDelta = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId))?.id;
           }
+          if (nowDone) celebrate("task");
           // Cascade-close subtasks when task is being completed
           const subtasks = nowDone ? t.subtasks.map((s) => ({ ...s, done: true })) : t.subtasks;
           return { ...t, done: nowDone, spentHours: nextSpent, subtasks };
         }),
       );
+
       promoteGoal(promoted);
       if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
@@ -998,8 +1002,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               )?.id;
               nextTaskSpent = Math.max(0, nextTaskSpent + signed);
             }
+            if (nowDone) celebrate("task");
             return { ...s, done: nowDone, spentHours: nextSpent };
           });
+
 
           let nextTaskDone = t.done;
           const allSubsDone = subtasks.length > 0 && subtasks.every((s) => s.done);
