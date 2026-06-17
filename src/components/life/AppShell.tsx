@@ -250,3 +250,21 @@ function NavButton({
     </button>
   );
 }
+
+function ThemedTabIcon({
+  id,
+  fallback,
+  className,
+}: {
+  id: TabId;
+  fallback: typeof Menu;
+  className?: string;
+}) {
+  const key = TAB_TO_ICON_KEY[id];
+  const Icon = useThemedIcon(fallback, key ?? "goal");
+  // If no Frieren mapping for this tab, useThemedIcon will still return fallback when not in Frieren.
+  // When in Frieren but no key, fall back to the default icon.
+  const Final = key ? Icon : fallback;
+  return <Final className={className} />;
+}
+
