@@ -102,7 +102,11 @@ export interface Settings {
   themeColor?: ThemeColor;
   notificationsEnabled?: boolean;
   reminderLeadMinutes?: number;
+  frierenMusic?: boolean;
+  frierenMusicVolume?: number; // 0–100
+  frierenSfx?: boolean;
 }
+
 
 export interface AppData {
   goals: Goal[];
