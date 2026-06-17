@@ -582,6 +582,7 @@ function GoalCard({ goal }: { goal: Goal }) {
 
 export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
   const { goals, skills } = useAppData();
+  const vocab = useFrierenVocabulary();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<SkillId | "all">("all");
   const filtered = filter === "all" ? goals : goals.filter((g) => g.skill === filter);
