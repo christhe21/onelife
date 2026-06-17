@@ -16,7 +16,6 @@ const SCALES: { id: TextScale; label: string; size: string; px: number }[] = [
   { id: "xl", label: "Large", size: "20px", px: 20 },
 ];
 
-
 const THEME_MODES: { id: ThemeMode; label: string }[] = [
   { id: "light", label: "Light" },
   { id: "dark", label: "Dark" },
@@ -32,7 +31,12 @@ const THEME_COLORS: { id: ThemeColor; label: string; primary: string; secondary:
 ];
 
 const SPECIAL_THEMES: { id: ThemeColor; label: string; primary: string; secondary: string }[] = [
-  { id: "frieren", label: "Frieren (Beyond Journey's End)", primary: "bg-[#f1eee4]", secondary: "bg-[#4da8a3]" },
+  {
+    id: "frieren",
+    label: "Frieren (Beyond Journey's End)",
+    primary: "bg-[#f1eee4]",
+    secondary: "bg-[#4da8a3]",
+  },
 ];
 
 export function SettingsView() {
@@ -123,7 +127,9 @@ export function SettingsView() {
                     <div className={`h-full w-1/2 ${c.primary}`} />
                     <div className={`h-full w-1/2 ${c.secondary}`} />
                   </div>
-                  <span className="text-xs font-medium leading-tight text-foreground">{c.label}</span>
+                  <span className="text-xs font-medium leading-tight text-foreground">
+                    {c.label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -147,7 +153,9 @@ export function SettingsView() {
                     <div className={`h-full w-1/2 ${c.primary}`} />
                     <div className={`h-full w-1/2 ${c.secondary}`} />
                   </div>
-                  <span className="text-xs font-medium leading-tight text-foreground">{c.label}</span>
+                  <span className="text-xs font-medium leading-tight text-foreground">
+                    {c.label}
+                  </span>
                 </button>
               ))}
             </div>

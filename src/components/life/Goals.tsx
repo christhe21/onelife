@@ -537,7 +537,6 @@ function GoalCard({ goal }: { goal: Goal }) {
                   Date must be between {goal.startDate} and {goal.targetDate}.
                 </p>
               )}
-
             </div>
             <div>
               <Label className="text-xs">Quick-add task linked to this goal</Label>
@@ -597,7 +596,7 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All skills</SelectItem>
+              <SelectItem value="all">All {vocab.skills.toLowerCase()}</SelectItem>
               {skills.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   {s.label}
@@ -618,13 +617,15 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
             <Store className="h-4 w-4 mr-2" />
             Marketplace
           </Button>
-          <NewGoalButton label="New goal" />
+          <NewGoalButton label={`New ${vocab.goal.toLowerCase()}`} />
         </div>
       </div>
       {filtered.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            No goals yet. Create your first one.
+            {vocab.isFrieren
+              ? `Even the longest journey begins with a single step northward.`
+              : `No ${vocab.goals.toLowerCase()} yet. Create your first one.`}
           </CardContent>
         </Card>
       ) : (

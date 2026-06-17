@@ -12,4 +12,3 @@ export function clampDate(d: string, min?: string, max?: string): string {
   if (max && d > max) return max;
   return d;
 }
-

@@ -134,7 +134,6 @@ export function AddToScheduleDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, preselect?.taskId, preselect?.subId]);
 
-
   const submit = () => {
     if (!selected) return;
     const startIso = hmToTodayISO(from, defaultDate);
@@ -264,7 +263,6 @@ export function AddToScheduleDialog({
               )}
             </div>
           )}
-
 
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <label className="min-w-0 space-y-1">

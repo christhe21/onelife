@@ -17,7 +17,6 @@ import { useAppData, type Task } from "@/lib/app-data";
 import { cn } from "@/lib/utils";
 import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
 
-
 const STEPS = ["basics", "priority", "link", "schedule", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
 
@@ -83,8 +82,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     [isDaily],
   );
   const visibleIdx = visibleSteps.indexOf(step);
-  const next = () =>
-    setStep(visibleSteps[Math.min(visibleIdx + 1, visibleSteps.length - 1)]);
+  const next = () => setStep(visibleSteps[Math.min(visibleIdx + 1, visibleSteps.length - 1)]);
   const back = () => setStep(visibleSteps[Math.max(visibleIdx - 1, 0)]);
 
   const goalMin = selectedGoal?.startDate;
@@ -94,8 +92,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const dueInRange = !dueDate || ((!goalMax || dueDate <= goalMax) && dueDate >= minDate);
   const dailyStartInRange =
     !startDate || ((!goalMax || startDate <= goalMax) && startDate >= minDate);
-  const dailyEndInRange =
-    !endDate || ((!goalMax || endDate <= goalMax) && endDate >= minDate);
+  const dailyEndInRange = !endDate || ((!goalMax || endDate <= goalMax) && endDate >= minDate);
   const scheduleOk = isDaily
     ? !!(startDate && endDate) && dailyStartInRange && dailyEndInRange && startDate <= endDate
     : !!dueDate && dueInRange;
@@ -138,7 +135,6 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, goalId, isDaily]);
 
-
   const save = () => {
     addTask({
       title: title.trim(),
@@ -160,7 +156,6 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
           priority: s.priority,
           description: s.description,
         })),
-
     });
     setStep("done");
   };
@@ -238,9 +233,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                     onClick={() => setPriority(p)}
                     className={cn(
                       "rounded-xl border p-4 text-left transition",
-                      priority === p
-                        ? "border-primary bg-primary/5"
-                        : "hover:border-primary/40",
+                      priority === p ? "border-primary bg-primary/5" : "hover:border-primary/40",
                     )}
                   >
                     <div className="text-sm font-semibold capitalize">{p}</div>
@@ -318,7 +311,9 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                       />
                     </div>
                   </div>
-                  {(!dailyStartInRange || !dailyEndInRange || (startDate && endDate && startDate > endDate)) && (
+                  {(!dailyStartInRange ||
+                    !dailyEndInRange ||
+                    (startDate && endDate && startDate > endDate)) && (
                     <p className="text-[11px] text-destructive">
                       Dates must be between {minDate} and {goalMax}, and end ≥ start.
                     </p>
@@ -327,8 +322,6 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
               )}
             </div>
           )}
-
-
 
           {step === "link" && (
             <div className="space-y-4">
@@ -464,17 +457,12 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 maxDate={goalMax}
                 onSubmit={(d) => {
                   setSubs((cur) =>
-                    editIdx === null
-                      ? [...cur, d]
-                      : cur.map((x, j) => (j === editIdx ? d : x)),
+                    editIdx === null ? [...cur, d] : cur.map((x, j) => (j === editIdx ? d : x)),
                   );
                 }}
               />
-
             </div>
           )}
-
-
 
           {step === "done" && (
             <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
@@ -490,12 +478,7 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
         <div className="flex items-center justify-between gap-2 border-t bg-muted/30 px-5 py-3">
           {step !== "done" ? (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={back}
-                disabled={visibleIdx === 0}
-              >
+              <Button variant="ghost" size="sm" onClick={back} disabled={visibleIdx === 0}>
                 <ArrowLeft className="mr-1 h-3.5 w-3.5" /> Back
               </Button>
               {step === "subtasks" || (isDaily && step === "schedule") ? (
@@ -508,7 +491,6 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 </Button>
               )}
             </>
-
           ) : (
             <>
               <Button

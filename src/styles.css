@@ -305,7 +305,6 @@
   --sidebar-ring: oklch(0.85 0 0);
 }
 
-
 .dark {
   --background: oklch(0.22 0.015 130);
   --foreground: oklch(0.95 0.012 90);
@@ -404,4 +403,122 @@
   --sidebar: oklch(0.25 0.015 90);
   --sidebar-primary: oklch(0.7 0.08 180);
   --sidebar-ring: oklch(0.7 0.08 180);
+}
+
+/* Frieren UI Additions */
+:root[data-theme="frieren"] body {
+  background-image:
+    radial-gradient(circle at 10% 20%, oklch(0.95 0.03 140 / 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, oklch(0.95 0.03 280 / 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, oklch(0.97 0.04 80 / 0.3) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+:root[data-theme="frieren"].dark body {
+  background-image:
+    radial-gradient(circle at 10% 20%, oklch(0.3 0.03 140 / 0.2) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, oklch(0.3 0.03 280 / 0.2) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, oklch(0.25 0.04 80 / 0.15) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
+:root[data-theme="frieren"] .card {
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.05),
+    0 2px 4px -2px rgb(0 0 0 / 0.05),
+    inset 0 0 0 1px oklch(0.9 0.02 80 / 0.5);
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+:root[data-theme="frieren"].dark .card {
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.2),
+    0 2px 4px -2px rgb(0 0 0 / 0.2),
+    inset 0 0 0 1px oklch(0.3 0.02 80 / 0.5);
+}
+
+:root[data-theme="frieren"] hr,
+:root[data-theme="frieren"] .border-b,
+:root[data-theme="frieren"] .border-t,
+:root[data-theme="frieren"] .border-l,
+:root[data-theme="frieren"] .border-r,
+:root[data-theme="frieren"] .border {
+  border-color: oklch(0.85 0.02 80 / 0.6);
+}
+
+:root[data-theme="frieren"].dark hr,
+:root[data-theme="frieren"].dark .border-b,
+:root[data-theme="frieren"].dark .border-t,
+:root[data-theme="frieren"].dark .border-l,
+:root[data-theme="frieren"].dark .border-r,
+:root[data-theme="frieren"].dark .border {
+  border-color: oklch(0.35 0.02 80 / 0.6);
+}
+
+/* Magic Particles Animation */
+@keyframes floatUp {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+    transform: translateY(80vh) translateX(10px) scale(1);
+  }
+  90% {
+    opacity: 0.8;
+    transform: translateY(20vh) translateX(-10px) scale(1);
+  }
+  100% {
+    transform: translateY(-10vh) translateX(0) scale(0);
+    opacity: 0;
+  }
+}
+
+:root[data-theme="frieren"] body::before,
+:root[data-theme="frieren"] body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+}
+
+:root[data-theme="frieren"] body::before {
+  background-image:
+    radial-gradient(circle, oklch(0.8 0.1 180 / 0.6) 1px, transparent 2px),
+    radial-gradient(circle, oklch(0.85 0.1 80 / 0.6) 1px, transparent 2px);
+  background-size:
+    150px 150px,
+    200px 200px;
+  background-position:
+    0 0,
+    50px 50px;
+  animation: floatUp 30s linear infinite;
+  opacity: 0.3;
+}
+
+:root[data-theme="frieren"] body::after {
+  background-image:
+    radial-gradient(circle, oklch(0.8 0.1 180 / 0.4) 2px, transparent 3px),
+    radial-gradient(circle, oklch(0.85 0.1 80 / 0.4) 2px, transparent 3px);
+  background-size:
+    300px 300px,
+    250px 250px;
+  background-position:
+    100px 100px,
+    20px 80px;
+  animation: floatUp 45s linear infinite;
+  opacity: 0.2;
+}
+
+:root[data-theme="frieren"].dark body::before {
+  opacity: 0.15;
+}
+
+:root[data-theme="frieren"].dark body::after {
+  opacity: 0.1;
 }

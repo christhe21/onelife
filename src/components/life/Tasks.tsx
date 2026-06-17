@@ -14,6 +14,7 @@ import {
 import { NewTaskWizard } from "./NewTaskWizard";
 import { SubtaskFormDialog } from "./SubtaskFormDialog";
 import { AddToScheduleDialog } from "./AddToScheduleDialog";
+import { useFrierenVocabulary } from "@/lib/frieren";
 import type { Recurrence } from "@/lib/app-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -291,9 +292,6 @@ function SubtasksPanel({ task }: { task: Task }) {
   );
 }
 
-
-
-
 function AddTaskBar() {
   const { addTask, goals } = useAppData();
   const firstMilestone = goals.flatMap((g) => g.subGoals)[0]?.id;
@@ -388,7 +386,6 @@ function TaskRow({ task }: { task: Task }) {
   const [schedOpen, setSchedOpen] = useState(false);
   const canSchedule = task.subtasks.length === 0;
 
-
   const today = new Date().toISOString().slice(0, 10);
   const overdue = !task.done && task.dueDate && task.dueDate < today;
   const goal =
@@ -470,7 +467,6 @@ function TaskRow({ task }: { task: Task }) {
             </PopoverTrigger>
             <PopoverContent align="end" className="w-44 p-1">
               <EditTaskDialog task={task}>
-
                 <button className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted">
                   <Pencil className="h-3.5 w-3.5" /> Edit
                 </button>
@@ -503,9 +499,9 @@ function TaskRow({ task }: { task: Task }) {
   );
 }
 
-
 export function Tasks() {
   const { tasks, goals } = useAppData();
+  const vocab = useFrierenVocabulary();
   const [wizardOpen, setWizardOpen] = useState(false);
 
   const sorted = [...tasks].sort((a, b) => {
@@ -525,7 +521,8 @@ export function Tasks() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">
-          20-min focus blocks. Sub-tasks with h/wk auto-schedule until end date.
+          20-min focus blocks. Sub-{vocab.tasks.toLowerCase()} with h/wk auto-schedule until end
+          date.
         </p>
         <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={exportSchedule}>
           <Download className="mr-1 h-3.5 w-3.5" />
@@ -534,14 +531,16 @@ export function Tasks() {
       </div>
 
       <Button className="w-full" onClick={() => setWizardOpen(true)}>
-        <Plus className="mr-1 h-4 w-4" /> Create task
+        <Plus className="mr-1 h-4 w-4" /> Create {vocab.task.toLowerCase()}
       </Button>
       <NewTaskWizard open={wizardOpen} onOpenChange={setWizardOpen} />
 
       {sorted.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            No tasks yet.
+            {vocab.isFrieren
+              ? "The road was interrupted. It matters only that you return to it."
+              : `No ${vocab.tasks.toLowerCase()} yet.`}
           </CardContent>
         </Card>
       ) : (
@@ -554,4 +553,3 @@ export function Tasks() {
     </div>
   );
 }
-

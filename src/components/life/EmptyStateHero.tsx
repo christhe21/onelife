@@ -5,9 +5,11 @@ import { useAppData, DEMO_DATA } from "@/lib/app-data";
 import { NewGoalButton } from "@/components/life/NewGoalButton";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useFrierenVocabulary } from "@/lib/frieren";
 
 export function EmptyStateHero() {
   const { replaceAll, importJSON, settings } = useAppData();
+  const vocab = useFrierenVocabulary();
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const onImport = async (f: File | null) => {
@@ -48,8 +50,9 @@ export function EmptyStateHero() {
           A calm place for the life you <span className="italic text-primary">want to build</span>
         </h1>
         <p className="mx-auto mt-3 max-w-md text-base text-muted-foreground">
-          Set meaningful goals, focus on today, and watch them grow on your mind map. Begin in any
-          way that feels right.
+          {vocab.isFrieren
+            ? `Even the longest journey begins with a single step northward.`
+            : `Set meaningful ${vocab.goals.toLowerCase()}, focus on today, and watch them grow on your mind map. Begin in any way that feels right.`}
         </p>
 
         <div className="mx-auto mt-7 grid max-w-2xl gap-3 sm:grid-cols-3">
@@ -67,7 +70,7 @@ export function EmptyStateHero() {
               <IntentCard
                 primary
                 icon={<Plus className="h-5 w-5" />}
-                title="Add your first goal"
+                title={`Add your first ${vocab.goal.toLowerCase()}`}
                 sub="Guided in a few steps"
               />
             }
@@ -94,7 +97,7 @@ export function EmptyStateHero() {
           <Reason
             icon={<Compass className="h-4 w-4" />}
             title="Long-term clarity"
-            body="One place for the goals that matter most."
+            body={`One place for the ${vocab.goals.toLowerCase()} that matter most.`}
           />
           <Reason
             icon={<Sun className="h-4 w-4" />}

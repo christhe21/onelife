@@ -1,6 +1,7 @@
 import { MarketplaceGoalTemplate } from "./marketplace";
 import { toast } from "sonner";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { getFrierenVocabulary } from "./frieren";
 
 export interface Skill {
   id: string;
@@ -745,7 +746,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     setGoals((prev) => [...prev, newGoal]);
     setTasks((prev) => [...prev, ...newTasks]);
-    toast.success("Goal imported successfully!");
+    const vocab = getFrierenVocabulary(settings.themeColor === "frieren");
+    toast.success(
+      vocab.isFrieren ? `A new quest inscribed in the grimoire.` : "Goal imported successfully!",
+    );
   };
 
   const value: Ctx = {
@@ -787,10 +791,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (goalToDelete) {
         const subGoalIds = new Set(goalToDelete.subGoals.map((sg) => sg.id));
         setTasks((cur) =>
-          cur.filter(
-            (t) =>
-              t.goalId !== id && (!t.subGoalId || !subGoalIds.has(t.subGoalId)),
-          ),
+          cur.filter((t) => t.goalId !== id && (!t.subGoalId || !subGoalIds.has(t.subGoalId))),
         );
       }
       setGoals((cur) => cur.filter((g) => g.id !== id));
@@ -805,7 +806,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             if (g.targetDate && clamped > g.targetDate) clamped = g.targetDate;
             if (g.startDate && clamped < g.startDate) clamped = g.startDate;
           }
-          return { ...g, subGoals: [...g.subGoals, { id, title, targetDate: clamped, done: false }] };
+          return {
+            ...g,
+            subGoals: [...g.subGoals, { id, title, targetDate: clamped, done: false }],
+          };
         }),
       );
       return id;
@@ -876,7 +880,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             const bumpedDueDate = bumpDateString(t.dueDate, t.recurrence);
             const bumpedStartDate = bumpDateString(t.startDate, t.recurrence);
             const bumpedEndDate = bumpDateString(t.endDate, t.recurrence);
-            toast.success(`Recurring task bumped to next occurrence`);
+            const vocab = getFrierenVocabulary(settings.themeColor === "frieren");
+            toast.success(
+              vocab.isFrieren
+                ? `Another preparation complete. The cycle continues.`
+                : `Recurring task bumped to next occurrence`,
+            );
             return {
               ...t,
               dueDate: bumpedDueDate,
@@ -953,7 +962,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             if (!s.done && isRecurring) {
               const bumpedStartDate = bumpDateString(s.startDate, s.recurrence);
               const bumpedEndDate = bumpDateString(s.endDate, s.recurrence);
-              toast.success(`Recurring subtask bumped to next occurrence`);
+              const vocab = getFrierenVocabulary(settings.themeColor === "frieren");
+              toast.success(
+                vocab.isFrieren
+                  ? `Another preparation complete. The cycle continues.`
+                  : `Recurring subtask bumped to next occurrence`,
+              );
               return {
                 ...s,
                 startDate: bumpedStartDate,

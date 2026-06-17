@@ -29,10 +29,12 @@
 - In `EditTaskDialog` (if it exposes a recurrence toggle): same rule — hide subtask UI for daily.
 
 ### Out of scope
+
 - No data migration for existing milestones already past target date.
 - No changes to calendar rendering or recurrence projection.
 
 ### Technical notes
+
 - Date comparisons use string `YYYY-MM-DD` (lexicographic compare is correct for ISO dates).
 - Clamping helper: `const clampDate = (d, min, max) => d < min ? min : d > max ? max : d;` — colocate in `src/lib/utils.ts`.
 - The wizard's `canNext` for the new `schedule` step also requires the chosen date(s) to be within the selected goal's range.
