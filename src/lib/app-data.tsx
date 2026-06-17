@@ -2,6 +2,8 @@ import { MarketplaceGoalTemplate } from "./marketplace";
 import { toast } from "sonner";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { getFrierenVocabulary } from "./frieren";
+import { celebrate } from "./celebrate";
+
 
 export interface Skill {
   id: string;
@@ -634,11 +636,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           if (allSubGoalsDone && g.status !== "completed") {
             newStatus = "completed";
             goalChanged = true;
+            celebrate("goal");
           } else if (!allSubGoalsDone && g.status === "completed") {
             newStatus = "in_progress";
             goalChanged = true;
           }
         }
+
 
         if (goalChanged) {
           changed = true;
