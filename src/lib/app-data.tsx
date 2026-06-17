@@ -564,6 +564,19 @@ function loadInitial(): Stored {
             textScale: ["sm", "base", "lg", "xl"].includes(parsed.settings.textScale)
               ? parsed.settings.textScale
               : undefined,
+            themeMode: ["light", "dark", "system"].includes(parsed.settings.themeMode)
+              ? parsed.settings.themeMode
+              : undefined,
+            themeColor: [
+              "sage",
+              "ocean",
+              "sunset",
+              "lavender",
+              "monochrome",
+              "frieren",
+            ].includes(parsed.settings.themeColor)
+              ? parsed.settings.themeColor
+              : undefined,
             notificationsEnabled:
               typeof parsed.settings.notificationsEnabled === "boolean"
                 ? parsed.settings.notificationsEnabled
@@ -572,9 +585,22 @@ function loadInitial(): Stored {
               typeof parsed.settings.reminderLeadMinutes === "number"
                 ? parsed.settings.reminderLeadMinutes
                 : undefined,
+            frierenMusic:
+              typeof parsed.settings.frierenMusic === "boolean"
+                ? parsed.settings.frierenMusic
+                : undefined,
+            frierenMusicVolume:
+              typeof parsed.settings.frierenMusicVolume === "number"
+                ? parsed.settings.frierenMusicVolume
+                : undefined,
+            frierenSfx:
+              typeof parsed.settings.frierenSfx === "boolean"
+                ? parsed.settings.frierenSfx
+                : undefined,
           }
         : {};
     return { ...data, skills, settings };
+
   } catch {
     return empty;
   }
