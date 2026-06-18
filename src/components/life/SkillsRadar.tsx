@@ -47,26 +47,36 @@ export function SkillsRadar() {
         </p>
       </CardHeader>
       <CardContent>
-        <div className="relative h-72 w-full">
+        <div className="relative h-80 w-full sm:h-96">
           <ClientOnly fallback={<div className="h-full" />}>
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={data} outerRadius="78%">
+              <RadarChart
+                data={data}
+                outerRadius="70%"
+                cx="50%"
+                cy="50%"
+                margin={{ top: 24, right: 48, bottom: 24, left: 48 }}
+              >
                 <defs>
-                  <radialGradient id="radarFill" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                    <stop offset="50%" stopColor="#a855f7" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="#ec4899" stopOpacity={0.4} />
-                  </radialGradient>
+                  <linearGradient id="radarFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.75} />
+                    <stop offset="25%" stopColor="#8b5cf6" stopOpacity={0.75} />
+                    <stop offset="50%" stopColor="#ec4899" stopOpacity={0.75} />
+                    <stop offset="75%" stopColor="#f59e0b" stopOpacity={0.75} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.75} />
+                  </linearGradient>
                 </defs>
                 <PolarGrid stroke="hsl(var(--border))" />
                 <PolarAngleAxis
                   dataKey="skill"
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  tickFormatter={(v: string) => v.replace(/\s*Skills?$/i, "")}
                 />
                 <PolarRadiusAxis
                   angle={90}
                   domain={[0, 100]}
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                  tick={false}
+                  axisLine={false}
                   stroke="hsl(var(--border))"
                 />
                 <Tooltip
@@ -78,10 +88,19 @@ export function SkillsRadar() {
                   }}
                   formatter={(v: number) => [`${v}%`, "Progress"]}
                 />
-                <Radar name="Progress" dataKey="value" stroke="none" fill="url(#radarFill)" />
+                <Radar
+                  name="Progress"
+                  dataKey="value"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  fill="url(#radarFill)"
+                  fillOpacity={0.75}
+                  dot={{ r: 3, fill: "hsl(var(--primary))", stroke: "hsl(var(--background))", strokeWidth: 1 }}
+                />
               </RadarChart>
             </ResponsiveContainer>
           </ClientOnly>
+
           {!hasData && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-sm text-muted-foreground">
               <span className="rounded bg-background/80 px-2 py-1 backdrop-blur-sm">
