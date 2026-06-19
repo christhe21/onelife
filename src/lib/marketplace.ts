@@ -1,13 +1,18 @@
 import { Recurrence, SkillId } from "./app-data";
 
+export type Difficulty = "beginner" | "intermediate" | "advanced";
+
 export interface MarketplaceSubGoal {
   title: string;
   dayOffset: number;
+  description?: string;
 }
 
 export interface MarketplaceSubTask {
   title: string;
   recurrence?: Recurrence;
+  plannedHours?: number;
+  priority?: "low" | "medium" | "high";
 }
 
 export interface MarketplaceTask {
@@ -18,6 +23,8 @@ export interface MarketplaceTask {
   endDayOffset?: number;
   recurrence?: Recurrence;
   plannedHours?: number;
+  description?: string;
+  notes?: string;
   subtasks: MarketplaceSubTask[];
 }
 
@@ -31,6 +38,9 @@ export interface MarketplaceGoalTemplate {
   resources: string[];
   advice: string;
   durationDays: number;
+  tags?: string[];
+  coverEmoji?: string;
+  difficulty?: Difficulty;
   subGoals: MarketplaceSubGoal[];
   tasks: MarketplaceTask[];
 }

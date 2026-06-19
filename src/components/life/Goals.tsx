@@ -332,14 +332,12 @@ function GoalCard({ goal }: { goal: Goal }) {
     addSubGoal,
     toggleSubGoal,
     deleteSubGoal,
-    addTask,
     skills,
     tasks,
   } = useAppData();
   const [expanded, setExpanded] = useState(false);
   const [subTitle, setSubTitle] = useState("");
   const [subDate, setSubDate] = useState("");
-  const [quickTask, setQuickTask] = useState("");
   const meta = skills.find((s) => s.id === goal.skill) ??
     skills[0] ?? { label: goal.skill, color: "#10b981" };
   const pct = progressFor(goal, tasks);
@@ -539,41 +537,6 @@ function GoalCard({ goal }: { goal: Goal }) {
                   Date must be between {goal.startDate} and {goal.targetDate}.
                 </p>
               )}
-            </div>
-            <div>
-              <Label className="text-xs">Quick-add task linked to this goal</Label>
-              <div className="mt-2 flex gap-2">
-                <Input
-                  placeholder="Task title"
-                  value={quickTask}
-                  onChange={(e) => setQuickTask(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && quickTask.trim()) {
-                      addTask({
-                        title: quickTask,
-                        priority: "medium",
-                        subGoalId: goal.subGoals[0]?.id,
-                      });
-                      setQuickTask("");
-                    }
-                  }}
-                />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    if (!quickTask.trim()) return;
-                    addTask({
-                      title: quickTask,
-                      priority: "medium",
-                      subGoalId: goal.subGoals[0]?.id,
-                    });
-                    setQuickTask("");
-                  }}
-                >
-                  Add task
-                </Button>
-              </div>
             </div>
           </div>
         )}

@@ -5,21 +5,27 @@
   "skillName": "Piano",
   "creatorName": "MelodyMaker",
   "verified": true,
+  "coverEmoji": "🎹",
+  "difficulty": "beginner",
+  "tags": ["music", "piano", "beginner", "hobby", "creativity"],
   "resources": ["https://www.musictheory.net/", "https://www.youtube.com/user/pianoteofficial"],
   "advice": "Practice 15-20 minutes every single day rather than 2 hours once a week. Muscle memory builds through consistent daily repetition.",
   "durationDays": 30,
   "subGoals": [
     {
       "title": "Learn the Notes & Basic Posture",
-      "dayOffset": 7
+      "dayOffset": 7,
+      "description": "Identify all 88 keys, sit correctly, and shape relaxed hands."
     },
     {
       "title": "Master Major Scales (C, G, D)",
-      "dayOffset": 14
+      "dayOffset": 14,
+      "description": "Play three major scales hands-separate at 60 BPM."
     },
     {
       "title": "Play First Simple Song Hands Together",
-      "dayOffset": 30
+      "dayOffset": 30,
+      "description": "Perform a beginner piece (e.g. Ode to Joy) hands together."
     }
   ],
   "tasks": [
@@ -31,15 +37,10 @@
       "endDayOffset": 30,
       "recurrence": "weekly",
       "plannedHours": 0.25,
+      "description": "Short Hanon-style warmups to build evenness and independence.",
       "subtasks": [
-        {
-          "title": "Warm up right hand",
-          "recurrence": "weekly"
-        },
-        {
-          "title": "Warm up left hand",
-          "recurrence": "weekly"
-        }
+        { "title": "Warm up right hand", "recurrence": "weekly", "plannedHours": 0.1 },
+        { "title": "Warm up left hand", "recurrence": "weekly", "plannedHours": 0.1 }
       ]
     },
     {
@@ -50,11 +51,9 @@
       "endDayOffset": 14,
       "recurrence": "weekly",
       "plannedHours": 0.5,
+      "description": "Cycle through C, G, and D major scales with a metronome.",
       "subtasks": [
-        {
-          "title": "C Major Scale (Both Hands)",
-          "recurrence": "weekly"
-        }
+        { "title": "C Major Scale (Both Hands)", "recurrence": "weekly", "plannedHours": 0.25, "priority": "high" }
       ]
     },
     {
@@ -65,19 +64,12 @@
       "endDayOffset": 30,
       "recurrence": "weekly",
       "plannedHours": 0.5,
+      "description": "Layer hands separately then together, slowly.",
+      "notes": "Record yourself once a week to track progress.",
       "subtasks": [
-        {
-          "title": "Right hand only",
-          "recurrence": "weekly"
-        },
-        {
-          "title": "Left hand only",
-          "recurrence": "weekly"
-        },
-        {
-          "title": "Both hands together slowly",
-          "recurrence": "weekly"
-        }
+        { "title": "Right hand only", "recurrence": "weekly", "plannedHours": 0.15 },
+        { "title": "Left hand only", "recurrence": "weekly", "plannedHours": 0.15 },
+        { "title": "Both hands together slowly", "recurrence": "weekly", "plannedHours": 0.2, "priority": "high" }
       ]
     }
   ]

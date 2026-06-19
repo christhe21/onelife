@@ -5,29 +5,37 @@
   "skillName": "DSA",
   "creatorName": "AlgoExpert",
   "verified": true,
+  "coverEmoji": "🧮",
+  "difficulty": "advanced",
+  "tags": ["interview", "algorithms", "coding", "leetcode", "career"],
   "resources": ["https://leetcode.com/", "https://neetcode.io/roadmap"],
   "advice": "Consistency is key. Don't just read solutions; try to solve them for at least 30 minutes before looking at hints. Understand the time and space complexity of every approach.",
   "durationDays": 90,
   "subGoals": [
     {
       "title": "Master Arrays, Strings, & Hashing",
-      "dayOffset": 14
+      "dayOffset": 14,
+      "description": "Build a rock-solid foundation in linear data structures and hash-based lookups."
     },
     {
       "title": "Master Pointers, Sliding Window, & Stacks",
-      "dayOffset": 28
+      "dayOffset": 28,
+      "description": "Two-pointer, sliding window, and monotonic stack patterns."
     },
     {
       "title": "Master Trees, Tries, & Heaps",
-      "dayOffset": 45
+      "dayOffset": 45,
+      "description": "Hierarchical structures, priority queues, and prefix trees."
     },
     {
       "title": "Master Graphs & Dynamic Programming",
-      "dayOffset": 75
+      "dayOffset": 75,
+      "description": "BFS/DFS, shortest paths, and 1D/2D DP."
     },
     {
       "title": "Mock Interviews & Advanced Topics",
-      "dayOffset": 90
+      "dayOffset": 90,
+      "description": "Timed mocks, system-design-lite, and recap of weak areas."
     }
   ],
   "tasks": [
@@ -39,19 +47,12 @@
       "endDayOffset": 14,
       "recurrence": "weekly",
       "plannedHours": 1,
+      "description": "Warm up daily with two easy problems to build pattern recognition.",
+      "notes": "Track time taken per problem to spot weak topics.",
       "subtasks": [
-        {
-          "title": "Review theory on Arrays/HashMaps",
-          "recurrence": "none"
-        },
-        {
-          "title": "Solve problem 1 without help",
-          "recurrence": "weekly"
-        },
-        {
-          "title": "Solve problem 2 without help",
-          "recurrence": "weekly"
-        }
+        { "title": "Review theory on Arrays/HashMaps", "recurrence": "none", "plannedHours": 0.25, "priority": "medium" },
+        { "title": "Solve problem 1 without help", "recurrence": "weekly", "plannedHours": 0.5, "priority": "high" },
+        { "title": "Solve problem 2 without help", "recurrence": "weekly", "plannedHours": 0.5, "priority": "high" }
       ]
     },
     {
@@ -62,11 +63,9 @@
       "endDayOffset": 28,
       "recurrence": "weekly",
       "plannedHours": 1.5,
+      "description": "Focused medium-difficulty drills on the two flagship patterns.",
       "subtasks": [
-        {
-          "title": "Solve 1 Medium Sliding Window problem",
-          "recurrence": "weekly"
-        }
+        { "title": "Solve 1 Medium Sliding Window problem", "recurrence": "weekly", "plannedHours": 0.75, "priority": "high" }
       ]
     },
     {
@@ -76,6 +75,8 @@
       "endDayOffset": 90,
       "recurrence": "weekly",
       "plannedHours": 2,
+      "description": "Re-attempt every problem you failed during the week.",
+      "notes": "Keep a spaced-repetition log so missed problems resurface in 7 / 21 / 60 days.",
       "subtasks": [],
       "subGoalIndex": 3
     }
