@@ -82,7 +82,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit task</DialogTitle>
         </DialogHeader>
