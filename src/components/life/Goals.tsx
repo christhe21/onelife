@@ -538,41 +538,6 @@ function GoalCard({ goal }: { goal: Goal }) {
                 </p>
               )}
             </div>
-            <div>
-              <Label className="text-xs">Quick-add task linked to this goal</Label>
-              <div className="mt-2 flex gap-2">
-                <Input
-                  placeholder="Task title"
-                  value={quickTask}
-                  onChange={(e) => setQuickTask(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && quickTask.trim()) {
-                      addTask({
-                        title: quickTask,
-                        priority: "medium",
-                        subGoalId: goal.subGoals[0]?.id,
-                      });
-                      setQuickTask("");
-                    }
-                  }}
-                />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    if (!quickTask.trim()) return;
-                    addTask({
-                      title: quickTask,
-                      priority: "medium",
-                      subGoalId: goal.subGoals[0]?.id,
-                    });
-                    setQuickTask("");
-                  }}
-                >
-                  Add task
-                </Button>
-              </div>
-            </div>
           </div>
         )}
       </CardContent>
