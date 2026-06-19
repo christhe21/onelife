@@ -610,7 +610,7 @@ export function MindMapCanvas() {
         onPointerLeave={onCanvasUp}
         onWheel={onWheel}
         style={{
-          background: `${PAPER} radial-gradient(circle at 20% 30%, rgba(0,0,0,0.025) 0 1px, transparent 1px) 0 0/18px 18px`,
+          background: `hsl(var(--card)) radial-gradient(circle at 20% 30%, hsl(var(--foreground) / 0.05) 0 1px, transparent 1px) 0 0/18px 18px`,
         }}
       >
         <svg
