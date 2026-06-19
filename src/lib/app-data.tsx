@@ -778,11 +778,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         endDate: taskEndDate,
         recurrence: t.recurrence,
         plannedHours: t.plannedHours,
+        evidence: [t.description, t.notes].filter(Boolean).join("\n\n") || undefined,
         subtasks: t.subtasks.map((st) => ({
           id: uid(),
           title: st.title,
           done: false,
           recurrence: st.recurrence,
+          plannedHours: st.plannedHours,
+          priority: st.priority,
         })),
       };
     });
