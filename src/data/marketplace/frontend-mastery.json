@@ -5,25 +5,32 @@
   "skillName": "Frontend",
   "creatorName": "WebDevExpert",
   "verified": true,
+  "coverEmoji": "💻",
+  "difficulty": "intermediate",
+  "tags": ["web", "react", "javascript", "css", "career", "coding"],
   "resources": ["https://developer.mozilla.org/", "https://react.dev/learn"],
   "advice": "Build projects. Don't just watch tutorials. The best way to learn frontend development is by actively coding and solving problems you encounter.",
   "durationDays": 120,
   "subGoals": [
     {
       "title": "Master HTML, CSS, & Responsive Design",
-      "dayOffset": 21
+      "dayOffset": 21,
+      "description": "Semantic markup, Flexbox, Grid, and mobile-first responsive design."
     },
     {
       "title": "Master JavaScript Fundamentals & DOM Manipulation",
-      "dayOffset": 50
+      "dayOffset": 50,
+      "description": "ES6+, async/await, fetch, and direct DOM APIs."
     },
     {
       "title": "Master React & State Management",
-      "dayOffset": 90
+      "dayOffset": 90,
+      "description": "Components, hooks, routing, and a state library of your choice."
     },
     {
       "title": "Performance Optimization & Advanced Concepts",
-      "dayOffset": 120
+      "dayOffset": 120,
+      "description": "Bundle analysis, Core Web Vitals, accessibility, testing."
     }
   ],
   "tasks": [
@@ -35,10 +42,11 @@
       "endDayOffset": 21,
       "recurrence": "weekly",
       "plannedHours": 4,
+      "description": "Ship a real, deployed landing page that looks great on mobile.",
       "subtasks": [
-        { "title": "Create semantic HTML structure", "recurrence": "none" },
-        { "title": "Style with CSS Flexbox/Grid", "recurrence": "none" },
-        { "title": "Make it responsive with media queries", "recurrence": "none" }
+        { "title": "Create semantic HTML structure", "recurrence": "none", "plannedHours": 1 },
+        { "title": "Style with CSS Flexbox/Grid", "recurrence": "none", "plannedHours": 1.5 },
+        { "title": "Make it responsive with media queries", "recurrence": "none", "plannedHours": 1.5 }
       ]
     },
     {
@@ -49,9 +57,10 @@
       "endDayOffset": 50,
       "recurrence": "weekly",
       "plannedHours": 5,
+      "description": "Vanilla JS only — no frameworks. Persist to localStorage.",
       "subtasks": [
-        { "title": "Implement core logic (add/remove)", "recurrence": "none" },
-        { "title": "Add local storage persistence", "recurrence": "none" }
+        { "title": "Implement core logic (add/remove)", "recurrence": "none", "plannedHours": 2 },
+        { "title": "Add local storage persistence", "recurrence": "none", "plannedHours": 1 }
       ]
     },
     {
@@ -62,9 +71,11 @@
       "endDayOffset": 90,
       "recurrence": "weekly",
       "plannedHours": 6,
+      "description": "A multi-route app with global state, forms, and an API.",
+      "notes": "Pick a project you'd actually use — motivation matters.",
       "subtasks": [
-        { "title": "Set up components and routing", "recurrence": "none" },
-        { "title": "Implement global state management", "recurrence": "none" }
+        { "title": "Set up components and routing", "recurrence": "none", "plannedHours": 2 },
+        { "title": "Implement global state management", "recurrence": "none", "plannedHours": 3 }
       ]
     },
     {
@@ -75,6 +86,7 @@
       "endDayOffset": 120,
       "recurrence": "weekly",
       "plannedHours": 2,
+      "description": "Re-read code from 7 days ago and improve naming, structure, tests.",
       "subtasks": []
     }
   ]
