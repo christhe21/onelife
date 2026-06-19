@@ -38,7 +38,7 @@ const PALETTE = [
   "#F0ABFC",
 ];
 const ROOT_FILL = "#FCD34D";
-const PAPER = "#fafbff";
+
 const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
 // Layout constants for the radial non-overlap formula
