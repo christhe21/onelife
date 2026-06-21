@@ -1,48 +1,53 @@
-# Plan
+# Desktop UX, Goal Modals & Science-Backed Marketplace Goals
 
-## 1. Mindmap respects dark theme
-`src/components/life/MindMapCanvas.tsx` currently hardcodes `const PAPER = "#fafbff"` and uses `rgba(0,0,0,0.025)` dot grid, so the canvas stays light in dark mode.
+## 1. Desktop view — bigger, fits the screen
 
-- Replace the inline `background` style with theme tokens: use `hsl(var(--card))` (or `--background`) as the base color and `hsl(var(--foreground) / 0.04)` for the dot grid.
-- Remove the `PAPER` constant (or keep it only as a light-mode fallback inside a `useTheme`-aware value). Simpler path: build the gradient string from CSS variables so it auto-switches.
-- Audit node/edge stroke colors in the same file for any hardcoded `#xxx` values that disappear on dark; swap to `hsl(var(--border))` / `hsl(var(--foreground))` as needed.
+`src/components/life/AppShell.tsx`
+- Widen the main content container so large screens actually use the space.
+  - Change `<main>` from `max-w-6xl` to a fluid cap: `max-w-[1600px] xl:px-12 2xl:px-16`.
+  - Bump main padding: `lg:px-8 lg:py-8` → `lg:px-10 lg:py-10 xl:py-12`.
+- Sidebar: keep `w-64` at `lg`, expand to `xl:w-72` for breathing room.
+- Header row: increase title size on desktop (`lg:text-xl xl:text-2xl`).
 
-## 2. Goal Marketplace: search, tags, list view
-File: `src/components/life/GoalMarketplace.tsx` (+ `src/lib/marketplace.ts`, JSON files).
+`src/components/life/Goals.tsx`
+- Goal grid currently `md:grid-cols-2 xl:grid-cols-3`. Add `2xl:grid-cols-3` cap and raise gap to `gap-4 lg:gap-5`. Cards already expand inline; we'll fix the expansion problem in section 2 by moving the body into a modal so the grid never reflows.
 
-- Add optional `tags: string[]` to `MarketplaceGoalTemplate` and populate each JSON file (`dsa-mastery`, `piano-basics`, `frontend-mastery`) with 3–6 relevant tags (e.g. `["interview","algorithms","coding"]`).
-- Toolbar above the grid:
-  - Search `Input` with icon — filters by title, description, creator, skillName, tags (case-insensitive).
-  - Horizontally-scrolling tag chips built from the union of all template tags; clicking toggles a multi-select filter.
-  - Grid/List `ToggleGroup` (icons: `LayoutGrid`, `List`).
-- List view: a vertical stack of compact rows (badge + title + tags + creator + duration on one line, "View" / "Use" buttons on the right). Reuses the existing `TemplateDialog`.
-- Render tag badges inside each card and inside the dialog header.
-- Empty state when filters return nothing.
+`src/components/life/GoalMarketplace.tsx`
+- Grid view: keep `sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4`.
+- List view rows: use full width, no `max-w` clamp.
 
-## 3a. Edit-task modal overflow on mobile
-File: `src/components/life/Tasks.tsx`, `DialogContent className="max-w-md"`.
+## 2. Replace dropdowns / inline expansion with clickable modals (Goals page)
 
-- Change to `className="max-w-md w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto"` so it shrinks below 28rem viewports and scrolls internally.
-- Audit the form body for any fixed-width children (e.g. `w-80`, long input rows in a non-wrapping flex) and switch to `w-full` / `flex-wrap` so nothing forces horizontal overflow.
+Problem: clicking a goal card expands it inline, pushing the grid around and breaking desktop layout. Status uses a `Select` dropdown; milestone dots use hover `Popover`.
 
-## 3b. Remove auto-milestone quick-add in Goals
-File: `src/components/life/Goals.tsx`, lines ~543–577.
+`src/components/life/Goals.tsx`
+- **Remove inline expand**: delete `expanded` state, `ChevronUp/Down` toggle button, and the `{expanded && (...)}` body block (lines ~338, 372-383, 439-541).
+- **New "Goal details" Dialog**: clicking the card title/body opens `<GoalDetailsDialog goal={goal} />` containing everything currently in the expanded section:
+  - Description, Current activity (editable textarea), Sub-goals list with add/remove/toggle, Manual progress slider.
+  - Width `max-w-2xl`, `max-h-[85vh] overflow-y-auto`, responsive `w-[calc(100vw-2rem)]`.
+- **Replace status `Select` with a clickable status modal**: small badge-style trigger button → `Dialog` with 3 large buttons (Not started / In progress / Completed), each with a short description. Closes on pick.
+- **Replace milestone-dot `Popover` with a click-to-open `Dialog`**: tapping a dot opens a modal showing milestone title, target date, done state, with Toggle done + Delete actions. Remove `openSubId`/`Popover` machinery.
+- Edit (pencil) and Delete (trash) buttons remain in the card header; they already use `Dialog`/`AlertDialog`.
 
-- Delete the entire "Quick-add task linked to this goal" block (Label, Input, Add button, and the related `quickTask` state + setter at the top of the component).
-- No replacement — task creation continues through `NewTaskWizard`, which lets the user pick the milestone explicitly.
+Filter `Select` at the top of the Goals page stays as-is (it's a simple filter, not a per-item action).
 
-## 4. Marketplace JSON: fully represent all template data
-`MarketplaceGoalTemplate` and the three JSON files currently omit fields the live `Goal` model supports. Make the JSON the single source of truth so imports don't silently drop information.
+## 3. New scientifically-grounded marketplace goals
 
-- Extend `src/lib/marketplace.ts`:
-  - `MarketplaceGoalTemplate`: add `tags?: string[]`, `coverEmoji?: string`, `difficulty?: "beginner"|"intermediate"|"advanced"`.
-  - `MarketplaceSubGoal`: add optional `description?: string`.
-  - `MarketplaceTask`: add optional `description?: string`, `notes?: string`.
-  - `MarketplaceSubTask`: add optional `plannedHours?: number`, `priority?: "low"|"medium"|"high"`.
-- Update the importer (wherever `onImport` consumes the template in `Goals.tsx`/`NewGoalWizard.tsx`) to pass these new fields through to `addGoal`/`addTask`/`addSubGoal`.
-- Backfill the three existing JSON files (`dsa-mastery.json`, `piano-basics.json`, `frontend-mastery.json`) with `tags`, `difficulty`, `coverEmoji`, and add `description`/`plannedHours` where it makes sense so the on-screen cards/dialog look complete.
+Add 4 new JSON templates to `src/data/marketplace/` and register them in `src/data/marketplace/index.ts`. Each template cites the principle in its `description` / `advice` fields and uses milestones aligned to evidence-based intervals.
+
+| File | Goal | Scientific basis |
+|---|---|---|
+| `deep-work-90.json` | "90-Day Deep Work Habit" | Cal Newport's deep-work blocks, ultradian 90-min cycles, implementation intentions (Gollwitzer). 4 milestones at days 7/30/60/90. |
+| `couch-to-5k.json` | "Couch to 5K (Evidence-Based)" | NHS Couch-to-5K progressive overload, HRV-guided rest, 3 sessions/week. 9-week ramp. |
+| `language-fluency-b1.json` | "Reach B1 in a New Language (180 days)" | Spaced repetition (Ebbinghaus/SuperMemo), comprehensible input (Krashen i+1), 15-min daily Anki + 30-min input. CEFR milestones A1→A2→B1. |
+| `meditation-mindfulness-8w.json` | "8-Week Mindfulness (MBSR-style)" | Kabat-Zinn MBSR curriculum, body scan → breath → open monitoring. Weekly milestones, 20 min/day. |
+
+Each template includes:
+- 3-5 `subGoals` with `dayOffset` and short `description` (the scientific rationale for that phase).
+- 8-15 `tasks` with `recurrence` (daily/weekly), `plannedHours`, `priority`, `subGoalIndex`, and a `description` quoting the principle.
+- `tags` (e.g. `["focus","habits","productivity"]`), `coverEmoji`, `difficulty`.
+- `resources` pointing to primary sources (Newport, NHS, Krashen, Kabat-Zinn).
+- `verified: true`, `creatorName: "Lovable Science"`.
 
 ## Out of scope
-- No changes to skills, dashboard, radar, Frieren ambience, or analytics.
-- No new marketplace templates; just enrich existing ones.
-- No backend changes — everything stays in local app data.
+Skills, Tasks, Dashboard, Calendar, Mindmap, Radar chart, Frieren theme, backend/persistence changes, importer logic (existing importer already handles the new fields added in the previous turn).
