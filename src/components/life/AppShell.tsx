@@ -15,7 +15,6 @@ import {
   Store,
 } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
-import { FrierenAmbience } from "@/components/life/FrierenAmbience";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useThemedIcon, type FrierenIconKey } from "@/lib/frieren-icons";
@@ -70,7 +69,6 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <FrierenAmbience />
       <div className="flex">
 
         {/* Desktop sidebar */}

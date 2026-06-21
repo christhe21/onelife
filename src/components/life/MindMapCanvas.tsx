@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
+import { useTheme } from "@/hooks/use-theme";
 
 type Kind = "root" | "skill" | "goal" | "milestone" | "task" | "subtask";
 
@@ -39,7 +40,6 @@ const PALETTE = [
 ];
 const ROOT_FILL = "#FCD34D";
 
-const INK = "#1f2937";
 const STORAGE_KEY = "mindmap-positions-v1";
 // Layout constants for the radial non-overlap formula
 const BASE_R = [0, 260, 460, 660, 860];
@@ -77,6 +77,9 @@ function ensureFonts() {
 
 export function MindMapCanvas() {
   const { skills, goals, tasks, settings } = useAppData();
+  const { isDark } = useTheme();
+  const ink = isDark ? "#e5e7eb" : "#1f2937"; // text-gray-200 : text-gray-800
+
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
   const [scale, setScale] = useState(0.85);
@@ -635,7 +638,7 @@ export function MindMapCanvas() {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M0,0 L10,5 L0,10 z" fill={INK} />
+              <path d="M0,0 L10,5 L0,10 z" fill={ink} />
             </marker>
           </defs>
 
@@ -661,7 +664,7 @@ export function MindMapCanvas() {
                 key={i}
                 d={`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`}
                 fill="none"
-                stroke={INK}
+                stroke={ink}
                 strokeOpacity={0.75}
                 strokeWidth={w}
                 strokeLinecap="round"
@@ -704,8 +707,8 @@ export function MindMapCanvas() {
                   <g transform={`translate(${badgeX},${badgeY})`} style={{ pointerEvents: "none" }}>
                     <circle
                       r={10}
-                      fill="#ffffff"
-                      stroke={INK}
+                      fill={isDark ? "#1f2937" : "#ffffff"}
+                      stroke={ink}
                       strokeOpacity={0.5}
                       strokeWidth={1}
                       vectorEffect="non-scaling-stroke"
@@ -714,7 +717,7 @@ export function MindMapCanvas() {
                       textAnchor="middle"
                       dy="3.5"
                       style={{ fontFamily: font.family, fontSize: 10, fontWeight: 700 }}
-                      fill={INK}
+                      fill={ink}
                     >
                       +{n.childCount}
                     </text>
@@ -722,7 +725,7 @@ export function MindMapCanvas() {
                 )}
                 <text
                   textAnchor="middle"
-                  fill={INK}
+                  fill={ink}
                   style={{
                     fontFamily: font.family,
                     fontSize: font.size,

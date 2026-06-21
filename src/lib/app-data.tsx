@@ -104,10 +104,7 @@ export interface Settings {
   themeColor?: ThemeColor;
   notificationsEnabled?: boolean;
   reminderLeadMinutes?: number;
-  frierenMusic?: boolean;
-  frierenMusicVolume?: number; // 0–100
   frierenSfx?: boolean;
-  frierenMusicTrack?: string;
 }
 
 
@@ -281,10 +278,6 @@ function normalizeAppData(raw: any): AppData {
           reminderLeadMinutes:
             typeof raw.settings.reminderLeadMinutes === "number"
               ? raw.settings.reminderLeadMinutes
-              : undefined,
-          frierenMusicTrack:
-            typeof raw.settings.frierenMusicTrack === "string"
-              ? raw.settings.frierenMusicTrack
               : undefined,
         }
       : undefined;
@@ -590,21 +583,9 @@ function loadInitial(): Stored {
               typeof parsed.settings.reminderLeadMinutes === "number"
                 ? parsed.settings.reminderLeadMinutes
                 : undefined,
-            frierenMusic:
-              typeof parsed.settings.frierenMusic === "boolean"
-                ? parsed.settings.frierenMusic
-                : undefined,
-            frierenMusicVolume:
-              typeof parsed.settings.frierenMusicVolume === "number"
-                ? parsed.settings.frierenMusicVolume
-                : undefined,
             frierenSfx:
               typeof parsed.settings.frierenSfx === "boolean"
                 ? parsed.settings.frierenSfx
-                : undefined,
-            frierenMusicTrack:
-              typeof parsed.settings.frierenMusicTrack === "string"
-                ? parsed.settings.frierenMusicTrack
                 : undefined,
           }
         : {};
