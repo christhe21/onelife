@@ -1,7 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Plus, Trash2, ChevronDown, ChevronUp, Pencil, Store } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useState } from "react";
+import { Plus, Trash2, Pencil, Store, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -196,24 +195,6 @@ function Timeline({ goal }: { goal: Goal }) {
         : "linear-gradient(90deg, oklch(0.7 0.18 150), oklch(0.82 0.16 150))";
   const showGlow = goal.status !== "not_started";
 
-  const [openSubId, setOpenSubId] = useState<string | null>(null);
-  // auto-dismiss after 3.5s
-  useEffect(() => {
-    if (!openSubId) return;
-    const id = setTimeout(() => setOpenSubId(null), 3500);
-    return () => clearTimeout(id);
-  }, [openSubId]);
-  // outside click dismiss
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!openSubId) return;
-    const onDown = (e: MouseEvent) => {
-      if (trackRef.current && !trackRef.current.contains(e.target as Node)) setOpenSubId(null);
-    };
-    window.addEventListener("mousedown", onDown);
-    return () => window.removeEventListener("mousedown", onDown);
-  }, [openSubId]);
-
   const fillPct = goal.status === "completed" ? 100 : nowPct;
 
   return (
@@ -239,10 +220,7 @@ function Timeline({ goal }: { goal: Goal }) {
         </span>
       </div>
 
-      <div
-        ref={trackRef}
-        className="relative h-4 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50"
-      >
+      <div className="relative h-4 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50">
         <div
           className="h-full rounded-full transition-[width] duration-700 ease-out"
           style={{
@@ -252,55 +230,18 @@ function Timeline({ goal }: { goal: Goal }) {
           }}
         />
 
-        {/* milestone dots */}
+        {/* milestone dots — click opens dialog */}
         {(goal.subGoals ?? []).map((s) => {
           if (!s.targetDate) return null;
           const t = new Date(s.targetDate).getTime();
           const pct = Math.min(100, Math.max(0, ((t - start) / span) * 100));
-          const isOpen = openSubId === s.id;
           return (
             <div
               key={s.id}
               className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${pct}%` }}
             >
-              <Popover
-                open={isOpen}
-                onOpenChange={(open) => {
-                  if (open) {
-                    setOpenSubId(s.id);
-                  } else {
-                    if (openSubId === s.id) setOpenSubId(null);
-                  }
-                }}
-              >
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenSubId((cur) => (cur === s.id ? null : s.id));
-                    }}
-                    className="block h-3.5 w-3.5 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
-                    style={{
-                      backgroundColor: s.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
-                    }}
-                    aria-label={`${s.title} – ${s.targetDate}`}
-                  />
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="center"
-                  sideOffset={4}
-                  className="w-44 px-2.5 py-1.5 text-[11px] shadow-md pointer-events-none"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-                >
-                  <div className="font-medium leading-tight">{s.title}</div>
-                  <div className="mt-0.5 text-[10px] text-muted-foreground">
-                    {s.targetDate} · {s.done ? "Done" : "Open"}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <MilestoneDot goalId={goal.id} sub={s} />
             </div>
           );
         })}
@@ -325,223 +266,355 @@ function Timeline({ goal }: { goal: Goal }) {
   );
 }
 
-function GoalCard({ goal }: { goal: Goal }) {
-  const {
-    updateGoal,
-    deleteGoal,
-    addSubGoal,
-    toggleSubGoal,
-    deleteSubGoal,
-    skills,
-    tasks,
-  } = useAppData();
-  const [expanded, setExpanded] = useState(false);
+function MilestoneDot({
+  goalId,
+  sub,
+}: {
+  goalId: string;
+  sub: NonNullable<Goal["subGoals"]>[number];
+}) {
+  const { toggleSubGoal, deleteSubGoal } = useAppData();
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="block h-3.5 w-3.5 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
+          style={{
+            backgroundColor: sub.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
+          }}
+          aria-label={`${sub.title} – ${sub.targetDate}`}
+        />
+      </DialogTrigger>
+      <DialogContent className="max-w-sm w-[calc(100vw-2rem)]">
+        <DialogHeader>
+          <DialogTitle className="text-base">{sub.title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center justify-between rounded-md border p-2">
+            <span className="text-muted-foreground">Target date</span>
+            <span className="tabular-nums">{sub.targetDate ?? "—"}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-2">
+            <span className="text-muted-foreground">Status</span>
+            <Badge variant={sub.done ? "default" : "secondary"}>
+              {sub.done ? "Done" : "Open"}
+            </Badge>
+          </div>
+        </div>
+        <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              deleteSubGoal(goalId, sub.id);
+              setOpen(false);
+            }}
+          >
+            <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              toggleSubGoal(goalId, sub.id);
+              setOpen(false);
+            }}
+          >
+            Mark {sub.done ? "open" : "done"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const STATUS_BLURB: Record<GoalStatus, string> = {
+  not_started: "Haven't begun yet — sitting on the backlog.",
+  in_progress: "Actively working on it right now.",
+  completed: "Done and dusted.",
+};
+
+function StatusModal({ goal }: { goal: Goal }) {
+  const { updateGoal } = useAppData();
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex h-6 items-center rounded-md border border-border bg-background px-2 text-[11px] font-medium hover:bg-muted"
+        >
+          {STATUS_LABEL[goal.status]}
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm w-[calc(100vw-2rem)]">
+        <DialogHeader>
+          <DialogTitle>Change status</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2">
+          {(Object.keys(STATUS_LABEL) as GoalStatus[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => {
+                updateGoal(goal.id, { status: s });
+                setOpen(false);
+              }}
+              className={`flex w-full flex-col items-start gap-0.5 rounded-md border p-3 text-left transition ${
+                goal.status === s ? "border-primary bg-primary/5" : "hover:bg-muted"
+              }`}
+            >
+              <span className="text-sm font-semibold">{STATUS_LABEL[s]}</span>
+              <span className="text-xs text-muted-foreground">{STATUS_BLURB[s]}</span>
+            </button>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function GoalDetailsDialog({
+  goal,
+  open,
+  onOpenChange,
+}: {
+  goal: Goal;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
+  const { updateGoal, addSubGoal, toggleSubGoal, deleteSubGoal, skills } = useAppData();
+  const meta = skills.find((s) => s.id === goal.skill) ??
+    skills[0] ?? { label: goal.skill, color: "#10b981" };
+  const subGoals = goal.subGoals ?? [];
   const [subTitle, setSubTitle] = useState("");
   const [subDate, setSubDate] = useState("");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <span
+              className="inline-block h-2.5 w-2.5 rounded-full"
+              style={{ backgroundColor: meta.color }}
+            />
+            {goal.title}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">{meta.label}</Badge>
+            <StatusModal goal={goal} />
+            <span className="text-xs text-muted-foreground">
+              {goal.startDate} → {goal.targetDate}
+            </span>
+          </div>
+
+          {goal.description && (
+            <div>
+              <Label className="text-xs">Description</Label>
+              <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>
+            </div>
+          )}
+
+          <div>
+            <Label className="text-xs">Current activity</Label>
+            <Textarea
+              value={goal.currentActivity ?? ""}
+              onChange={(e) => updateGoal(goal.id, { currentActivity: e.target.value })}
+              placeholder="What are you doing right now?"
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs">Sub-goals / milestones</Label>
+            <div className="mt-2 space-y-1">
+              {subGoals.map((s) => (
+                <div key={s.id} className="flex items-center gap-2 rounded-md border p-2">
+                  <Checkbox
+                    checked={s.done}
+                    onCheckedChange={() => toggleSubGoal(goal.id, s.id)}
+                  />
+                  <span
+                    className={`flex-1 text-sm ${s.done ? "line-through text-muted-foreground" : ""}`}
+                  >
+                    {s.title}
+                  </span>
+                  {s.targetDate && (
+                    <span className="text-xs text-muted-foreground">{s.targetDate}</span>
+                  )}
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button size="icon" variant="ghost" title="Delete milestone">
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this milestone?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          &quot;{s.title}&quot; will be removed from this goal. This can&apos;t be
+                          undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => deleteSubGoal(goal.id, s.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete milestone
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              ))}
+              {subGoals.length === 0 && (
+                <p className="text-xs text-muted-foreground">No milestones yet.</p>
+              )}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Input
+                placeholder="Milestone title"
+                className="min-w-0 flex-1"
+                value={subTitle}
+                onChange={(e) => setSubTitle(e.target.value)}
+              />
+              <Input
+                type="date"
+                className="w-40"
+                min={goal.startDate}
+                max={goal.targetDate}
+                value={subDate}
+                onChange={(e) => setSubDate(e.target.value)}
+              />
+              <Button
+                size="sm"
+                disabled={
+                  !subTitle.trim() ||
+                  (!!subDate && (subDate > goal.targetDate || subDate < goal.startDate))
+                }
+                onClick={() => {
+                  if (!subTitle.trim()) return;
+                  if (subDate && (subDate > goal.targetDate || subDate < goal.startDate)) return;
+                  addSubGoal(goal.id, subTitle, subDate || undefined);
+                  setSubTitle("");
+                  setSubDate("");
+                }}
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" /> Add
+              </Button>
+            </div>
+            {subDate && (subDate > goal.targetDate || subDate < goal.startDate) && (
+              <p className="mt-1 text-[11px] text-destructive">
+                Date must be between {goal.startDate} and {goal.targetDate}.
+              </p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function GoalCard({ goal }: { goal: Goal }) {
+  const { deleteGoal, skills, tasks } = useAppData();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const meta = skills.find((s) => s.id === goal.skill) ??
     skills[0] ?? { label: goal.skill, color: "#10b981" };
   const pct = progressFor(goal, tasks);
   const subGoals = goal.subGoals ?? [];
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="p-3 pb-2 sm:p-4 sm:pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => setExpanded((e) => !e)}
-            className="flex min-w-0 flex-1 items-center gap-2 text-left"
-          >
-            <span
-              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: meta.color }}
-            />
-            <CardTitle className="min-w-0 truncate text-sm font-semibold sm:text-base">
-              {goal.title}
-            </CardTitle>
-          </button>
-          <div className="flex shrink-0 items-center gap-0.5">
-            <GoalDialog
-              goal={goal}
-              trigger={
-                <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit goal">
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-              }
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7"
-              onClick={() => setExpanded((e) => !e)}
+    <>
+      <Card className="overflow-hidden transition-shadow hover:shadow-md">
+        <CardHeader className="p-3 pb-2 sm:p-4 sm:pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setDetailsOpen(true)}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left"
             >
-              {expanded ? (
-                <ChevronUp className="h-3.5 w-3.5" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5" />
-              )}
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-7 w-7" title="Delete goal">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently remove &quot;{goal.title}&quot; along with its milestones,
-                    tasks and scheduled blocks. This can&apos;t be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => deleteGoal(goal.id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Delete goal
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          <Badge variant="secondary" className="text-[10px]">
-            {meta.label}
-          </Badge>
-          <Select
-            value={goal.status}
-            onValueChange={(v) => updateGoal(goal.id, { status: v as GoalStatus })}
-          >
-            <SelectTrigger className="h-6 w-auto min-w-0 px-2 text-[11px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(STATUS_LABEL) as GoalStatus[]).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STATUS_LABEL[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {subGoals.length > 0 && (
-            <span className="text-[11px] text-muted-foreground">
-              {subGoals.filter((s) => s.done).length}/{subGoals.length} milestones
-            </span>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="overflow-hidden px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
-        <Timeline goal={goal} />
-        {expanded && (
-          <div className="mt-4 space-y-4">
-            {goal.description && (
-              <div>
-                <Label className="text-xs">Description</Label>
-                <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>
-              </div>
-            )}
-            <div>
-              <Label className="text-xs">Current activity</Label>
-              <Textarea
-                value={goal.currentActivity ?? ""}
-                onChange={(e) => updateGoal(goal.id, { currentActivity: e.target.value })}
-                placeholder="What are you doing right now?"
-                rows={2}
+              <span
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: meta.color }}
               />
-            </div>
-            <div>
-              <Label className="text-xs">Sub-goals / milestones</Label>
-              <div className="mt-2 space-y-1">
-                {subGoals.map((s) => (
-                  <div key={s.id} className="flex items-center gap-2 rounded-md border p-2">
-                    <Checkbox
-                      checked={s.done}
-                      onCheckedChange={() => toggleSubGoal(goal.id, s.id)}
-                    />
-                    <span
-                      className={`flex-1 text-sm ${s.done ? "line-through text-muted-foreground" : ""}`}
+              <CardTitle className="min-w-0 truncate text-sm font-semibold sm:text-base">
+                {goal.title}
+              </CardTitle>
+            </button>
+            <div className="flex shrink-0 items-center gap-0.5">
+              <GoalDialog
+                goal={goal}
+                trigger={
+                  <Button size="icon" variant="ghost" className="h-7 w-7" title="Edit goal">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                }
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7"
+                onClick={() => setDetailsOpen(true)}
+                title="Open details"
+              >
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" title="Delete goal">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently remove &quot;{goal.title}&quot; along with its milestones,
+                      tasks and scheduled blocks. This can&apos;t be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteGoal(goal.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {s.title}
-                    </span>
-                    {s.targetDate && (
-                      <span className="text-xs text-muted-foreground">{s.targetDate}</span>
-                    )}
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="icon" variant="ghost" title="Delete milestone">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete this milestone?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            &quot;{s.title}&quot; will be removed from this goal. This can&apos;t be
-                            undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteSubGoal(goal.id, s.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Delete milestone
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                ))}
-                {subGoals.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No milestones yet.</p>
-                )}
-              </div>
-              <div className="mt-2 flex gap-2">
-                <Input
-                  placeholder="Milestone title"
-                  value={subTitle}
-                  onChange={(e) => setSubTitle(e.target.value)}
-                />
-                <Input
-                  type="date"
-                  className="w-40"
-                  min={goal.startDate}
-                  max={goal.targetDate}
-                  value={subDate}
-                  onChange={(e) => setSubDate(e.target.value)}
-                />
-                <Button
-                  size="sm"
-                  disabled={
-                    !subTitle.trim() ||
-                    (!!subDate && (subDate > goal.targetDate || subDate < goal.startDate))
-                  }
-                  onClick={() => {
-                    if (!subTitle.trim()) return;
-                    if (subDate && (subDate > goal.targetDate || subDate < goal.startDate)) return;
-                    addSubGoal(goal.id, subTitle, subDate || undefined);
-                    setSubTitle("");
-                    setSubDate("");
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-              {subDate && (subDate > goal.targetDate || subDate < goal.startDate) && (
-                <p className="mt-1 text-[11px] text-destructive">
-                  Date must be between {goal.startDate} and {goal.targetDate}.
-                </p>
-              )}
+                      Delete goal
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <Badge variant="secondary" className="text-[10px]">
+              {meta.label}
+            </Badge>
+            <StatusModal goal={goal} />
+            {subGoals.length > 0 && (
+              <span className="text-[11px] text-muted-foreground">
+                {subGoals.filter((s) => s.done).length}/{subGoals.length} milestones
+              </span>
+            )}
+            <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
+              {pct}%
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="overflow-hidden px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
+          <Timeline goal={goal} />
+        </CardContent>
+      </Card>
+      <GoalDetailsDialog goal={goal} open={detailsOpen} onOpenChange={setDetailsOpen} />
+    </>
   );
 }
 
@@ -596,7 +669,7 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 lg:gap-5">
           {filtered.map((g) => (
             <GoalCard key={g.id} goal={g} />
           ))}

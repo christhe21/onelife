@@ -74,7 +74,7 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
       <div className="flex">
 
         {/* Desktop sidebar */}
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex xl:w-72">
           <Brand />
           <nav className="flex-1 space-y-1 px-3 py-4">
             {NAV.map((item) => (
@@ -122,8 +122,8 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
             </div>
           </header>
 
-          <main className="flex-1 overflow-x-hidden px-4 py-6 lg:px-8 lg:py-8">
-            <div className="mx-auto w-full min-w-0 max-w-6xl">{children}</div>
+          <main className="flex-1 overflow-x-hidden px-4 py-6 lg:px-10 lg:py-10 xl:px-12 xl:py-12 2xl:px-16">
+            <div className="mx-auto w-full min-w-0 max-w-[1600px]">{children}</div>
           </main>
 
           <footer className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground lg:px-8">
