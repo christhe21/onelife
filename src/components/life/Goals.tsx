@@ -195,24 +195,6 @@ function Timeline({ goal }: { goal: Goal }) {
         : "linear-gradient(90deg, oklch(0.7 0.18 150), oklch(0.82 0.16 150))";
   const showGlow = goal.status !== "not_started";
 
-  const [openSubId, setOpenSubId] = useState<string | null>(null);
-  // auto-dismiss after 3.5s
-  useEffect(() => {
-    if (!openSubId) return;
-    const id = setTimeout(() => setOpenSubId(null), 3500);
-    return () => clearTimeout(id);
-  }, [openSubId]);
-  // outside click dismiss
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!openSubId) return;
-    const onDown = (e: MouseEvent) => {
-      if (trackRef.current && !trackRef.current.contains(e.target as Node)) setOpenSubId(null);
-    };
-    window.addEventListener("mousedown", onDown);
-    return () => window.removeEventListener("mousedown", onDown);
-  }, [openSubId]);
-
   const fillPct = goal.status === "completed" ? 100 : nowPct;
 
   return (
@@ -238,10 +220,7 @@ function Timeline({ goal }: { goal: Goal }) {
         </span>
       </div>
 
-      <div
-        ref={trackRef}
-        className="relative h-4 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50"
-      >
+      <div className="relative h-4 overflow-visible rounded-full bg-muted/60 ring-1 ring-inset ring-border/50">
         <div
           className="h-full rounded-full transition-[width] duration-700 ease-out"
           style={{
@@ -251,55 +230,18 @@ function Timeline({ goal }: { goal: Goal }) {
           }}
         />
 
-        {/* milestone dots */}
+        {/* milestone dots — click opens dialog */}
         {(goal.subGoals ?? []).map((s) => {
           if (!s.targetDate) return null;
           const t = new Date(s.targetDate).getTime();
           const pct = Math.min(100, Math.max(0, ((t - start) / span) * 100));
-          const isOpen = openSubId === s.id;
           return (
             <div
               key={s.id}
               className="absolute top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${pct}%` }}
             >
-              <Popover
-                open={isOpen}
-                onOpenChange={(open) => {
-                  if (open) {
-                    setOpenSubId(s.id);
-                  } else {
-                    if (openSubId === s.id) setOpenSubId(null);
-                  }
-                }}
-              >
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenSubId((cur) => (cur === s.id ? null : s.id));
-                    }}
-                    className="block h-3.5 w-3.5 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
-                    style={{
-                      backgroundColor: s.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
-                    }}
-                    aria-label={`${s.title} – ${s.targetDate}`}
-                  />
-                </PopoverTrigger>
-                <PopoverContent
-                  side="bottom"
-                  align="center"
-                  sideOffset={4}
-                  className="w-44 px-2.5 py-1.5 text-[11px] shadow-md pointer-events-none"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
-                >
-                  <div className="font-medium leading-tight">{s.title}</div>
-                  <div className="mt-0.5 text-[10px] text-muted-foreground">
-                    {s.targetDate} · {s.done ? "Done" : "Open"}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <MilestoneDot goalId={goal.id} sub={s} />
             </div>
           );
         })}
@@ -321,6 +263,70 @@ function Timeline({ goal }: { goal: Goal }) {
         <span>{goal.targetDate}</span>
       </div>
     </div>
+  );
+}
+
+function MilestoneDot({
+  goalId,
+  sub,
+}: {
+  goalId: string;
+  sub: NonNullable<Goal["subGoals"]>[number];
+}) {
+  const { toggleSubGoal, deleteSubGoal } = useAppData();
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="block h-3.5 w-3.5 rounded-full border-2 border-background shadow-sm transition-transform hover:scale-125"
+          style={{
+            backgroundColor: sub.done ? "oklch(0.65 0.15 160)" : "oklch(0.75 0.02 250)",
+          }}
+          aria-label={`${sub.title} – ${sub.targetDate}`}
+        />
+      </DialogTrigger>
+      <DialogContent className="max-w-sm w-[calc(100vw-2rem)]">
+        <DialogHeader>
+          <DialogTitle className="text-base">{sub.title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center justify-between rounded-md border p-2">
+            <span className="text-muted-foreground">Target date</span>
+            <span className="tabular-nums">{sub.targetDate ?? "—"}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-md border p-2">
+            <span className="text-muted-foreground">Status</span>
+            <Badge variant={sub.done ? "default" : "secondary"}>
+              {sub.done ? "Done" : "Open"}
+            </Badge>
+          </div>
+        </div>
+        <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => {
+              deleteSubGoal(goalId, sub.id);
+              setOpen(false);
+            }}
+          >
+            <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              toggleSubGoal(goalId, sub.id);
+              setOpen(false);
+            }}
+          >
+            Mark {sub.done ? "open" : "done"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
