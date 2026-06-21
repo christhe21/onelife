@@ -669,7 +669,7 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 lg:gap-5">
           {filtered.map((g) => (
             <GoalCard key={g.id} goal={g} />
           ))}
