@@ -1,0 +1,67 @@
+{
+  "id": "language-fluency-b1",
+  "title": "Reach B1 in a New Language (180 days)",
+  "description": "Combine spaced-repetition vocabulary (Ebbinghaus forgetting curve, SuperMemo SM-2) with daily comprehensible input at the i+1 level (Krashen's input hypothesis) to reach CEFR B1 — independent conversational use — in six months.",
+  "skillName": "Learning",
+  "creatorName": "Lovable Science",
+  "verified": true,
+  "resources": [
+    "Krashen, S. (1985). The Input Hypothesis.",
+    "Ebbinghaus, H. (1885). Über das Gedächtnis.",
+    "Council of Europe — CEFR descriptors.",
+    "Anki / SuperMemo SM-2 algorithm."
+  ],
+  "advice": "Volume beats intensity. 45 min/day every day > 5 hours once a week. Output (speaking) starts week 8 — silent period first, per Krashen.",
+  "durationDays": 180,
+  "tags": ["language", "learning", "spaced-repetition", "science"],
+  "coverEmoji": "🗣️",
+  "difficulty": "intermediate",
+  "subGoals": [
+    { "title": "A1: Survival phrases (~500 words)", "dayOffset": 45, "description": "Greetings, numbers, basic needs. Most-frequent 500 words cover ~70% of spoken text." },
+    { "title": "A2: Everyday topics (~1500 words)", "dayOffset": 90, "description": "Can describe routine, immediate environment. First conversation partner sessions begin." },
+    { "title": "B1 listening threshold (~2500 words)", "dayOffset": 135, "description": "Native podcasts at 0.75x speed comprehensible. Krashen's i+1 zone reached." },
+    { "title": "B1: Independent user", "dayOffset": 180, "description": "Can hold a 15-min conversation on familiar topics. Self-assess against CEFR descriptors." }
+  ],
+  "tasks": [
+    {
+      "title": "Anki reviews (15 min)",
+      "priority": "high",
+      "recurrence": "daily",
+      "plannedHours": 0.25,
+      "description": "SM-2 spacing — review whatever the algorithm surfaces. Skipping a day doubles tomorrow's load.",
+      "subtasks": [
+        { "title": "Clear due cards", "priority": "high" },
+        { "title": "Add 10 new cards", "priority": "medium" }
+      ]
+    },
+    {
+      "title": "Comprehensible input (30 min)",
+      "priority": "high",
+      "recurrence": "daily",
+      "plannedHours": 0.5,
+      "description": "Podcasts, graded readers, or shows with target-language subtitles. Aim for 80-90% understanding (i+1).",
+      "subtasks": [
+        { "title": "Pick one input source", "priority": "medium" },
+        { "title": "Mine 3 new words to Anki", "priority": "medium" }
+      ]
+    },
+    {
+      "title": "Weekly tutor / exchange call",
+      "priority": "high",
+      "subGoalIndex": 1,
+      "startDayOffset": 56,
+      "recurrence": "weekly",
+      "plannedHours": 1,
+      "description": "Output forces retrieval. Italki / Tandem from week 8 onward (after silent period).",
+      "subtasks": []
+    },
+    {
+      "title": "CEFR self-assessment",
+      "priority": "medium",
+      "recurrence": "monthly",
+      "plannedHours": 0.5,
+      "description": "Tick descriptors on the Council of Europe self-assessment grid. Objective progress signal.",
+      "subtasks": []
+    }
+  ]
+}

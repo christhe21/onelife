@@ -1,0 +1,63 @@
+{
+  "id": "meditation-mindfulness-8w",
+  "title": "8-Week Mindfulness (MBSR-style)",
+  "description": "Adapted from Jon Kabat-Zinn's Mindfulness-Based Stress Reduction (MBSR) program. Meta-analyses (Goyal et al., JAMA Internal Medicine 2014) show moderate evidence for reduced anxiety, depression and pain after 8 weeks of consistent practice.",
+  "skillName": "Wellbeing",
+  "creatorName": "Lovable Science",
+  "verified": true,
+  "resources": [
+    "Kabat-Zinn, J. (1990). Full Catastrophe Living.",
+    "Goyal, M. et al. (2014). Meditation programs for psychological stress. JAMA Intern Med.",
+    "UMass Memorial Health — MBSR curriculum."
+  ],
+  "advice": "Consistency over duration. 20 min every day for 8 weeks shows larger effect sizes than 60 min thrice weekly. Don't judge sessions — observation is the practice.",
+  "durationDays": 56,
+  "tags": ["mindfulness", "wellbeing", "stress", "science"],
+  "coverEmoji": "🧘",
+  "difficulty": "beginner",
+  "subGoals": [
+    { "title": "Weeks 1-2: Body scan", "dayOffset": 14, "description": "Lying-down body scan. Builds interoceptive awareness — the foundation skill in MBSR." },
+    { "title": "Weeks 3-4: Sitting with breath", "dayOffset": 28, "description": "Anchor attention on breath. Notice wandering, return without self-judgement." },
+    { "title": "Weeks 5-6: Open monitoring", "dayOffset": 42, "description": "Awareness of thoughts/emotions as events, not facts (defusion)." },
+    { "title": "Weeks 7-8: Choiceless awareness + daily integration", "dayOffset": 56, "description": "Integrate informal practice (mindful eating, walking) with formal sit." }
+  ],
+  "tasks": [
+    {
+      "title": "Formal sit (20 min)",
+      "priority": "high",
+      "recurrence": "daily",
+      "plannedHours": 0.35,
+      "description": "Guided audio matching current week's focus. Same time, same place if possible.",
+      "subtasks": [
+        { "title": "Set timer", "priority": "low" },
+        { "title": "Note one observation after", "priority": "medium" }
+      ]
+    },
+    {
+      "title": "Informal mindfulness anchor",
+      "priority": "medium",
+      "recurrence": "daily",
+      "plannedHours": 0.1,
+      "description": "Pick one daily activity (brushing teeth, first sip of coffee) and do it with full attention.",
+      "subtasks": []
+    },
+    {
+      "title": "Weekly reflection journal",
+      "priority": "medium",
+      "recurrence": "weekly",
+      "plannedHours": 0.25,
+      "description": "3 prompts: what did I notice this week? What was hard? What surprised me?",
+      "subtasks": []
+    },
+    {
+      "title": "Mid-program check-in",
+      "priority": "medium",
+      "subGoalIndex": 1,
+      "startDayOffset": 28,
+      "endDayOffset": 29,
+      "plannedHours": 0.5,
+      "description": "Rescore PSS-10 (Perceived Stress Scale) — compare with day 0 baseline.",
+      "subtasks": []
+    }
+  ]
+}

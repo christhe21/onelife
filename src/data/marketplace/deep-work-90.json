@@ -1,0 +1,80 @@
+{
+  "id": "deep-work-90",
+  "title": "90-Day Deep Work Habit",
+  "description": "Build a daily deep-work practice grounded in Cal Newport's Deep Work, ultradian 90-minute focus cycles (Kleitman), and implementation intentions (Gollwitzer, 1999). You will progress from 25-minute focus blocks to fully protected 90-minute deep sessions.",
+  "skillName": "Productivity",
+  "creatorName": "Lovable Science",
+  "verified": true,
+  "resources": [
+    "Newport, C. (2016). Deep Work.",
+    "Gollwitzer, P. M. (1999). Implementation intentions. American Psychologist.",
+    "Kleitman, N. — Basic rest-activity cycle (BRAC) research."
+  ],
+  "advice": "Schedule the block at a fixed time, write an if-then plan ('If it is 9am, then I open my deep-work doc'), and remove phone from room. Track streaks weekly, not daily.",
+  "durationDays": 90,
+  "tags": ["focus", "habits", "productivity", "science"],
+  "coverEmoji": "🧠",
+  "difficulty": "intermediate",
+  "subGoals": [
+    { "title": "Week 1: Establish a 25-min daily block", "dayOffset": 7, "description": "Lowest-friction entry point. Build the cue → routine loop before extending duration." },
+    { "title": "Day 30: 50-min single block, 5 days/week", "dayOffset": 30, "description": "Crossing the half-ultradian threshold. Habit should feel automatic by now (Lally et al., 2010: ~66 days median to automaticity)." },
+    { "title": "Day 60: Two 50-min blocks per day", "dayOffset": 60, "description": "Add a second block with a 90-min recovery gap matching the BRAC cycle." },
+    { "title": "Day 90: One 90-min deep block daily", "dayOffset": 90, "description": "Full ultradian session. This is the target state — protected, scheduled, undistracted." }
+  ],
+  "tasks": [
+    {
+      "title": "Daily deep-work block",
+      "priority": "high",
+      "subGoalIndex": 0,
+      "recurrence": "daily",
+      "plannedHours": 0.5,
+      "description": "Phone in another room. One tab. One doc. Timer running. Newport: 'Clarity about what matters provides clarity about what does not.'",
+      "subtasks": [
+        { "title": "Write today's if-then plan", "priority": "high" },
+        { "title": "Silence notifications", "priority": "high" },
+        { "title": "Log session in tracker", "priority": "medium" }
+      ]
+    },
+    {
+      "title": "Weekly shutdown review",
+      "priority": "medium",
+      "recurrence": "weekly",
+      "plannedHours": 0.5,
+      "description": "Newport's shutdown ritual. Review last week's blocks, plan next week's slots, identify what broke focus.",
+      "subtasks": [
+        { "title": "Count completed blocks", "priority": "medium" },
+        { "title": "Pick next week's anchor time", "priority": "high" }
+      ]
+    },
+    {
+      "title": "Extend block to 50 minutes",
+      "priority": "high",
+      "subGoalIndex": 1,
+      "startDayOffset": 14,
+      "endDayOffset": 30,
+      "plannedHours": 0.85,
+      "description": "Gradual progressive overload — research on attention training shows linear extension beats jumps.",
+      "subtasks": []
+    },
+    {
+      "title": "Add second daily block",
+      "priority": "medium",
+      "subGoalIndex": 2,
+      "startDayOffset": 30,
+      "endDayOffset": 60,
+      "plannedHours": 0.85,
+      "description": "Place 90+ minutes after the first block ends (BRAC recovery window).",
+      "subtasks": []
+    },
+    {
+      "title": "Reach 90-minute single block",
+      "priority": "high",
+      "subGoalIndex": 3,
+      "startDayOffset": 60,
+      "endDayOffset": 90,
+      "plannedHours": 1.5,
+      "description": "Match the natural ultradian peak. Stop at the timer — overrun erodes recovery.",
+      "subtasks": []
+    }
+  ]
+}

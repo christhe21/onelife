@@ -1,0 +1,56 @@
+{
+  "id": "couch-to-5k",
+  "title": "Couch to 5K (Evidence-Based)",
+  "description": "The NHS Couch to 5K plan: a 9-week progressive run-walk program shown in peer-reviewed trials to take inactive adults to a continuous 5K run. Built on progressive overload and adequate recovery (Daniels' Running Formula).",
+  "skillName": "Health",
+  "creatorName": "Lovable Science",
+  "verified": true,
+  "resources": [
+    "NHS Better Health — Couch to 5K.",
+    "Daniels, J. (2013). Daniels' Running Formula, 3rd ed.",
+    "Buchheit, M. & Laursen, P. (2013). HIIT — solutions to the programming puzzle."
+  ],
+  "advice": "Three runs per week with a full rest day between. If you feel persistent soreness, repeat the previous week before progressing — supercompensation needs full recovery.",
+  "durationDays": 63,
+  "tags": ["running", "fitness", "health", "habit"],
+  "coverEmoji": "🏃",
+  "difficulty": "beginner",
+  "subGoals": [
+    { "title": "Week 3: Run 3 min continuously", "dayOffset": 21, "description": "Aerobic base forming. Capillary density increases ~3-4 weeks in." },
+    { "title": "Week 5: Run 20 min continuously", "dayOffset": 35, "description": "First major aerobic milestone. Mitochondrial adaptations measurable." },
+    { "title": "Week 7: Run 25 min continuously", "dayOffset": 49, "description": "VO2max improvements typically appear here." },
+    { "title": "Week 9: Run 5K (30 min) continuously", "dayOffset": 63, "description": "Target distance. Pace is conversational — talk-test passable." }
+  ],
+  "tasks": [
+    {
+      "title": "Run day 1 (alternating intervals)",
+      "priority": "high",
+      "subGoalIndex": 0,
+      "recurrence": "weekly",
+      "plannedHours": 0.5,
+      "description": "Follow week's prescribed run/walk intervals. 5-min warm-up walk, then intervals, then 5-min cool-down.",
+      "subtasks": [
+        { "title": "Dynamic warm-up", "priority": "medium" },
+        { "title": "Log perceived exertion (RPE 1-10)", "priority": "low" }
+      ]
+    },
+    { "title": "Run day 2", "priority": "high", "recurrence": "weekly", "plannedHours": 0.5, "description": "Same prescription as day 1. Full rest day between.", "subtasks": [] },
+    { "title": "Run day 3", "priority": "high", "recurrence": "weekly", "plannedHours": 0.5, "description": "Long-ish run of the week.", "subtasks": [] },
+    {
+      "title": "Strength & mobility (20 min)",
+      "priority": "medium",
+      "recurrence": "weekly",
+      "plannedHours": 0.35,
+      "description": "Bodyweight squats, calf raises, glute bridges — reduces running injury risk ~50% (Lauersen et al., 2014, Br J Sports Med).",
+      "subtasks": []
+    },
+    {
+      "title": "Sleep ≥7h on run nights",
+      "priority": "high",
+      "recurrence": "daily",
+      "plannedHours": 7,
+      "description": "Sleep restriction below 7h doubles injury risk in athletes (Milewski et al., 2014).",
+      "subtasks": []
+    }
+  ]
+}
