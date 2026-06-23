@@ -157,6 +157,120 @@ function hoursBetween(startISO?: string, endISO?: string): number {
   return (e - s) / 3_600_000;
 }
 
+// ---------------------------------------------------------------------------
+// autoScheduleTasks: pure helper. Distributes tasks/subtasks into free 09:00–21:00
+// slots between `goalStart` and `goalEnd`, never overlapping `existingBlocks`.
+//
+// Rules (mirrors test expectations):
+//  - If a task has subtasks → only schedule the subtasks (parent stays blank;
+//    `toggleSubtask` auto-completes the parent when all subs are done).
+//  - If a task has no subtasks and plannedHours <= 3 → schedule the task itself.
+//  - If a task has no subtasks and plannedHours > 3 → split into ~2h sessions
+//    across consecutive days, materialised as new subtasks; parent stays blank.
+//  - Subtasks always have startDate/endDate on the same calendar day.
+// ---------------------------------------------------------------------------
+const SESSION_HOURS = 2;
+const DAY_START_MIN = 9 * 60;
+const DAY_END_MIN = 21 * 60;
+
+export function autoScheduleTasks(
+  tasks: Task[],
+  goalStart: string,
+  goalEnd: string,
+  existingBlocks: Array<{ startDate?: string; endDate?: string }>,
+  now: Date = new Date(),
+): Task[] {
+  const busy: Array<[number, number]> = [];
+  for (const b of existingBlocks) {
+    if (b.startDate && b.endDate) {
+      const s = new Date(b.startDate).getTime();
+      const e = new Date(b.endDate).getTime();
+      if (isFinite(s) && isFinite(e) && e > s) busy.push([s, e]);
+    }
+  }
+
+  const startBound = new Date(`${goalStart}T00:00:00`);
+  const endBound = new Date(`${goalEnd}T23:59:59`);
+  const today0 = new Date(now);
+  today0.setHours(0, 0, 0, 0);
+  let cursor = new Date(Math.max(today0.getTime(), startBound.getTime()));
+
+  function findSlot(durationH: number, fromDay: Date): { s: Date; e: Date } | null {
+    const ms = Math.max(0.25, durationH) * 3_600_000;
+    const day = new Date(fromDay);
+    day.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      if (day.getTime() > endBound.getTime()) return null;
+      for (let mins = DAY_START_MIN; mins + durationH * 60 <= DAY_END_MIN; mins += 30) {
+        const s = new Date(day);
+        s.setHours(0, mins, 0, 0);
+        if (s.getTime() < now.getTime() && day.toDateString() === now.toDateString()) continue;
+        const e = new Date(s.getTime() + ms);
+        const overlap = busy.some(([bs, be]) => s.getTime() < be && e.getTime() > bs);
+        if (!overlap) {
+          busy.push([s.getTime(), e.getTime()]);
+          return { s, e };
+        }
+      }
+      day.setDate(day.getDate() + 1);
+    }
+    return null;
+  }
+
+  return tasks.map((t) => {
+    const hasSubs = t.subtasks.length > 0;
+
+    if (hasSubs) {
+      const newSubs = t.subtasks.map((s) => {
+        if (s.startDate && s.endDate) return s;
+        const total = s.plannedHours ?? SESSION_HOURS;
+        const dur = Math.min(3, Math.max(0.5, total));
+        const slot = findSlot(dur, cursor);
+        if (!slot) return s;
+        return { ...s, startDate: slot.s.toISOString(), endDate: slot.e.toISOString() };
+      });
+      return { ...t, subtasks: newSubs };
+    }
+
+    // No existing subtasks.
+    if (t.startDate && t.endDate) return t;
+    const total = t.plannedHours ?? SESSION_HOURS;
+
+    if (total <= 3) {
+      const slot = findSlot(total, cursor);
+      if (!slot) return t;
+      return { ...t, startDate: slot.s.toISOString(), endDate: slot.e.toISOString() };
+    }
+
+    // Split into ~2h sessions across consecutive days.
+    let remaining = total;
+    const sessions: Array<{ s: Date; e: Date }> = [];
+    let from = new Date(cursor);
+    while (remaining > 0.001) {
+      const dur = Math.min(SESSION_HOURS, remaining);
+      const slot = findSlot(dur, from);
+      if (!slot) break;
+      sessions.push(slot);
+      remaining -= dur;
+      from = new Date(slot.s);
+      from.setDate(from.getDate() + 1);
+      from.setHours(0, 0, 0, 0);
+    }
+    if (sessions.length === 0) return t;
+    const subs: SubTask[] = sessions.map((sl, i) => ({
+      id: uid(),
+      title: `${t.title} — session ${i + 1}/${sessions.length}`,
+      done: false,
+      startDate: sl.s.toISOString(),
+      endDate: sl.e.toISOString(),
+      plannedHours: (sl.e.getTime() - sl.s.getTime()) / 3_600_000,
+    }));
+    return { ...t, subtasks: subs };
+  });
+}
+
+
+
 function normalizeSubTask(raw: any): SubTask {
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
