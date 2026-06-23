@@ -628,7 +628,10 @@ interface Ctx extends AppData {
   appendJSON: (file: File) => Promise<{ goals: number; tasks: number; bucket: number }>;
   replaceAll: (data: AppData) => void;
   clearAll: () => void;
-  importMarketplaceGoal: (template: MarketplaceGoalTemplate) => void;
+  importMarketplaceGoal: (template: MarketplaceGoalTemplate, opts?: { autoSchedule?: boolean }) => void;
+  autoScheduleGoal: (goalId: string) => number;
+  autoScheduleSkill: (skillId: string) => number;
+
 }
 
 const AppDataContext = createContext<Ctx | null>(null);
