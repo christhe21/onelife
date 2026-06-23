@@ -87,10 +87,11 @@ function Shell() {
       {tab === "settings" && <SettingsView />}
       {tab === "marketplace" && (
         <GoalMarketplace
-          onImport={(t) => {
-            importMarketplaceGoal(t);
+          onImport={(t, opts) => {
+            importMarketplaceGoal(t, opts);
             setTab("goals");
           }}
+
         />
       )}
     </AppShell>
