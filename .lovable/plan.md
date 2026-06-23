@@ -1,53 +1,53 @@
-# Desktop UX, Goal Modals & Science-Backed Marketplace Goals
 
-## 1. Desktop view — bigger, fits the screen
+## 1. Auto-schedule prompt after marketplace import
 
-`src/components/life/AppShell.tsx`
-- Widen the main content container so large screens actually use the space.
-  - Change `<main>` from `max-w-6xl` to a fluid cap: `max-w-[1600px] xl:px-12 2xl:px-16`.
-  - Bump main padding: `lg:px-8 lg:py-8` → `lg:px-10 lg:py-10 xl:py-12`.
-- Sidebar: keep `w-64` at `lg`, expand to `xl:w-72` for breathing room.
-- Header row: increase title size on desktop (`lg:text-xl xl:text-2xl`).
+**Flow change in `GoalMarketplace.tsx`:**
+- When the user clicks "Import" on a template, do NOT immediately call `onImport`.
+- Open a small confirmation `Dialog` with three actions:
+  - **Yes, auto-schedule** — import and distribute blocks on the calendar.
+  - **No, I'll schedule manually** — import only (current behavior).
+  - **Cancel** — abort.
 
-`src/components/life/Goals.tsx`
-- Goal grid currently `md:grid-cols-2 xl:grid-cols-3`. Add `2xl:grid-cols-3` cap and raise gap to `gap-4 lg:gap-5`. Cards already expand inline; we'll fix the expansion problem in section 2 by moving the body into a modal so the grid never reflows.
+**API change in `src/lib/app-data.tsx`:**
+- Extend `importMarketplaceGoal(template, opts?: { autoSchedule?: boolean })`. Default `autoSchedule = false` (preserves current tests/behavior).
+- When `autoSchedule` is true, after creating tasks call a new internal helper `autoScheduleTasks(tasksJustImported, goal)`.
 
-`src/components/life/GoalMarketplace.tsx`
-- Grid view: keep `sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4`.
-- List view rows: use full width, no `max-w` clamp.
+**Scheduling rules (mirrors existing test/behaviour conventions):**
+- **If a task has subtasks → schedule only the subtasks**, never the parent task. The parent auto-completes when all subtasks are done (already implemented in `toggleSubtask`, kept unchanged).
+- **If a task has no subtasks → schedule the task itself.**
+- Block size: prefer the item's `plannedHours` (clamped to 0.5–3h per session). If `plannedHours > 3`, split into multiple ~2h sessions across consecutive eligible days. If unset, default to **2h**.
+- Day window: between the item's `startDate`/`endDate` (or goal's start/target) — weekdays first, then weekends if needed.
+- Time-of-day: start at **09:00** local and walk forward in 30-min steps to find a slot that does not overlap any existing scheduled task/subtask `startDate`/`endDate`. Cap searching at 21:00; if no slot that day, advance to the next eligible day.
+- For subtasks the rule that `startDate` and `endDate` must fall on the **same calendar day** is preserved (existing invariant in app-data prompt at line 321).
+- Recurring items (`recurrence !== "none"`) are scheduled once at the first occurrence only; existing `toggleSubtask` recurrence bump logic handles the rest.
+- Toast on completion: "Scheduled N blocks across M days" (Frieren variant respected via `getFrierenVocabulary`).
 
-## 2. Replace dropdowns / inline expansion with clickable modals (Goals page)
+## 2. Skill time estimates + quick schedule
 
-Problem: clicking a goal card expands it inline, pushing the grid around and breaking desktop layout. Status uses a `Select` dropdown; milestone dots use hover `Popover`.
+**In `src/components/life/Skills.tsx` (skill card):**
+- Compute `estimatedRemainingHours` for each skill = sum over not-done tasks/subtasks linked to goals of that skill, using `plannedHours - spentHours` (fallback 2h when `plannedHours` missing, matching the auto-schedule default).
+- Show a small line: "≈ Xh remaining · ~Y sessions @ 2h".
+- Add a "Schedule next sessions" button that runs the same `autoScheduleTasks` helper over the skill's unscheduled (no `startDate`) tasks/subtasks, following the same subtask-vs-task rule.
 
-`src/components/life/Goals.tsx`
-- **Remove inline expand**: delete `expanded` state, `ChevronUp/Down` toggle button, and the `{expanded && (...)}` body block (lines ~338, 372-383, 439-541).
-- **New "Goal details" Dialog**: clicking the card title/body opens `<GoalDetailsDialog goal={goal} />` containing everything currently in the expanded section:
-  - Description, Current activity (editable textarea), Sub-goals list with add/remove/toggle, Manual progress slider.
-  - Width `max-w-2xl`, `max-h-[85vh] overflow-y-auto`, responsive `w-[calc(100vw-2rem)]`.
-- **Replace status `Select` with a clickable status modal**: small badge-style trigger button → `Dialog` with 3 large buttons (Not started / In progress / Completed), each with a short description. Closes on pick.
-- **Replace milestone-dot `Popover` with a click-to-open `Dialog`**: tapping a dot opens a modal showing milestone title, target date, done state, with Toggle done + Delete actions. Remove `openSubId`/`Popover` machinery.
-- Edit (pencil) and Delete (trash) buttons remain in the card header; they already use `Dialog`/`AlertDialog`.
+## 3. Tests (extend `src/lib/__tests__/app-data.test.tsx`)
 
-Filter `Select` at the top of the Goals page stays as-is (it's a simple filter, not a per-item action).
+Add a new `describe("importMarketplaceGoal auto-schedule", ...)` block:
 
-## 3. New scientifically-grounded marketplace goals
+1. **Imports without scheduling by default** — call `importMarketplaceGoal(template)`; assert every new task/subtask has no `startDate`/`endDate`.
+2. **Auto-schedules only subtasks when task has subtasks** — template has one task with 2 subtasks; with `autoSchedule: true`, assert the parent task has no `startDate`, and both subtasks have `startDate`/`endDate` on the same calendar day.
+3. **Auto-schedules the task itself when it has no subtasks** — single task, no subtasks, `plannedHours: 2`; assert the task gets a 2h block.
+4. **Splits long plannedHours into multiple ~2h sessions on consecutive days** — task with `plannedHours: 6`, no subtasks; assert it produces 3 blocks across 3 distinct days (one block per day, fits within goal window).
+5. **No overlap with existing scheduled items** — pre-create a task scheduled 09:00–11:00 today, then auto-schedule; assert new block starts ≥ 11:00.
+6. **Completing all subtasks auto-completes the parent task** — regression test for existing behavior (not currently covered): toggle every subtask done, assert `task.done === true`.
 
-Add 4 new JSON templates to `src/data/marketplace/` and register them in `src/data/marketplace/index.ts`. Each template cites the principle in its `description` / `advice` fields and uses milestones aligned to evidence-based intervals.
+## Files touched
 
-| File | Goal | Scientific basis |
-|---|---|---|
-| `deep-work-90.json` | "90-Day Deep Work Habit" | Cal Newport's deep-work blocks, ultradian 90-min cycles, implementation intentions (Gollwitzer). 4 milestones at days 7/30/60/90. |
-| `couch-to-5k.json` | "Couch to 5K (Evidence-Based)" | NHS Couch-to-5K progressive overload, HRV-guided rest, 3 sessions/week. 9-week ramp. |
-| `language-fluency-b1.json` | "Reach B1 in a New Language (180 days)" | Spaced repetition (Ebbinghaus/SuperMemo), comprehensible input (Krashen i+1), 15-min daily Anki + 30-min input. CEFR milestones A1→A2→B1. |
-| `meditation-mindfulness-8w.json` | "8-Week Mindfulness (MBSR-style)" | Kabat-Zinn MBSR curriculum, body scan → breath → open monitoring. Weekly milestones, 20 min/day. |
-
-Each template includes:
-- 3-5 `subGoals` with `dayOffset` and short `description` (the scientific rationale for that phase).
-- 8-15 `tasks` with `recurrence` (daily/weekly), `plannedHours`, `priority`, `subGoalIndex`, and a `description` quoting the principle.
-- `tags` (e.g. `["focus","habits","productivity"]`), `coverEmoji`, `difficulty`.
-- `resources` pointing to primary sources (Newport, NHS, Krashen, Kabat-Zinn).
-- `verified: true`, `creatorName: "Lovable Science"`.
+- `src/lib/app-data.tsx` — extend `importMarketplaceGoal`, add `autoScheduleTasks` helper (pure, exported for tests).
+- `src/components/life/GoalMarketplace.tsx` — add confirm dialog between click and import.
+- `src/components/life/Skills.tsx` — estimate line + "Schedule next sessions" button.
+- `src/lib/__tests__/app-data.test.tsx` — new test cases above.
 
 ## Out of scope
-Skills, Tasks, Dashboard, Calendar, Mindmap, Radar chart, Frieren theme, backend/persistence changes, importer logic (existing importer already handles the new fields added in the previous turn).
+
+- Calendar UI changes, recurrence engine changes, marketplace JSON edits, dashboard, mindmap, radar.
+- Changing the existing `toggleSubtask` auto-complete behavior (kept as-is, only adds a regression test).
