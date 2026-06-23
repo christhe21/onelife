@@ -1260,6 +1260,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     deleteBucket: (id) => setBucketList((cur) => cur.filter((b) => b.id !== id)),
 
     importMarketplaceGoal,
+    autoScheduleGoal: autoScheduleGoalFn,
+    autoScheduleSkill: autoScheduleSkillFn,
+
     exportJSON: () => {
       const payload = {
         version: EXPORT_VERSION,
