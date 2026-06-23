@@ -36,16 +36,18 @@ import { MARKETPLACE_GOALS } from "@/data/marketplace";
 import { MarketplaceGoalTemplate } from "@/lib/marketplace";
 
 interface Props {
-  onImport: (template: MarketplaceGoalTemplate) => void;
+  onImport: (template: MarketplaceGoalTemplate, opts?: { autoSchedule?: boolean }) => void;
 }
 
 type ViewMode = "grid" | "list";
 
 export function GoalMarketplace({ onImport }: Props) {
   const [selectedTemplate, setSelectedTemplate] = useState<MarketplaceGoalTemplate | null>(null);
+  const [pendingImport, setPendingImport] = useState<MarketplaceGoalTemplate | null>(null);
   const [query, setQuery] = useState("");
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [view, setView] = useState<ViewMode>("grid");
+
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
