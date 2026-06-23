@@ -892,13 +892,72 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       };
     });
 
+    let scheduledTasks = newTasks;
+    if (opts?.autoSchedule) {
+      const existing: Array<{ startDate?: string; endDate?: string }> = [];
+      for (const t of tasks) {
+        existing.push({ startDate: t.startDate, endDate: t.endDate });
+        for (const s of t.subtasks)
+          existing.push({ startDate: s.startDate, endDate: s.endDate });
+      }
+      scheduledTasks = autoScheduleTasks(newTasks, startDate, targetDate, existing);
+    }
+
     setGoals((prev) => [...prev, newGoal]);
-    setTasks((prev) => [...prev, ...newTasks]);
+    setTasks((prev) => [...prev, ...scheduledTasks]);
     const vocab = getFrierenVocabulary(settings.themeColor === "frieren");
-    toast.success(
-      vocab.isFrieren ? `A new quest inscribed in the grimoire.` : "Goal imported successfully!",
-    );
+    if (opts?.autoSchedule) {
+      const blocks = scheduledTasks.reduce((n, t) => {
+        const subBlocks = t.subtasks.filter((s) => s.startDate && s.endDate).length;
+        const taskBlock = t.startDate && t.endDate ? 1 : 0;
+        return n + subBlocks + taskBlock;
+      }, 0);
+      toast.success(
+        vocab.isFrieren
+          ? `${blocks} preparations scheduled in the grimoire.`
+          : `Goal imported · ${blocks} blocks scheduled`,
+      );
+    } else {
+      toast.success(
+        vocab.isFrieren ? `A new quest inscribed in the grimoire.` : "Goal imported successfully!",
+      );
+    }
   };
+
+  const autoScheduleGoalFn = (goalId: string): number => {
+    const goal = goals.find((g) => g.id === goalId);
+    if (!goal) return 0;
+    const subGoalIds = new Set(goal.subGoals.map((sg) => sg.id));
+    const goalTasks = tasks.filter((t) => t.subGoalId && subGoalIds.has(t.subGoalId));
+    const otherBlocks: Array<{ startDate?: string; endDate?: string }> = [];
+    for (const t of tasks) {
+      if (goalTasks.find((gt) => gt.id === t.id)) continue;
+      otherBlocks.push({ startDate: t.startDate, endDate: t.endDate });
+      for (const s of t.subtasks)
+        otherBlocks.push({ startDate: s.startDate, endDate: s.endDate });
+    }
+    const rescheduled = autoScheduleTasks(goalTasks, goal.startDate, goal.targetDate, otherBlocks);
+    const byId = new Map(rescheduled.map((t) => [t.id, t]));
+    let count = 0;
+    setTasks((cur) =>
+      cur.map((t) => {
+        const r = byId.get(t.id);
+        if (!r) return t;
+        count +=
+          r.subtasks.filter((s) => s.startDate && s.endDate).length +
+          (r.startDate && r.endDate ? 1 : 0);
+        return r;
+      }),
+    );
+    return count;
+  };
+
+  const autoScheduleSkillFn = (skillId: string): number => {
+    let total = 0;
+    for (const g of goals) if (g.skill === skillId) total += autoScheduleGoalFn(g.id);
+    return total;
+  };
+
 
   const value: Ctx = {
     goals,
