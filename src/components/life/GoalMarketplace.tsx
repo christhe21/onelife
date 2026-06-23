@@ -172,7 +172,7 @@ export function GoalMarketplace({ onImport }: Props) {
               key={template.id}
               template={template}
               onView={() => setSelectedTemplate(template)}
-              onImport={() => onImport(template)}
+              onImport={() => setPendingImport(template)}
             />
           ))}
         </div>
@@ -183,7 +183,7 @@ export function GoalMarketplace({ onImport }: Props) {
               key={template.id}
               template={template}
               onView={() => setSelectedTemplate(template)}
-              onImport={() => onImport(template)}
+              onImport={() => setPendingImport(template)}
             />
           ))}
         </div>
@@ -193,13 +193,57 @@ export function GoalMarketplace({ onImport }: Props) {
         template={selectedTemplate}
         onClose={() => setSelectedTemplate(null)}
         onImport={(t) => {
-          onImport(t);
           setSelectedTemplate(null);
+          setPendingImport(t);
+        }}
+      />
+
+      <AutoScheduleDialog
+        template={pendingImport}
+        onClose={() => setPendingImport(null)}
+        onConfirm={(autoSchedule) => {
+          if (pendingImport) onImport(pendingImport, { autoSchedule });
+          setPendingImport(null);
         }}
       />
     </div>
   );
 }
+
+function AutoScheduleDialog({
+  template,
+  onClose,
+  onConfirm,
+}: {
+  template: MarketplaceGoalTemplate | null;
+  onClose: () => void;
+  onConfirm: (autoSchedule: boolean) => void;
+}) {
+  return (
+    <Dialog open={!!template} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
+        <DialogHeader>
+          <DialogTitle>Auto-schedule this goal?</DialogTitle>
+          <DialogDescription>
+            We'll place tasks and subtasks on your calendar between 9 AM–9 PM, splitting longer
+            sessions across days and avoiding times you've already booked. Tasks that have subtasks
+            are scheduled at the subtask level only.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="outline" onClick={() => onConfirm(false)}>
+            No, I'll schedule manually
+          </Button>
+          <Button onClick={() => onConfirm(true)}>Yes, auto-schedule</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 function TemplateCard({
   template,
