@@ -806,7 +806,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const importMarketplaceGoal = (template: MarketplaceGoalTemplate) => {
+  const importMarketplaceGoal = (
+    template: MarketplaceGoalTemplate,
+    opts?: { autoSchedule?: boolean },
+  ) => {
+
     let finalSkillId = skills.find(
       (s) => s.label.toLowerCase() === template.skillName.toLowerCase(),
     )?.id;
