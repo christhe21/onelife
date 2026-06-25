@@ -256,7 +256,6 @@ export function CreateGoalWizard() {
         startDate: tStart,
         endDate: tEnd,
         dueDate: dt.dueDate,
-        description: dt.description,
       } as Task;
 
       let toSchedule: Task[] = [taskShell];
@@ -302,7 +301,6 @@ export function CreateGoalWizard() {
         startDate: finalTask.startDate,
         endDate: finalTask.endDate,
         dueDate: finalTask.dueDate,
-        description: finalTask.description,
         subtasks: finalTask.subtasks,
       });
     }
