@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   ExternalLink,
-  Star,
   ShieldCheck,
   Clock,
   BookOpen,
@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   List as ListIcon,
   X,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,13 +81,6 @@ export function GoalMarketplace({ onImport }: Props) {
   const toggleTag = (tag: string) =>
     setActiveTags((cur) => (cur.includes(tag) ? cur.filter((t) => t !== tag) : [...cur, tag]));
 
-  const handleContribute = () => {
-    window.open(
-      "https://github.com/lovable-dev/lovable/new/main/src/data/marketplace",
-      "_blank",
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -96,9 +90,11 @@ export function GoalMarketplace({ onImport }: Props) {
             Import community-curated goals complete with milestones, tasks, and schedules.
           </p>
         </div>
-        <Button onClick={handleContribute} variant="outline" className="gap-2 self-start">
-          <Star className="h-4 w-4" />
-          Submit a Goal
+        <Button asChild className="gap-2 self-start">
+          <Link to="/create-goal">
+            <Plus className="h-4 w-4" />
+            Create Goal
+          </Link>
         </Button>
       </div>
 
