@@ -1,53 +1,54 @@
+# Create Goal route in Marketplace
 
-## 1. Auto-schedule prompt after marketplace import
+Add a full goal-authoring flow accessible from the Goal Marketplace. Replace the "Submit a Goal" button with "Create Goal" which navigates to a dedicated route. Everything authored there must be editable before saving, and tasks/subtasks must be schedulable via presets (daily, weekdays, weekly, biweekly, monthly, custom days) — informed by common recurrence patterns (RFC 5545 RRULE-style: FREQ, INTERVAL, BYDAY, COUNT/UNTIL) but exposed as friendly presets.
 
-**Flow change in `GoalMarketplace.tsx`:**
-- When the user clicks "Import" on a template, do NOT immediately call `onImport`.
-- Open a small confirmation `Dialog` with three actions:
-  - **Yes, auto-schedule** — import and distribute blocks on the calendar.
-  - **No, I'll schedule manually** — import only (current behavior).
-  - **Cancel** — abort.
+## Scope
 
-**API change in `src/lib/app-data.tsx`:**
-- Extend `importMarketplaceGoal(template, opts?: { autoSchedule?: boolean })`. Default `autoSchedule = false` (preserves current tests/behavior).
-- When `autoSchedule` is true, after creating tasks call a new internal helper `autoScheduleTasks(tasksJustImported, goal)`.
+1. **Remove** the "Submit a Goal" button in `GoalMarketplace.tsx` (and the `handleContribute` helper).
+2. **Add** a "Create Goal" button in its place that navigates to a new route `/create-goal`.
+3. **New route** `src/routes/create-goal.tsx` rendering a `CreateGoalWizard` inside the existing `AppShell`.
+4. **New component** `src/components/life/CreateGoalWizard.tsx`.
+5. Reuse existing `app-data` mutations (`addGoal`, `addTask`, `autoScheduleTasks`) — no schema changes needed.
 
-**Scheduling rules (mirrors existing test/behaviour conventions):**
-- **If a task has subtasks → schedule only the subtasks**, never the parent task. The parent auto-completes when all subtasks are done (already implemented in `toggleSubtask`, kept unchanged).
-- **If a task has no subtasks → schedule the task itself.**
-- Block size: prefer the item's `plannedHours` (clamped to 0.5–3h per session). If `plannedHours > 3`, split into multiple ~2h sessions across consecutive eligible days. If unset, default to **2h**.
-- Day window: between the item's `startDate`/`endDate` (or goal's start/target) — weekdays first, then weekends if needed.
-- Time-of-day: start at **09:00** local and walk forward in 30-min steps to find a slot that does not overlap any existing scheduled task/subtask `startDate`/`endDate`. Cap searching at 21:00; if no slot that day, advance to the next eligible day.
-- For subtasks the rule that `startDate` and `endDate` must fall on the **same calendar day** is preserved (existing invariant in app-data prompt at line 321).
-- Recurring items (`recurrence !== "none"`) are scheduled once at the first occurrence only; existing `toggleSubtask` recurrence bump logic handles the rest.
-- Toast on completion: "Scheduled N blocks across M days" (Frieren variant respected via `getFrierenVocabulary`).
+## Wizard structure (single page, sectioned, all editable)
 
-## 2. Skill time estimates + quick schedule
+Step layout (no forced step gating; all sections visible and editable, with a sticky "Save Goal" footer):
 
-**In `src/components/life/Skills.tsx` (skill card):**
-- Compute `estimatedRemainingHours` for each skill = sum over not-done tasks/subtasks linked to goals of that skill, using `plannedHours - spentHours` (fallback 2h when `plannedHours` missing, matching the auto-schedule default).
-- Show a small line: "≈ Xh remaining · ~Y sessions @ 2h".
-- Add a "Schedule next sessions" button that runs the same `autoScheduleTasks` helper over the skill's unscheduled (no `startDate`) tasks/subtasks, following the same subtask-vs-task rule.
+1. **Goal**: title, description, skill (dropdown), startDate, targetDate, plannedHours, status.
+2. **Sub-goals** (repeatable rows): title, optional targetDate, optional description. Add/remove/reorder.
+3. **Tasks** (repeatable rows, each linkable to a sub-goal): title, description, priority, startDate, dueDate, plannedHours.
+   - **Subtasks** nested under each task: title, plannedHours, priority. Add/remove.
+   - **Schedule** section per task or per subtask (rule: if a task has subtasks, schedule only at subtask level — matches existing autoSchedule rule).
+4. **Review & Save**: summary of everything, "Save Goal" persists and routes back to `/` with a toast.
 
-## 3. Tests (extend `src/lib/__tests__/app-data.test.tsx`)
+## Scheduling presets (per task/subtask)
 
-Add a new `describe("importMarketplaceGoal auto-schedule", ...)` block:
+Inline "Schedule" popover per item with:
 
-1. **Imports without scheduling by default** — call `importMarketplaceGoal(template)`; assert every new task/subtask has no `startDate`/`endDate`.
-2. **Auto-schedules only subtasks when task has subtasks** — template has one task with 2 subtasks; with `autoSchedule: true`, assert the parent task has no `startDate`, and both subtasks have `startDate`/`endDate` on the same calendar day.
-3. **Auto-schedules the task itself when it has no subtasks** — single task, no subtasks, `plannedHours: 2`; assert the task gets a 2h block.
-4. **Splits long plannedHours into multiple ~2h sessions on consecutive days** — task with `plannedHours: 6`, no subtasks; assert it produces 3 blocks across 3 distinct days (one block per day, fits within goal window).
-5. **No overlap with existing scheduled items** — pre-create a task scheduled 09:00–11:00 today, then auto-schedule; assert new block starts ≥ 11:00.
-6. **Completing all subtasks auto-completes the parent task** — regression test for existing behavior (not currently covered): toggle every subtask done, assert `task.done === true`.
+- **Frequency preset**: `none`, `daily`, `weekdays` (Mon–Fri), `weekends`, `weekly`, `biweekly`, `monthly`, `custom`.
+- **Custom**: weekday checkboxes (S M T W T F S) + interval (every N weeks).
+- **Time of day**: start time (default 09:00), duration (default = item's `plannedHours` or 1h).
+- **Range**: start date (default today), end via `until date` OR `count` (e.g. 12 occurrences).
+- **Auto-schedule fallback**: button "Auto-place in free slots" — calls the existing `autoScheduleTasks` helper (9 AM–9 PM, no overlap) for items where the user doesn't define explicit recurrence.
 
-## Files touched
+On Save, the wizard:
+- Creates the goal + subgoals via `addGoal`.
+- Creates each task via `addTask` with `recurrence` populated from the preset (mapped to existing `Recurrence` type: `none|daily|weekly|monthly|yearly` — store advanced custom rules as additional task fields only if already supported; otherwise fall back to closest preset + a description note. Confirm scope below.).
+- For items with auto-schedule selected, calls `autoScheduleTasks` after creation.
 
-- `src/lib/app-data.tsx` — extend `importMarketplaceGoal`, add `autoScheduleTasks` helper (pure, exported for tests).
-- `src/components/life/GoalMarketplace.tsx` — add confirm dialog between click and import.
-- `src/components/life/Skills.tsx` — estimate line + "Schedule next sessions" button.
-- `src/lib/__tests__/app-data.test.tsx` — new test cases above.
+## Files
+
+- **Edit** `src/components/life/GoalMarketplace.tsx`: replace Submit button with Create Goal `<Link to="/create-goal">`.
+- **Create** `src/routes/create-goal.tsx`: route + AppShell wrapper.
+- **Create** `src/components/life/CreateGoalWizard.tsx`: the wizard UI.
+- **Create** `src/components/life/SchedulePresetPicker.tsx`: reusable popover used for tasks & subtasks.
+- **Edit** `src/lib/app-data.tsx` only if we need to extend `Recurrence` for `weekdays|biweekly|custom`. Recommended: add optional `recurrenceRule?: { byDay?: string[]; interval?: number; count?: number; until?: string; time?: string }` on `Task`/`SubTask` so calendar/scheduling can render exact occurrences without breaking existing data.
 
 ## Out of scope
 
-- Calendar UI changes, recurrence engine changes, marketplace JSON edits, dashboard, mindmap, radar.
-- Changing the existing `toggleSubtask` auto-complete behavior (kept as-is, only adds a regression test).
+- No marketplace JSON edits, no submission flow, no calendar UI refactor, no auth/cloud changes.
+- Editing existing goals stays in current Goals view (not touched).
+
+## Open question (will assume default if not answered)
+
+The existing `Recurrence` type only supports `none|daily|weekly|monthly|yearly`. To support weekdays/biweekly/custom-day patterns cleanly, I plan to add an optional `recurrenceRule` field on `Task`/`SubTask` (non-breaking). If you'd rather keep the data model untouched and limit presets to the existing five values, say so and I'll constrain the UI accordingly.
