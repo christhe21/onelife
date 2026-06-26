@@ -743,7 +743,7 @@ export function MindMapCanvas() {
                 )}
                 <text
                   textAnchor="middle"
-                  fill={ink}
+                  fill={n.kind === "root" || n.fill ? inkOn(n.fill) : ink}
                   style={{
                     fontFamily: font.family,
                     fontSize: font.size,
