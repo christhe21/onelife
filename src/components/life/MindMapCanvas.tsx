@@ -65,6 +65,24 @@ function darken(hex: string, amount = 0.4): string {
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 }
 
+// Pick black or white text based on the perceived luminance of a hex fill
+function inkOn(hex: string): string {
+  const h = hex.replace("#", "");
+  const full =
+    h.length === 3
+      ? h.split("").map((c) => c + c).join("")
+      : h.length >= 6
+        ? h.slice(0, 6)
+        : "888888";
+  const num = parseInt(full, 16);
+  const r = (num >> 16) & 0xff;
+  const g = (num >> 8) & 0xff;
+  const b = num & 0xff;
+  // Rec. 709 relative luminance
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return lum > 0.6 ? "#111827" : "#f9fafb";
+}
+
 function ensureFonts() {
   if (typeof document === "undefined") return;
   if (document.getElementById("mindmap-fonts")) return;
