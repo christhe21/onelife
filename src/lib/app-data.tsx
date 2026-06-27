@@ -405,63 +405,225 @@ function normalizeAppData(raw: any): AppData {
   };
 }
 
-const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user, then output a JSON file matching this shape exactly:
+const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user about who they are, what they care about, the seasons of life they are in, and what they want the next 1–12 months to look like. Then output a single JSON document (no markdown, no commentary) that matches the schema below EXACTLY. Every field listed is supported by the app; unknown fields are ignored.
+
+HIERARCHY (strict): Skill → Goal → SubGoal (a.k.a. milestone) → Task → SubTask.
+- Every Task MUST link to its parent via either subGoalId (preferred — milestone under a goal) OR goalId (only for "daily/standing" tasks that belong to a goal but not to a specific milestone, e.g. "Daily meditation" under goal "Mindfulness").
+- A Task with recurrence !== "none" is a daily/standing task: prefer goalId over subGoalId, and do NOT give it subtasks.
+- SubTasks inherit context from their parent Task. A SubTask MUST have startDate and endDate on the SAME calendar day if scheduled.
+- SubGoal targetDate MUST fall within its parent Goal's [startDate, targetDate] window.
+- Task/SubTask startDate/endDate MUST fall within the related Goal window if linked.
+
+DATES & TIMES:
+- "YYYY-MM-DD" for calendar-only dates (dueDate, targetDate, startDate on goals, subGoal.targetDate, bucket year via targetYear).
+- "YYYY-MM-DDTHH:mm:ss" (local, 24h) for scheduled calendar blocks (task/subtask startDate & endDate).
+- onboardedAt is a full ISO instant: "YYYY-MM-DDTHH:mm:ss.sssZ".
+
+HOURS:
+- plannedHours = total effort estimate for that item.
+- spentHours = accumulated time logged (auto-updated when scheduled blocks complete; you may seed it for prior progress).
+- hoursPerWeek on a subtask describes recurring weekly cadence and does NOT replace startDate/endDate.
+
+PROGRESS & STATE:
+- Goal.manualProgress (0–100) overrides computed progress when set.
+- Task.progress (0–100) records prior partial completion; Task.evidence is a freeform note (links, what's done so far).
+- done flags reflect completion. A Task with subtasks is considered done when all its subtasks are done.
+
+SCHEMA (TypeScript-ish, all fields optional unless marked REQUIRED):
 {
-  "version": 1,
-  "skills": [{"id":"string","label":"string","color":"#HEXHEX"}],
-  "settings": {
-    "birthYear": 1990, "userName": "string", "onboardedAt": "YYYY-MM-DDTHH:mm:ss.sssZ",
-    "textScale": "sm|base|lg|xl", "notificationsEnabled": true, "reminderLeadMinutes": 15
-  },
-  "goals": [{
-    "id": "string", "title": "string", "description": "string",
-    "skill": "life|technical|health|creative|financial|social|career|learning|<custom>",
-    "startDate": "YYYY-MM-DD", "targetDate": "YYYY-MM-DD",
-    "status": "not_started|in_progress|completed",
-    "currentActivity": "string", "manualProgress": 0,
-    "plannedHours": 40, "spentHours": 0,
-    "subGoals": [{"id":"string","title":"string","targetDate":"YYYY-MM-DD","done":false}]
-  }],
-  "tasks": [{
-    "id": "string", "title": "string", "dueDate": "YYYY-MM-DD",
-    "priority": "low|medium|high", "done": false, "subGoalId": "<subGoal id or omit>",
-    "progress": 0, "startDate": "YYYY-MM-DDTHH:mm:ss", "endDate": "YYYY-MM-DDTHH:mm:ss",
-    "evidence": "what has been done so far / links",
-    "plannedHours": 4, "spentHours": 0,
-    "subtasks": [{"id":"string","title":"string","done":false,"hoursPerWeek":2,"plannedHours":2,"spentHours":0,"startDate":"YYYY-MM-DDTHH:mm:ss","endDate":"YYYY-MM-DDTHH:mm:ss"}]
-  }],
-  "bucketList": [{"id":"string","title":"string","notes":"string","targetYear":2030,"achieved":false}]
+  "version": 1,                                        // REQUIRED, currently 1
+  "exportedAt": "YYYY-MM-DDTHH:mm:ss.sssZ",            // ISO instant the file was produced
+  "skills":   [Skill],                                 // user's skill palette (custom colors allowed)
+  "settings": Settings,                                // profile + preferences
+  "goals":    [Goal],                                  // top-level objectives
+  "tasks":    [Task],                                  // actionable work linked to goals/milestones
+  "bucketList":[BucketItem]                            // long-horizon wishes (no scheduling)
 }
-Use ISO YYYY-MM-DD dates for dates, and YYYY-MM-DDTHH:mm:ss for calendar specific times. plannedHours = total effort estimate for the goal/task/subtask; spentHours is auto-updated when scheduled blocks are completed. Capture prior progress with progress/startDate/evidence so partially-done work is preserved. Ensure calendar schedule dates (startDate, endDate) are fully populated if a task is scheduled for a specific time. For subtasks, startDate and endDate must always be on the same calendar day. hoursPerWeek defines recurrence, not the date range. Output ONLY the raw JSON without markdown codeblocks or other text.`;
+
+Skill       = { id: string, label: string, color: "#RRGGBB" }
+Settings    = {
+  birthYear?: number,                                  // for life-timeline / age math
+  userName?: string,
+  onboardedAt?: string,                                // ISO instant first onboarded
+  textScale?: "sm"|"base"|"lg"|"xl",
+  themeMode?: "light"|"dark"|"system",
+  themeColor?: "sage"|"ocean"|"sunset"|"lavender"|"monochrome"|"frieren",
+  notificationsEnabled?: boolean,
+  reminderLeadMinutes?: number,                        // minutes before event to remind
+  frierenSfx?: boolean                                 // sound effects when frieren theme is on
+}
+Goal = {
+  id: string, title: string, description?: string,
+  skill: SkillId,                                      // id from skills[] or a default ("life","technical","health","creative","financial","social","career","learning")
+  startDate: "YYYY-MM-DD", targetDate: "YYYY-MM-DD",   // REQUIRED window
+  status: "not_started"|"in_progress"|"completed",
+  currentActivity?: string,                            // 1-line "what I'm doing right now"
+  manualProgress?: 0..100,
+  plannedHours?: number, spentHours?: number,
+  subGoals: [ SubGoal ]                                // milestones (REQUIRED array; may be empty but prefer 1+)
+}
+SubGoal = { id: string, title: string, targetDate?: "YYYY-MM-DD", done: boolean }
+Task = {
+  id: string, title: string,
+  dueDate?: "YYYY-MM-DD",                              // soft deadline
+  priority: "low"|"medium"|"high",                     // REQUIRED
+  done: boolean,                                       // REQUIRED
+  subGoalId?: string,                                  // link to milestone (preferred for one-off work)
+  goalId?: string,                                     // link directly to goal (use for daily/standing tasks)
+  progress?: 0..100, evidence?: string,
+  startDate?: "YYYY-MM-DDTHH:mm:ss", endDate?: "YYYY-MM-DDTHH:mm:ss",
+  plannedHours?: number, spentHours?: number,
+  recurrence?: "none"|"daily"|"weekly"|"monthly"|"yearly",
+  subtasks: [ SubTask ]                                // REQUIRED array; [] if none. Empty when recurrence !== "none".
+}
+SubTask = {
+  id: string, title: string, done: boolean,
+  description?: string,
+  priority?: "low"|"medium"|"high",
+  hoursPerWeek?: number,                               // weekly cadence; not a substitute for dates
+  startDate?: "YYYY-MM-DDTHH:mm:ss", endDate?: "YYYY-MM-DDTHH:mm:ss",  // same calendar day
+  plannedHours?: number, spentHours?: number,
+  recurrence?: "none"|"daily"|"weekly"|"monthly"|"yearly"
+}
+BucketItem = { id: string, title: string, notes?: string, targetYear?: number, achieved: boolean }
+
+VALIDATION CHECKLIST BEFORE EMITTING:
+1. Every goal has subGoals: [] (may be empty) and a valid [startDate, targetDate].
+2. Every task links via subGoalId OR goalId (never neither when goals exist) and has subtasks: [].
+3. Recurring tasks: subtasks=[], prefer goalId.
+4. All datetimes obey their format; subtask block stays within one day.
+5. SubGoal targetDate ⊆ parent goal window; task/subtask dates ⊆ linked goal window.
+6. Output ONLY the raw JSON object. No prose, no code fences.`;
 
 export const TEMPLATE_PAYLOAD = {
   version: 1,
   exportedAt: "2026-01-01T00:00:00.000Z",
   _ai: {
+    purpose:
+      "Hand this file to an LLM. Paste the systemPrompt as the system message, describe yourself, and import the JSON the model returns.",
     instructions: "Copy systemPrompt into an LLM, get JSON back, import it.",
     systemPrompt: AI_SYSTEM_PROMPT,
   },
   _schema: {
-    skills: "id, label, color",
-    settings:
-      "birthYear, userName, onboardedAt, textScale, notificationsEnabled, reminderLeadMinutes",
-    goal: "title, description, skill, startDate, targetDate, status, currentActivity, manualProgress (0-100), plannedHours, spentHours, subGoals[]",
-    task: "title, priority, dueDate, subGoalId, progress (0-100), startDate, endDate, evidence, plannedHours, spentHours, subtasks[]", // subGoalId links task to a milestone (subgoal) under a goal
-    subtask:
-      "title, done, hoursPerWeek (auto-schedules .ics), startDate, endDate, plannedHours, spentHours",
-    bucketList: "title, notes, targetYear, achieved",
+    description:
+      "Field-level reference. Every section in this template ships a sample value plus the matching description here so a human or model can introspect the format without reading source.",
+    version: "Schema version. Currently 1. Required.",
+    exportedAt: "ISO instant when the file was produced. Informational.",
+    skills: {
+      description:
+        "User-defined skill palette. Goals reference a skill via Goal.skill = Skill.id. Default ids: life, technical, health, creative, financial, social, career, learning.",
+      fields: { id: "string", label: "string", color: "#RRGGBB hex" },
+    },
+    settings: {
+      description: "User profile and app preferences. All fields optional.",
+      fields: {
+        birthYear: "number — used for life-timeline calculations",
+        userName: "display name",
+        onboardedAt: "ISO instant the user first finished onboarding",
+        textScale: "sm | base | lg | xl",
+        themeMode: "light | dark | system",
+        themeColor: "sage | ocean | sunset | lavender | monochrome | frieren",
+        notificationsEnabled: "boolean",
+        reminderLeadMinutes: "minutes before an event to fire a reminder",
+        frierenSfx: "boolean — chimes/confetti while frieren theme active",
+      },
+    },
+    goal: {
+      description:
+        "Top-level objective. Owns milestones (subGoals). Tasks may link to it directly (daily/standing) or via a subGoal (preferred).",
+      fields: {
+        id: "string",
+        title: "string",
+        description: "longform purpose / why",
+        skill: "SkillId — must match a Skill.id",
+        startDate: "YYYY-MM-DD (required window start)",
+        targetDate: "YYYY-MM-DD (required window end)",
+        status: "not_started | in_progress | completed",
+        currentActivity: "one-line 'what I'm doing now'",
+        manualProgress: "0–100 override of computed progress",
+        plannedHours: "total effort estimate",
+        spentHours: "accumulated hours logged",
+        subGoals: "milestone array; each targetDate within goal window",
+      },
+    },
+    subGoal: {
+      description: "Milestone under a goal. Tasks link via subGoalId.",
+      fields: {
+        id: "string",
+        title: "string",
+        targetDate: "YYYY-MM-DD — within parent goal window",
+        done: "boolean",
+      },
+    },
+    task: {
+      description:
+        "Actionable item. Must link via subGoalId (milestone) OR goalId (for recurring/daily). Empty subtasks=[] when recurrence !== 'none'.",
+      fields: {
+        id: "string",
+        title: "string",
+        dueDate: "YYYY-MM-DD soft deadline",
+        priority: "low | medium | high (required)",
+        done: "boolean (required)",
+        subGoalId: "milestone id (preferred for one-off work)",
+        goalId: "goal id (use for daily/standing tasks)",
+        progress: "0–100 prior progress",
+        evidence: "freeform notes / links",
+        startDate: "YYYY-MM-DDTHH:mm:ss scheduled block start",
+        endDate: "YYYY-MM-DDTHH:mm:ss scheduled block end",
+        plannedHours: "estimate",
+        spentHours: "logged hours",
+        recurrence: "none | daily | weekly | monthly | yearly",
+        subtasks: "SubTask[]; required array (may be empty)",
+      },
+    },
+    subtask: {
+      description:
+        "Atomic step under a task. If scheduled, startDate & endDate must be the same calendar day.",
+      fields: {
+        id: "string",
+        title: "string",
+        done: "boolean",
+        description: "optional note",
+        priority: "low | medium | high (optional)",
+        hoursPerWeek: "weekly recurrence cadence; not a substitute for dates",
+        startDate: "YYYY-MM-DDTHH:mm:ss",
+        endDate: "YYYY-MM-DDTHH:mm:ss (same day as startDate)",
+        plannedHours: "estimate",
+        spentHours: "logged hours",
+        recurrence: "none | daily | weekly | monthly | yearly",
+      },
+    },
+    bucketList: {
+      description: "Long-horizon wishes. Not scheduled on the calendar.",
+      fields: {
+        id: "string",
+        title: "string",
+        notes: "context / where / with whom",
+        targetYear: "number",
+        achieved: "boolean",
+      },
+    },
   },
   skills: [
     { id: "life", label: "Life", color: "#10b981" },
     { id: "technical", label: "Technical", color: "#3b82f6" },
+    { id: "health", label: "Health", color: "#ef4444" },
+    { id: "creative", label: "Creative", color: "#a855f7" },
+    { id: "financial", label: "Financial", color: "#eab308" },
+    { id: "social", label: "Social", color: "#ec4899" },
+    { id: "career", label: "Career", color: "#6366f1" },
+    { id: "learning", label: "Learning", color: "#14b8a6" },
   ],
   settings: {
     birthYear: 1990,
     userName: "Alex",
     onboardedAt: "2026-01-01T00:00:00.000Z",
     textScale: "base",
+    themeMode: "system",
+    themeColor: "sage",
     notificationsEnabled: true,
     reminderLeadMinutes: 15,
+    frierenSfx: false,
   },
   goals: [
     {
@@ -482,6 +644,20 @@ export const TEMPLATE_PAYLOAD = {
       ],
     },
     {
+      id: "g_mindful",
+      title: "Establish a daily mindfulness habit",
+      description: "10 minutes of breath-focused meditation every morning.",
+      skill: "life",
+      startDate: "2026-01-01",
+      targetDate: "2026-12-31",
+      status: "in_progress",
+      currentActivity: "Sitting 5 mornings / week",
+      manualProgress: 25,
+      plannedHours: 60,
+      spentHours: 14,
+      subGoals: [],
+    },
+    {
       id: "g_react",
       title: "Ship a portfolio site",
       description: "Personal site showcasing 3 projects.",
@@ -489,12 +665,13 @@ export const TEMPLATE_PAYLOAD = {
       startDate: "2026-02-01",
       targetDate: "2026-04-30",
       status: "not_started",
-      currentActivity: "Planning Phase",
+      currentActivity: "Planning phase",
       manualProgress: 0,
       plannedHours: 40,
       spentHours: 0,
       subGoals: [
         { id: "sg3", title: "Complete wireframes", targetDate: "2026-02-15", done: false },
+        { id: "sg4", title: "Deploy v1", targetDate: "2026-04-15", done: false },
       ],
     },
   ],
@@ -505,33 +682,39 @@ export const TEMPLATE_PAYLOAD = {
       dueDate: "2026-02-10",
       priority: "high",
       done: false,
-      subGoalId: undefined,
+      subGoalId: "sg3",
       progress: 35,
       startDate: "2026-02-03T09:00:00",
       endDate: "2026-02-03T11:00:00",
       evidence: "Drafted hero + about copy in Notion.",
       plannedHours: 6,
       spentHours: 2,
+      recurrence: "none",
       subtasks: [
         {
           id: "st1",
           title: "Pick 3 projects",
           done: true,
+          description: "Choose work that shows range.",
+          priority: "high",
           hoursPerWeek: 0,
           plannedHours: 1,
           spentHours: 1,
           startDate: "2026-02-03T09:00:00",
           endDate: "2026-02-03T10:00:00",
+          recurrence: "none",
         },
         {
           id: "st2",
           title: "Write case studies",
           done: false,
+          priority: "medium",
           hoursPerWeek: 3,
           plannedHours: 5,
           spentHours: 1,
           startDate: "2026-02-04T13:00:00",
-          endDate: "2026-02-25T17:00:00",
+          endDate: "2026-02-04T17:00:00",
+          recurrence: "weekly",
         },
       ],
     },
@@ -541,25 +724,28 @@ export const TEMPLATE_PAYLOAD = {
       dueDate: "2026-02-04",
       priority: "medium",
       done: true,
-      subGoalId: undefined,
+      subGoalId: "sg2",
       progress: 100,
       startDate: "2026-02-04T07:00:00",
       endDate: "2026-02-04T08:00:00",
       evidence: "8x400m @ 5:00/km",
       plannedHours: 1,
       spentHours: 1,
-      subtasks: [
-        {
-          id: "st3",
-          title: "Warmup 10 mins",
-          done: true,
-          hoursPerWeek: 0,
-          plannedHours: 0.2,
-          spentHours: 0.2,
-          startDate: "2026-02-04T07:00:00",
-          endDate: "2026-02-04T07:10:00",
-        },
-      ],
+      recurrence: "weekly",
+      subtasks: [],
+    },
+    {
+      id: "t_meditate",
+      title: "Morning meditation",
+      priority: "low",
+      done: false,
+      goalId: "g_mindful",
+      plannedHours: 0.2,
+      spentHours: 0,
+      recurrence: "daily",
+      startDate: "2026-01-02T06:30:00",
+      endDate: "2026-01-02T06:40:00",
+      subtasks: [],
     },
   ],
   bucketList: [
@@ -568,6 +754,13 @@ export const TEMPLATE_PAYLOAD = {
       title: "See the northern lights",
       notes: "Iceland or Tromsø",
       targetYear: 2028,
+      achieved: false,
+    },
+    {
+      id: "b2",
+      title: "Run a marathon",
+      notes: "Bonus: a flat course like Berlin.",
+      targetYear: 2030,
       achieved: false,
     },
   ],
