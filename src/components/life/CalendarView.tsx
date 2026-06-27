@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Download, Clock, Target, ListTodo, CheckCircle2, Circle } from "lucide-react";
 import { useAppData, type Task, type SubTask } from "@/lib/app-data";
 import { downloadICS } from "@/lib/calendar-export";
 import {
@@ -280,9 +280,9 @@ export function CalendarView() {
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 h-full flex flex-col">
+      <Card className="flex-1 flex flex-col border-none shadow-none bg-transparent">
+        <CardHeader className="flex flex-col gap-3 pb-3 sm:flex-row sm:items-center sm:justify-between shrink-0 px-0 sm:px-0 pt-0 sm:pt-0">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-primary" />
             <CardTitle className="text-base sm:text-lg">{headerLabel}</CardTitle>
@@ -352,7 +352,7 @@ export function CalendarView() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
           {view === "month" && (
             <MonthGrid
               cursor={cursor}
@@ -391,38 +391,63 @@ export function CalendarView() {
       </Card>
 
       <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
-        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-4 overflow-x-hidden overflow-y-auto border-2 border-primary/60 p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-6 overflow-x-hidden overflow-y-auto border-2 border-primary/20 p-6">
+          <DialogHeader className="gap-2">
+            <div className="flex items-start gap-3">
               <span
-                className="h-3 w-3 rounded-full shrink-0"
+                className="mt-1.5 h-4 w-4 shrink-0 rounded-full"
                 style={{ backgroundColor: selectedEvent?.color }}
               />
-              <span className="min-w-0 break-words">{selectedEvent?.title}</span>
-            </DialogTitle>
-            <DialogDescription>
-              {selectedEvent && `${hm(selectedEvent.start)} - ${hm(selectedEvent.end)}`}
-            </DialogDescription>
+              <div className="flex flex-col gap-1 text-left">
+                <DialogTitle className="text-xl leading-tight min-w-0 break-words">
+                  {selectedEvent?.title}
+                </DialogTitle>
+                <DialogDescription className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4" />
+                  {selectedEvent && `${hm(selectedEvent.start)} - ${hm(selectedEvent.end)}`}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="flex flex-col gap-2">
+
+          <div className="flex flex-col gap-4 rounded-lg bg-muted/30 p-4">
             {selectedEvent?.isSub && (
-              <div className="text-sm break-words">
-                <strong>Parent Task:</strong> {selectedEvent.parentTitle}
+              <div className="flex items-start gap-3 text-sm">
+                <ListTodo className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div>
+                  <span className="font-semibold text-foreground/80 block">Parent Task</span>
+                  <span className="break-words text-muted-foreground">{selectedEvent.parentTitle}</span>
+                </div>
               </div>
             )}
             {selectedEvent?.goalTitle && (
-              <div className="text-sm break-words">
-                <strong>Goal:</strong> {selectedEvent.goalTitle}
+              <div className="flex items-start gap-3 text-sm">
+                <Target className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div>
+                  <span className="font-semibold text-foreground/80 block">Goal</span>
+                  <span className="break-words text-muted-foreground">{selectedEvent.goalTitle}</span>
+                </div>
               </div>
             )}
-            <div className="text-sm">
-              <strong>Status:</strong> {selectedEvent?.done ? "Completed" : "Pending"}
+            <div className="flex items-center gap-3 text-sm">
+              {selectedEvent?.done ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+              ) : (
+                <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+              <div>
+                <span className="font-semibold text-foreground/80 mr-2">Status:</span>
+                <span className={cn("font-medium", selectedEvent?.done ? "text-primary" : "text-muted-foreground")}>
+                  {selectedEvent?.done ? "Completed" : "Pending"}
+                </span>
+              </div>
             </div>
           </div>
+
           <DialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
             <Button
               variant="outline"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto order-last sm:order-first"
               onClick={() => setEventDetailsOpen(false)}
             >
               Close
@@ -558,8 +583,8 @@ function MonthGrid({
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-end gap-3 px-3 py-1.5 text-[10px] text-muted-foreground">
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-end gap-3 px-3 py-1.5 text-[10px] text-muted-foreground shrink-0 border-b border-border/40">
         <span className="inline-flex items-center gap-1">
           <span
             className="h-2 w-2 rounded-sm"
@@ -581,7 +606,7 @@ function MonthGrid({
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7">
+      <div className="grid grid-cols-7 flex-1 min-h-0 overflow-y-auto">
         {cells.map((d, i) => {
           const key = ymd(d);
           const dayEvents = eventsByDay.get(key) ?? [];
@@ -610,10 +635,10 @@ function MonthGrid({
               }}
               className={cn(
                 "group relative flex cursor-pointer flex-col gap-1 border-b border-r p-1.5 text-left transition hover:bg-muted/40",
-                isMobile ? "min-h-[56px]" : "min-h-[96px]",
+                isMobile ? "min-h-[56px]" : "min-h-[120px] h-full",
                 (i + 1) % 7 === 0 && "border-r-0",
                 isOtherMonth && "text-muted-foreground",
-                isDragOver && "ring-2 ring-inset ring-primary",
+                isDragOver && "ring-2 ring-inset ring-primary bg-primary/10",
               )}
               style={{ backgroundColor: heatBg(stats?.completed ?? 0) }}
             >
@@ -658,8 +683,8 @@ function MonthGrid({
                   </div>
                 )
               ) : (
-                <div className="flex flex-col gap-0.5">
-                  {dayEvents.slice(0, 3).map((e) => (
+                <div className="flex flex-col gap-1 mt-1 overflow-y-auto pr-1 no-scrollbar flex-1">
+                  {dayEvents.map((e) => (
                     <span
                       key={e.id}
                       draggable
@@ -673,24 +698,20 @@ function MonthGrid({
                         onEventClick(e);
                       }}
                       className={cn(
-                        "cursor-grab truncate rounded px-1 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing",
+                        "cursor-grab truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-sm shrink-0",
                         e.done && "line-through opacity-60",
                       )}
                       style={{
-                        backgroundColor: `color-mix(in oklab, ${e.color} 18%, transparent)`,
-                        color: e.color,
-                        borderLeft: `2px solid ${e.color}`,
+                        backgroundColor: `color-mix(in oklab, ${e.color} 15%, transparent)`,
+                        color: `color-mix(in oklab, ${e.color} 80%, currentColor)`,
+                        border: `1px solid color-mix(in oklab, ${e.color} 40%, transparent)`,
+                        borderLeft: `3px solid ${e.color}`,
                       }}
                       title={`${hm(e.start)} ${e.title} — drag to reschedule`}
                     >
                       {hm(e.start)} {e.title}
                     </span>
                   ))}
-                  {dayEvents.length > 3 && (
-                    <span className="px-1 text-[10px] text-muted-foreground">
-                      +{dayEvents.length - 3} more
-                    </span>
-                  )}
                 </div>
               )}
             </div>
@@ -772,8 +793,12 @@ function WeekGrid({
                   style={{ top: nowTop - 6 }}
                   aria-label={`Now ${nowLabel}`}
                 >
-                  <span className="rounded bg-destructive px-1 py-px text-[9px] font-semibold leading-none text-destructive-foreground tabular-nums">
+                  <span className="rounded bg-primary px-1 py-px text-[9px] font-semibold leading-none text-primary-foreground tabular-nums relative">
                     {nowLabel}
+                    <span className="absolute -left-1 -top-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
                   </span>
                 </div>
               )}
@@ -813,8 +838,8 @@ function WeekGrid({
                       className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
                       style={{ top: nowTop - 1 }}
                     >
-                      <div className="h-px flex-1 bg-destructive" />
-                      <span className="mr-1 h-2 w-2 rounded-full bg-destructive" />
+                      <div className="h-px flex-1 bg-primary" />
+                      <span className="mr-1 h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
                     </div>
                   )}
                   {HOURS.map((h) => (
@@ -846,19 +871,21 @@ function WeekGrid({
                         }}
                         title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
-                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md border bg-card px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col",
+                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col transition-all hover:scale-[1.02] hover:shadow-md hover:z-10",
                           e.done && "opacity-60 line-through",
                         )}
                         style={{
                           top,
                           height,
-                          borderLeft: `3px solid ${e.color}`,
+                          backgroundColor: `color-mix(in oklab, ${e.color} 15%, transparent)`,
+                          border: `1px solid color-mix(in oklab, ${e.color} 40%, transparent)`,
+                          borderLeft: `4px solid ${e.color}`,
                         }}
                       >
-                        <div className="break-words font-medium leading-tight mb-0.5 line-clamp-2">
+                        <div className="break-words font-medium leading-tight mb-0.5 line-clamp-2" style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}>
                           {e.title}
                         </div>
-                        <div className="truncate text-muted-foreground mt-auto">
+                        <div className="truncate opacity-80 mt-auto" style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}>
                           {hm(e.start)}–{hm(e.end)}
                         </div>
                       </div>
@@ -948,22 +975,28 @@ function DayGrid({
                     onEventClick(e);
                   }}
                   className={cn(
-                    "pointer-events-auto absolute left-1 right-1 rounded-md border bg-card px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden",
+                    "pointer-events-auto absolute left-1 right-1 rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 cursor-pointer",
                     e.done && "opacity-60 line-through",
                   )}
-                  style={{ top, height, borderLeft: `3px solid ${e.color}` }}
+                  style={{
+                    top,
+                    height,
+                    backgroundColor: `color-mix(in oklab, ${e.color} 15%, transparent)`,
+                    border: `1px solid color-mix(in oklab, ${e.color} 40%, transparent)`,
+                    borderLeft: `4px solid ${e.color}`
+                  }}
                 >
                   <div className="flex items-start gap-1.5 mb-1 shrink-0">
                     {e.isSub && (
-                      <Badge variant="outline" className="px-1 py-0 text-[9px] mt-0.5 shrink-0">
+                      <Badge variant="outline" className="px-1 py-0 text-[9px] mt-0.5 shrink-0" style={{ borderColor: `color-mix(in oklab, ${e.color} 50%, transparent)`, color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}>
                         sub
                       </Badge>
                     )}
-                    <span className="min-w-0 flex-1 break-words font-medium leading-tight line-clamp-2">
+                    <span className="min-w-0 flex-1 break-words font-medium leading-tight line-clamp-2" style={{ color: `color-mix(in oklab, ${e.color} 90%, currentColor)` }}>
                       {e.title}
                     </span>
                   </div>
-                  <div className="truncate text-[10px] text-muted-foreground mt-auto shrink-0">
+                  <div className="truncate text-[10px] opacity-80 mt-auto shrink-0" style={{ color: `color-mix(in oklab, ${e.color} 90%, currentColor)` }}>
                     {hm(e.start)}–{hm(e.end)}
                     {e.goalTitle ? ` · ${e.goalTitle}` : ""}
                     {e.parentTitle ? ` · ${e.parentTitle}` : ""}
@@ -979,11 +1012,15 @@ function DayGrid({
             style={{ top: nowTop - 1 }}
             aria-label={`Now ${nowLabel}`}
           >
-            <span className="ml-1 rounded bg-destructive px-1 py-px text-[9px] font-semibold leading-none text-destructive-foreground tabular-nums">
+            <span className="ml-1 rounded bg-primary px-1 py-px text-[9px] font-semibold leading-none text-primary-foreground tabular-nums relative">
               {nowLabel}
+              <span className="absolute -right-1 -top-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
             </span>
-            <div className="ml-1 h-px flex-1 bg-destructive" />
-            <span className="mr-1 h-2 w-2 rounded-full bg-destructive" />
+            <div className="ml-1 h-px flex-1 bg-primary shadow-[0_0_4px_hsl(var(--primary))]" />
+            <span className="mr-1 h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
           </div>
         )}
       </div>
