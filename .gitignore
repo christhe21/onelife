@@ -25,8 +25,8 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
-android/app/src/main/assets/www/*
-!android/app/src/main/assets/www/PLACEHOLDER.txt
+# populated from dist/client by scripts/copy-web-assets.sh
+android/app/src/main/assets/www/
 *.keystore
 *.jks
 
