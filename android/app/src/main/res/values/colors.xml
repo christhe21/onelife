@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors the web theme tokens in src/styles.css (default sage palette). -->
+    <color name="onelife_primary">#7d9b76</color>
+    <!-- background light: oklch(0.962 0.014 86) = #f5f0e8 cream -->
+    <color name="onelife_background">#f5f0e8</color>
+    <!-- background dark: oklch(0.22 0.015 130), a deep sage-ink -->
+    <color name="onelife_background_dark">#23261f</color>
+</resources>

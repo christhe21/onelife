@@ -1,5 +1,16 @@
 import { useEffect, useRef } from "react";
 import { useAppData } from "@/lib/app-data";
+import {
+  isNativeApp,
+  getNativeNotificationPermission,
+  nativeScheduleNotifications,
+  nativeCancelScheduledNotifications,
+  type ScheduledNotification,
+} from "@/lib/native-bridge";
+
+// AlarmManager handles at most a few dozen exact alarms comfortably; the
+// nearest reminders matter most anyway.
+const MAX_NATIVE_REMINDERS = 50;
 
 const SCALE_PX: Record<string, string> = {
   sm: "14px",
@@ -66,7 +77,40 @@ export function useAppSettingsEffects() {
     root.setAttribute("data-theme", settings.themeColor ?? "sage");
   }, [settings.themeColor]);
 
-  // Reminders
+  // Reminders — native path (Android shell). The WebView has no Notification
+  // API and pauses JS timers in the background, so upcoming reminders are
+  // handed to Kotlin, which schedules real alarms mirroring the same
+  // lead-time logic as the web polling path below.
+  useEffect(() => {
+    if (typeof window === "undefined" || !isNativeApp()) return;
+    if (!settings.notificationsEnabled || getNativeNotificationPermission() !== "granted") {
+      nativeCancelScheduledNotifications();
+      return;
+    }
+
+    const lead = Math.max(0, settings.reminderLeadMinutes ?? 10);
+    const now = Date.now();
+    const upcoming: ScheduledNotification[] = [];
+    for (const t of tasks) {
+      if (t.done || !t.startDate) continue;
+      const start = new Date(t.startDate).getTime();
+      if (Number.isNaN(start)) continue;
+      const fireAt = start - lead * 60_000;
+      if (fireAt <= now) continue;
+      const goal = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId));
+      upcoming.push({
+        id: t.id,
+        title: `Upcoming: ${t.title}`,
+        body: goal ? `In ${lead} min · ${goal.title}` : "Starts soon",
+        triggerAtMillis: fireAt,
+      });
+    }
+    upcoming.sort((a, b) => a.triggerAtMillis - b.triggerAtMillis);
+    nativeScheduleNotifications(upcoming.slice(0, MAX_NATIVE_REMINDERS));
+  }, [settings.notificationsEnabled, settings.reminderLeadMinutes, tasks, goals]);
+
+  // Reminders — web polling path (browsers). No-ops inside the Android shell
+  // because the WebView has no Notification API.
   const firedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (typeof window === "undefined") return;

@@ -20,6 +20,16 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Android (see ANDROID.md)
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+# populated from dist/client by scripts/copy-web-assets.sh
+android/app/src/main/assets/www/
+*.keystore
+*.jks
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

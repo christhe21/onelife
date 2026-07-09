@@ -9,6 +9,12 @@ import { Bell, BellOff, Type, Music, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppData, type TextScale, type ThemeMode, type ThemeColor } from "@/lib/app-data";
 import { celebrate } from "@/lib/celebrate";
+import {
+  isNativeApp,
+  getNativeNotificationPermission,
+  requestNativeNotificationPermission,
+  nativeShowNotification,
+} from "@/lib/native-bridge";
 import { Palette, Moon } from "lucide-react";
 import {
   Select,
@@ -53,7 +59,9 @@ export function SettingsView() {
   const { settings, updateSettings } = useAppData();
   const current: TextScale = settings.textScale ?? "base";
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
-    typeof Notification === "undefined" ? "unsupported" : Notification.permission,
+    () =>
+      getNativeNotificationPermission() ??
+      (typeof Notification === "undefined" ? "unsupported" : Notification.permission),
   );
   const [name, setName] = useState(settings.userName ?? "");
   const [lead, setLead] = useState<number>(settings.reminderLeadMinutes ?? 10);
@@ -61,6 +69,19 @@ export function SettingsView() {
   useEffect(() => setName(settings.userName ?? ""), [settings.userName]);
 
   const enableNotifications = async () => {
+    // Android shell: route through the native POST_NOTIFICATIONS permission.
+    if (isNativeApp()) {
+      const p = await requestNativeNotificationPermission();
+      setPermission(p);
+      if (p === "granted") {
+        updateSettings({ notificationsEnabled: true });
+        nativeShowNotification("Reminders are on", "You'll be notified before scheduled tasks.");
+      } else {
+        updateSettings({ notificationsEnabled: false });
+        toast.error("Permission denied. Enable it in your device's app settings.");
+      }
+      return;
+    }
     if (typeof Notification === "undefined") {
       toast.error("This browser doesn't support notifications.");
       return;
