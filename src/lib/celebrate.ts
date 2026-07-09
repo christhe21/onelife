@@ -7,11 +7,15 @@ type Kind = "task" | "milestone" | "goal";
 
 const STORAGE_KEY = "life-manager:v1";
 
-// Royalty-free chimes from Mixkit (stable CDN URLs).
+// Royalty-free chimes from Mixkit, self-hosted (public/sfx) so they play offline
+// (e.g. inside the Android APK).
+// KNOWN ISSUE: the milestone chime's upstream URL (mixkit sfx/1435) now returns 403,
+// so the asset could not be self-hosted. It keeps the original remote URL and fails
+// silently — exactly the current production behavior. See ANDROID.md "Known issues".
 const SFX_URLS: Record<Kind, string> = {
-  task: "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3",
+  task: "/sfx/task-chime.mp3",
   milestone: "https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3",
-  goal: "https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3",
+  goal: "/sfx/goal-chime.mp3",
 };
 
 const audioCache = new Map<string, HTMLAudioElement>();

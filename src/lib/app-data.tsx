@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { getFrierenVocabulary } from "./frieren";
 import { celebrate } from "./celebrate";
+import { nativeSaveFile } from "./native-bridge";
 
 
 export interface Skill {
@@ -124,7 +125,11 @@ const STATUSES: GoalStatus[] = ["not_started", "in_progress", "completed"];
 const PRIORITIES: Task["priority"][] = ["low", "medium", "high"];
 
 function downloadJSON(payload: unknown, filename: string) {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const text = JSON.stringify(payload, null, 2);
+  // Inside the Android shell, anchor-clicking a blob: URL does nothing —
+  // route through the native "Save as" dialog instead.
+  if (nativeSaveFile(filename, "application/json", text)) return;
+  const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

@@ -1,4 +1,5 @@
 import type { Task } from "@/lib/app-data";
+import { nativeSaveFile } from "@/lib/native-bridge";
 
 const BLOCK_MINUTES = 20;
 const DAY_START_HOUR = 9; // 09:00
@@ -183,11 +184,15 @@ export function downloadICS(tasks: Task[], goalsTitleById: Record<string, string
     return;
   }
   const ics = blocksToICS(blocks);
+  const filename = `life-manager-schedule-${new Date().toISOString().slice(0, 10)}.ics`;
+  // Inside the Android shell, anchor-clicking a blob: URL does nothing —
+  // route through the native "Save as" dialog instead.
+  if (nativeSaveFile(filename, "text/calendar", ics)) return;
   const blob = new Blob([ics], { type: "text/calendar" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `life-manager-schedule-${new Date().toISOString().slice(0, 10)}.ics`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
