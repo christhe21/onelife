@@ -49,7 +49,6 @@ export function GoalMarketplace({ onImport }: Props) {
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [view, setView] = useState<ViewMode>("grid");
 
-
   const allTags = useMemo(() => {
     const set = new Set<string>();
     MARKETPLACE_GOALS.forEach((t) => t.tags?.forEach((tag) => set.add(tag)));
@@ -240,7 +239,6 @@ function AutoScheduleDialog({
   );
 }
 
-
 function TemplateCard({
   template,
   onView,
@@ -259,10 +257,7 @@ function TemplateCard({
             {template.skillName}
           </Badge>
           {template.verified && (
-            <Badge
-              variant="outline"
-              className="gap-1 border-primary/20 bg-primary/5 text-primary"
-            >
+            <Badge variant="outline" className="gap-1 border-primary/20 bg-primary/5 text-primary">
               <ShieldCheck className="h-3 w-3" />
               Verified
             </Badge>
@@ -281,9 +276,7 @@ function TemplateCard({
             <Clock className="h-4 w-4" />
             <span>{template.durationDays} Days</span>
           </div>
-          {template.difficulty && (
-            <span className="capitalize">{template.difficulty}</span>
-          )}
+          {template.difficulty && <span className="capitalize">{template.difficulty}</span>}
         </div>
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">

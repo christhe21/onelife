@@ -3,7 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Download, Clock, Target, ListTodo, CheckCircle2, Circle } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  CalendarDays,
+  Download,
+  Clock,
+  Target,
+  ListTodo,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import { useAppData, type Task, type SubTask } from "@/lib/app-data";
 import { downloadICS } from "@/lib/calendar-export";
 import {
@@ -102,10 +113,14 @@ function sameDay(a: Date, b: Date) {
   return ymd(a) === ymd(b);
 }
 function hm(d: Date) {
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, "0");
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return `${h12}:${m} ${ampm}`;
 }
 
-export function CalendarView() {
+export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
   const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } =
     useAppData();
   const isMobile = useIsMobile();
@@ -399,7 +414,15 @@ export function CalendarView() {
                 style={{ backgroundColor: selectedEvent?.color }}
               />
               <div className="flex flex-col gap-1 text-left">
-                <DialogTitle className="text-xl leading-tight min-w-0 break-words">
+                <DialogTitle
+                  className="text-xl leading-tight min-w-0 break-words cursor-pointer hover:underline"
+                  onClick={() => {
+                    if (onGoTasks && window.confirm("Navigate to tasks page to view details?")) {
+                      setEventDetailsOpen(false);
+                      onGoTasks();
+                    }
+                  }}
+                >
                   {selectedEvent?.title}
                 </DialogTitle>
                 <DialogDescription className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -416,7 +439,9 @@ export function CalendarView() {
                 <ListTodo className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div>
                   <span className="font-semibold text-foreground/80 block">Parent Task</span>
-                  <span className="break-words text-muted-foreground">{selectedEvent.parentTitle}</span>
+                  <span className="break-words text-muted-foreground">
+                    {selectedEvent.parentTitle}
+                  </span>
                 </div>
               </div>
             )}
@@ -425,7 +450,9 @@ export function CalendarView() {
                 <Target className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <div>
                   <span className="font-semibold text-foreground/80 block">Goal</span>
-                  <span className="break-words text-muted-foreground">{selectedEvent.goalTitle}</span>
+                  <span className="break-words text-muted-foreground">
+                    {selectedEvent.goalTitle}
+                  </span>
                 </div>
               </div>
             )}
@@ -437,7 +464,12 @@ export function CalendarView() {
               )}
               <div>
                 <span className="font-semibold text-foreground/80 mr-2">Status:</span>
-                <span className={cn("font-medium", selectedEvent?.done ? "text-primary" : "text-muted-foreground")}>
+                <span
+                  className={cn(
+                    "font-medium",
+                    selectedEvent?.done ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
                   {selectedEvent?.done ? "Completed" : "Pending"}
                 </span>
               </div>
@@ -808,7 +840,7 @@ function WeekGrid({
                   className="border-t pl-2 pt-0.5 text-[10px] tabular-nums text-muted-foreground"
                   style={{ height: HOUR_PX }}
                 >
-                  {String(h).padStart(2, "0")}:00
+                  {`${h % 12 || 12}:00 ${h >= 12 ? "PM" : "AM"}`}
                 </div>
               ))}
             </div>
@@ -882,10 +914,16 @@ function WeekGrid({
                           borderLeft: `4px solid ${e.color}`,
                         }}
                       >
-                        <div className="break-words font-medium leading-tight mb-0.5 line-clamp-2" style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}>
+                        <div
+                          className="break-words font-medium leading-tight mb-0.5 line-clamp-2"
+                          style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}
+                        >
                           {e.title}
                         </div>
-                        <div className="truncate opacity-80 mt-auto" style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}>
+                        <div
+                          className="truncate opacity-80 mt-auto"
+                          style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}
+                        >
                           {hm(e.start)}–{hm(e.end)}
                         </div>
                       </div>
@@ -942,7 +980,7 @@ function DayGrid({
             style={{ height: HOUR_PX }}
           >
             <span className="w-12 shrink-0 pl-2 pt-0.5 text-[10px] tabular-nums text-muted-foreground">
-              {String(h).padStart(2, "0")}:00
+              {`${h % 12 || 12}:00 ${h >= 12 ? "PM" : "AM"}`}
             </span>
             <div className="flex-1" />
           </div>
@@ -962,11 +1000,25 @@ function DayGrid({
                 .
               </div>
             )}
-            {events.map((e) => {
+            {events.map((e, index) => {
               const startH = e.start.getHours() + e.start.getMinutes() / 60;
               const endH = Math.max(startH + 0.25, e.end.getHours() + e.end.getMinutes() / 60);
               const top = (startH - baseHour) * HOUR_PX;
               const height = Math.max(28, (endH - startH) * HOUR_PX - 4);
+
+              // Calculate overlap offset and z-index
+              const overlappingBefore = events.slice(0, index).filter((prevEvent) => {
+                const prevStartH = prevEvent.start.getHours() + prevEvent.start.getMinutes() / 60;
+                const prevEndH = Math.max(
+                  prevStartH + 0.25,
+                  prevEvent.end.getHours() + prevEvent.end.getMinutes() / 60,
+                );
+                return prevStartH < endH && prevEndH > startH;
+              });
+              const overlapIndex = overlappingBefore.length;
+              const zIndex = 20 - overlapIndex;
+              const leftOffset = 4 + overlapIndex * 16;
+
               return (
                 <div
                   key={e.id}
@@ -975,31 +1027,39 @@ function DayGrid({
                     onEventClick(e);
                   }}
                   className={cn(
-                    "pointer-events-auto absolute left-1 right-1 rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-10 cursor-pointer",
+                    "pointer-events-auto absolute right-1 rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-30 cursor-pointer",
                     e.done && "opacity-60 line-through",
                   )}
                   style={{
                     top,
                     height,
+                    left: `${leftOffset}px`,
+                    zIndex,
                     backgroundColor: `color-mix(in oklab, ${e.color} 15%, transparent)`,
                     border: `1px solid color-mix(in oklab, ${e.color} 40%, transparent)`,
-                    borderLeft: `4px solid ${e.color}`
+                    borderLeft: `4px solid ${e.color}`,
+                    backdropFilter: "blur(4px)",
                   }}
                 >
                   <div className="flex items-start gap-1.5 mb-1 shrink-0">
                     {e.isSub && (
-                      <Badge variant="outline" className="px-1 py-0 text-[9px] mt-0.5 shrink-0" style={{ borderColor: `color-mix(in oklab, ${e.color} 50%, transparent)`, color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}>
+                      <Badge
+                        variant="outline"
+                        className="px-1 py-0 text-[9px] mt-0.5 shrink-0 bg-background/50 backdrop-blur-sm"
+                        style={{
+                          borderColor: `color-mix(in oklab, ${e.color} 50%, transparent)`,
+                          color: `color-mix(in oklab, ${e.color} 80%, currentColor)`,
+                        }}
+                      >
                         sub
                       </Badge>
                     )}
-                    <span className="min-w-0 flex-1 break-words font-medium leading-tight line-clamp-2" style={{ color: `color-mix(in oklab, ${e.color} 90%, currentColor)` }}>
+                    <span
+                      className="min-w-0 flex-1 break-words font-medium leading-tight line-clamp-2"
+                      style={{ color: `color-mix(in oklab, ${e.color} 90%, currentColor)` }}
+                    >
                       {e.title}
                     </span>
-                  </div>
-                  <div className="truncate text-[10px] opacity-80 mt-auto shrink-0" style={{ color: `color-mix(in oklab, ${e.color} 90%, currentColor)` }}>
-                    {hm(e.start)}–{hm(e.end)}
-                    {e.goalTitle ? ` · ${e.goalTitle}` : ""}
-                    {e.parentTitle ? ` · ${e.parentTitle}` : ""}
                   </div>
                 </div>
               );

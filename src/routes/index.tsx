@@ -78,7 +78,7 @@ function Shell() {
           onGoCalendar={() => setTab("calendar")}
         />
       )}
-      {tab === "calendar" && <CalendarView />}
+      {tab === "calendar" && <CalendarView onGoTasks={() => setTab("tasks")} />}
       {tab === "overview" && <Overview />}
       {tab === "goals" && <Goals onGoMarketplace={() => setTab("marketplace")} />}
       {tab === "tasks" && <Tasks />}
@@ -91,7 +91,6 @@ function Shell() {
             importMarketplaceGoal(t, opts);
             setTab("goals");
           }}
-
         />
       )}
     </AppShell>

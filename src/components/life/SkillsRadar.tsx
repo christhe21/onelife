@@ -31,9 +31,7 @@ export function SkillsRadar() {
       const planned = gs.filter((g) => g.status !== "completed").length;
 
       const achieved =
-        total === 0
-          ? 0
-          : Math.round(gs.reduce((a, g) => a + progressFor(g, tasks), 0) / total);
+        total === 0 ? 0 : Math.round(gs.reduce((a, g) => a + progressFor(g, tasks), 0) / total);
 
       // "Planned" ceiling — how far you'd reach if every active/not-started
       // goal were completed. Equals 100 whenever any goals exist in the skill,
@@ -59,8 +57,8 @@ export function SkillsRadar() {
       <CardHeader className="pb-2">
         <CardTitle className="font-display text-base">Development radar</CardTitle>
         <p className="text-xs text-muted-foreground">
-          Solid shape = what you've achieved. Outer ring = your planned ambition
-          (in‑progress + not‑started goals).
+          Solid shape = what you've achieved. Outer ring = your planned ambition (in‑progress +
+          not‑started goals).
         </p>
       </CardHeader>
       <CardContent>
@@ -132,15 +130,11 @@ export function SkillsRadar() {
                     const p = item?.payload;
                     if (name === "Achieved")
                       return [`${val}% (${p?.doneGoals ?? 0}/${p?.totalGoals ?? 0} done)`, name];
-                    if (name === "Planned")
-                      return [`${p?.plannedGoals ?? 0} in pipeline`, name];
+                    if (name === "Planned") return [`${p?.plannedGoals ?? 0} in pipeline`, name];
                     return [val, name];
                   }}
                 />
-                <Legend
-                  wrapperStyle={{ fontSize: 12 }}
-                  iconType="circle"
-                />
+                <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
 
                 {/* Planned ceiling — translucent outer shell */}
                 <Radar

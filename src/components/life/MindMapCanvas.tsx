@@ -70,7 +70,10 @@ function inkOn(hex: string): string {
   const h = hex.replace("#", "");
   const full =
     h.length === 3
-      ? h.split("").map((c) => c + c).join("")
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
       : h.length >= 6
         ? h.slice(0, 6)
         : "888888";

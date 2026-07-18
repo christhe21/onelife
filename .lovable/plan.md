@@ -32,6 +32,7 @@ Inline "Schedule" popover per item with:
 - **Auto-schedule fallback**: button "Auto-place in free slots" — calls the existing `autoScheduleTasks` helper (9 AM–9 PM, no overlap) for items where the user doesn't define explicit recurrence.
 
 On Save, the wizard:
+
 - Creates the goal + subgoals via `addGoal`.
 - Creates each task via `addTask` with `recurrence` populated from the preset (mapped to existing `Recurrence` type: `none|daily|weekly|monthly|yearly` — store advanced custom rules as additional task fields only if already supported; otherwise fall back to closest preset + a description note. Confirm scope below.).
 - For items with auto-schedule selected, calls `autoScheduleTasks` after creation.

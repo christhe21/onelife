@@ -24,7 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
 const SCALES: { id: TextScale; label: string; size: string; px: number }[] = [
   { id: "sm", label: "Compact", size: "14px", px: 14 },
   { id: "base", label: "Default", size: "16px", px: 16 },
@@ -234,7 +233,6 @@ export function SettingsView() {
           </CardContent>
         </Card>
       )}
-
 
       <Card>
         <CardHeader>

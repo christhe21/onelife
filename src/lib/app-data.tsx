@@ -5,7 +5,6 @@ import { getFrierenVocabulary } from "./frieren";
 import { celebrate } from "./celebrate";
 import { nativeSaveFile } from "./native-bridge";
 
-
 export interface Skill {
   id: string;
   label: string;
@@ -108,7 +107,6 @@ export interface Settings {
   frierenSfx?: boolean;
 }
 
-
 export interface AppData {
   goals: Goal[];
   tasks: Task[];
@@ -198,7 +196,7 @@ export function autoScheduleTasks(
   const endBound = new Date(`${goalEnd}T23:59:59`);
   const today0 = new Date(now);
   today0.setHours(0, 0, 0, 0);
-  let cursor = new Date(Math.max(today0.getTime(), startBound.getTime()));
+  const cursor = new Date(Math.max(today0.getTime(), startBound.getTime()));
 
   function findSlot(durationH: number, fromDay: Date): { s: Date; e: Date } | null {
     const ms = Math.max(0.25, durationH) * 3_600_000;
@@ -273,8 +271,6 @@ export function autoScheduleTasks(
     return { ...t, subtasks: subs };
   });
 }
-
-
 
 function normalizeSubTask(raw: any): SubTask {
   return {
@@ -826,10 +822,12 @@ interface Ctx extends AppData {
   appendJSON: (file: File) => Promise<{ goals: number; tasks: number; bucket: number }>;
   replaceAll: (data: AppData) => void;
   clearAll: () => void;
-  importMarketplaceGoal: (template: MarketplaceGoalTemplate, opts?: { autoSchedule?: boolean }) => void;
+  importMarketplaceGoal: (
+    template: MarketplaceGoalTemplate,
+    opts?: { autoSchedule?: boolean },
+  ) => void;
   autoScheduleGoal: (goalId: string) => number;
   autoScheduleSkill: (skillId: string) => number;
-
 }
 
 const AppDataContext = createContext<Ctx | null>(null);
@@ -880,14 +878,9 @@ function loadInitial(): Stored {
             themeMode: ["light", "dark", "system"].includes(parsed.settings.themeMode)
               ? parsed.settings.themeMode
               : undefined,
-            themeColor: [
-              "sage",
-              "ocean",
-              "sunset",
-              "lavender",
-              "monochrome",
-              "frieren",
-            ].includes(parsed.settings.themeColor)
+            themeColor: ["sage", "ocean", "sunset", "lavender", "monochrome", "frieren"].includes(
+              parsed.settings.themeColor,
+            )
               ? parsed.settings.themeColor
               : undefined,
             notificationsEnabled:
@@ -905,7 +898,6 @@ function loadInitial(): Stored {
           }
         : {};
     return { ...data, skills, settings };
-
   } catch {
     return empty;
   }
@@ -974,7 +966,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           }
         }
 
-
         if (goalChanged) {
           changed = true;
           return { ...g, subGoals: newSubGoals, status: newStatus };
@@ -1008,7 +999,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     template: MarketplaceGoalTemplate,
     opts?: { autoSchedule?: boolean },
   ) => {
-
     let finalSkillId = skills.find(
       (s) => s.label.toLowerCase() === template.skillName.toLowerCase(),
     )?.id;
@@ -1095,8 +1085,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       const existing: Array<{ startDate?: string; endDate?: string }> = [];
       for (const t of tasks) {
         existing.push({ startDate: t.startDate, endDate: t.endDate });
-        for (const s of t.subtasks)
-          existing.push({ startDate: s.startDate, endDate: s.endDate });
+        for (const s of t.subtasks) existing.push({ startDate: s.startDate, endDate: s.endDate });
       }
       scheduledTasks = autoScheduleTasks(newTasks, startDate, targetDate, existing);
     }
@@ -1131,8 +1120,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     for (const t of tasks) {
       if (goalTasks.find((gt) => gt.id === t.id)) continue;
       otherBlocks.push({ startDate: t.startDate, endDate: t.endDate });
-      for (const s of t.subtasks)
-        otherBlocks.push({ startDate: s.startDate, endDate: s.endDate });
+      for (const s of t.subtasks) otherBlocks.push({ startDate: s.startDate, endDate: s.endDate });
     }
     const rescheduled = autoScheduleTasks(goalTasks, goal.startDate, goal.targetDate, otherBlocks);
     const byId = new Map(rescheduled.map((t) => [t.id, t]));
@@ -1155,7 +1143,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     for (const g of goals) if (g.skill === skillId) total += autoScheduleGoalFn(g.id);
     return total;
   };
-
 
   const value: Ctx = {
     goals,
@@ -1402,7 +1389,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             if (nowDone) celebrate("task");
             return { ...s, done: nowDone, spentHours: nextSpent };
           });
-
 
           let nextTaskDone = t.done;
           const allSubsDone = subtasks.length > 0 && subtasks.every((s) => s.done);

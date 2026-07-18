@@ -65,9 +65,7 @@ describe("autoScheduleTasks", () => {
     expect(out.subtasks[0].startDate).toBeTruthy();
     expect(out.subtasks[0].endDate).toBeTruthy();
     // same calendar day invariant
-    expect(out.subtasks[0].startDate!.slice(0, 10)).toEqual(
-      out.subtasks[0].endDate!.slice(0, 10),
-    );
+    expect(out.subtasks[0].startDate!.slice(0, 10)).toEqual(out.subtasks[0].endDate!.slice(0, 10));
     expect(out.subtasks[1].startDate).toBeTruthy();
   });
 
@@ -156,8 +154,6 @@ describe("toggleSubtask cascading completion", () => {
     expect(updated.done).toBe(true);
   });
 });
-
-
 
 describe("AppData cascading deletes", () => {
   test("deleteGoal removes tasks associated with its subGoals", () => {

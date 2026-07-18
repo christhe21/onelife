@@ -99,9 +99,7 @@ export function CreateGoalWizard() {
   const [plannedHours, setPlannedHours] = useState<number | undefined>(undefined);
 
   // Sub-goals
-  const [subGoals, setSubGoals] = useState<DraftSubGoal[]>([
-    { key: newKey(), title: "General" },
-  ]);
+  const [subGoals, setSubGoals] = useState<DraftSubGoal[]>([{ key: newKey(), title: "General" }]);
 
   // Tasks
   const [draftTasks, setDraftTasks] = useState<DraftTask[]>([]);
@@ -133,8 +131,7 @@ export function CreateGoalWizard() {
     ]);
   const updateTaskRow = (key: string, patch: Partial<DraftTask>) =>
     setDraftTasks((ts) => ts.map((t) => (t.key === key ? { ...t, ...patch } : t)));
-  const removeTaskRow = (key: string) =>
-    setDraftTasks((ts) => ts.filter((t) => t.key !== key));
+  const removeTaskRow = (key: string) => setDraftTasks((ts) => ts.filter((t) => t.key !== key));
 
   const addSubtaskTo = (taskKey: string) =>
     updateTaskRow(taskKey, {
@@ -212,7 +209,7 @@ export function CreateGoalWizard() {
       const hasSubs = dt.subtasks.length > 0;
 
       // Build raw subtasks first
-      let subtasks = dt.subtasks
+      const subtasks = dt.subtasks
         .filter((s) => s.title.trim())
         .map((s) => {
           const { startDate: sStart, endDate: sEnd } = combine(
@@ -270,9 +267,7 @@ export function CreateGoalWizard() {
           startDate: dt.autoPlace ? undefined : taskShell.startDate,
           endDate: dt.autoPlace ? undefined : taskShell.endDate,
           subtasks: taskShell.subtasks.map((s) => {
-            const ds = dt.subtasks.find(
-              (x) => x.title.trim() === s.title && x.key && s.title,
-            );
+            const ds = dt.subtasks.find((x) => x.title.trim() === s.title && x.key && s.title);
             if (ds?.autoPlace && !ds.startDate) {
               return { ...s, startDate: undefined, endDate: undefined };
             }
@@ -332,7 +327,11 @@ export function CreateGoalWizard() {
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <Label>Title</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Run a half marathon" />
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Run a half marathon"
+            />
           </div>
           <div className="sm:col-span-2">
             <Label>Description</Label>
@@ -364,9 +363,7 @@ export function CreateGoalWizard() {
               type="number"
               min={0}
               value={plannedHours ?? ""}
-              onChange={(e) =>
-                setPlannedHours(e.target.value ? Number(e.target.value) : undefined)
-              }
+              onChange={(e) => setPlannedHours(e.target.value ? Number(e.target.value) : undefined)}
             />
           </div>
           <div>
@@ -393,7 +390,10 @@ export function CreateGoalWizard() {
             <p className="text-sm text-muted-foreground">No milestones yet.</p>
           )}
           {subGoals.map((s) => (
-            <div key={s.key} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_180px_auto]">
+            <div
+              key={s.key}
+              className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_180px_auto]"
+            >
               <Input
                 value={s.title}
                 onChange={(e) => updateSub(s.key, { title: e.target.value })}
@@ -546,13 +546,19 @@ export function CreateGoalWizard() {
                   <div className="space-y-2 rounded-md border border-dashed p-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Subtasks</span>
-                      <Button size="sm" variant="ghost" onClick={() => addSubtaskTo(t.key)} className="gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => addSubtaskTo(t.key)}
+                        className="gap-1"
+                      >
                         <Plus className="h-3.5 w-3.5" /> Add subtask
                       </Button>
                     </div>
                     {t.subtasks.length === 0 && (
                       <p className="text-xs text-muted-foreground">
-                        If a task has subtasks, only subtasks are scheduled. The task auto-completes when all subtasks are done.
+                        If a task has subtasks, only subtasks are scheduled. The task auto-completes
+                        when all subtasks are done.
                       </p>
                     )}
                     {t.subtasks.map((s) => (
@@ -560,7 +566,9 @@ export function CreateGoalWizard() {
                         <div className="flex items-center gap-2">
                           <Input
                             value={s.title}
-                            onChange={(e) => updateSubtaskOf(t.key, s.key, { title: e.target.value })}
+                            onChange={(e) =>
+                              updateSubtaskOf(t.key, s.key, { title: e.target.value })
+                            }
                             placeholder="Subtask title"
                             className="flex-1"
                           />
@@ -656,7 +664,10 @@ function SchedulePresetPicker({
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Label className="text-xs">Repeats</Label>
-          <Select value={recurrence} onValueChange={(v) => onChange({ recurrence: v as Recurrence })}>
+          <Select
+            value={recurrence}
+            onValueChange={(v) => onChange({ recurrence: v as Recurrence })}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -711,10 +722,7 @@ function SchedulePresetPicker({
         )}
       </div>
       <label className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Checkbox
-          checked={autoPlace}
-          onCheckedChange={(v) => onChange({ autoPlace: !!v })}
-        />
+        <Checkbox checked={autoPlace} onCheckedChange={(v) => onChange({ autoPlace: !!v })} />
         Auto-place in next free slot (9 AM–9 PM, no overlap)
       </label>
     </div>

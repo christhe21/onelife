@@ -39,7 +39,6 @@ import {
 import { progressFor, useAppData, type GoalStatus, type SkillId, type Goal } from "@/lib/app-data";
 import { useFrierenVocabulary } from "@/lib/frieren";
 
-
 const STATUS_LABEL: Record<GoalStatus, string> = {
   not_started: "Not started",
   in_progress: "In progress",
@@ -299,9 +298,7 @@ function MilestoneDot({
           </div>
           <div className="flex items-center justify-between rounded-md border p-2">
             <span className="text-muted-foreground">Status</span>
-            <Badge variant={sub.done ? "default" : "secondary"}>
-              {sub.done ? "Done" : "Open"}
-            </Badge>
+            <Badge variant={sub.done ? "default" : "secondary"}>{sub.done ? "Done" : "Open"}</Badge>
           </div>
         </div>
         <DialogFooter className="flex-row justify-between gap-2 sm:justify-between">
@@ -436,10 +433,7 @@ function GoalDetailsDialog({
             <div className="mt-2 space-y-1">
               {subGoals.map((s) => (
                 <div key={s.id} className="flex items-center gap-2 rounded-md border p-2">
-                  <Checkbox
-                    checked={s.done}
-                    onCheckedChange={() => toggleSubGoal(goal.id, s.id)}
-                  />
+                  <Checkbox checked={s.done} onCheckedChange={() => toggleSubGoal(goal.id, s.id)} />
                   <span
                     className={`flex-1 text-sm ${s.done ? "line-through text-muted-foreground" : ""}`}
                   >
@@ -577,8 +571,8 @@ function GoalCard({ goal }: { goal: Goal }) {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete this goal?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently remove &quot;{goal.title}&quot; along with its milestones,
-                      tasks and scheduled blocks. This can&apos;t be undone.
+                      This will permanently remove &quot;{goal.title}&quot; along with its
+                      milestones, tasks and scheduled blocks. This can&apos;t be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -604,9 +598,7 @@ function GoalCard({ goal }: { goal: Goal }) {
                 {subGoals.filter((s) => s.done).length}/{subGoals.length} milestones
               </span>
             )}
-            <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-              {pct}%
-            </span>
+            <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">{pct}%</span>
           </div>
         </CardHeader>
         <CardContent className="overflow-hidden px-3 pb-3 pt-0 sm:px-4 sm:pb-4">
@@ -624,7 +616,6 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
   const navigate = useNavigate();
   const [filter, setFilter] = useState<SkillId | "all">("all");
   const filtered = filter === "all" ? goals : goals.filter((g) => g.skill === filter);
-
 
   return (
     <div className="space-y-4">

@@ -28,8 +28,6 @@ const TAB_TO_ICON_KEY: Partial<Record<TabId, FrierenIconKey>> = {
   settings: "settings",
 };
 
-
-
 export type TabId =
   | "dashboard"
   | "today"
@@ -70,7 +68,6 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex">
-
         {/* Desktop sidebar */}
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex xl:w-72">
           <Brand />
@@ -104,7 +101,11 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
               </Button>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <ThemedTabIcon id={active.id} fallback={active.icon} className="h-4 w-4 text-primary" />
+                  <ThemedTabIcon
+                    id={active.id}
+                    fallback={active.icon}
+                    className="h-4 w-4 text-primary"
+                  />
                   <h1 className="font-display text-lg font-semibold tracking-tight">
                     {active.label}
                   </h1>
@@ -265,4 +266,3 @@ function ThemedTabIcon({
   const Final = key ? Icon : fallback;
   return <Final className={className} />;
 }
-

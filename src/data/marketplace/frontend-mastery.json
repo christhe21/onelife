@@ -46,7 +46,11 @@
       "subtasks": [
         { "title": "Create semantic HTML structure", "recurrence": "none", "plannedHours": 1 },
         { "title": "Style with CSS Flexbox/Grid", "recurrence": "none", "plannedHours": 1.5 },
-        { "title": "Make it responsive with media queries", "recurrence": "none", "plannedHours": 1.5 }
+        {
+          "title": "Make it responsive with media queries",
+          "recurrence": "none",
+          "plannedHours": 1.5
+        }
       ]
     },
     {

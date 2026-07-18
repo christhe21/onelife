@@ -1,2 +1,2 @@
-import fs from 'fs';
-console.log(fs.readdirSync('public/music'));
+import fs from "fs";
+console.log(fs.readdirSync("public/music"));

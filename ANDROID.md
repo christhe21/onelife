@@ -16,18 +16,18 @@ src/  (web app) ──vite build──▶ dist/client ──copied──▶ andr
 
 ## How it works
 
-| Concern | Implementation |
-| --- | --- |
-| UI | `MainActivity` renders `assets/www` via `WebViewAssetLoader` at `https://appassets.androidplatform.net` (a real secure origin, fully offline) |
-| SPA routes | `SpaAssetsPathHandler` falls back to `index.html` for extension-less paths (`/home`, `/create-goal`) |
-| Storage | WebView `localStorage` (key `life-manager:v1`) in the app's private data dir — persists across restarts, removed on uninstall/clear-data |
-| JSON / ICS export | `window.AndroidBridge.saveFile(...)` → native "Save as" dialog (Storage Access Framework) |
-| JSON import | WebView's `<input type="file">` → `onShowFileChooser` → system file picker |
-| Reminders | `src/hooks/use-app-settings.ts` hands upcoming reminders to Kotlin; `NotificationScheduler` sets `AlarmManager` alarms (fire even when the app is backgrounded, honoring the "remind me ahead of time" setting) and re-registers them after reboot |
-| Notification permission | Android 13+ `POST_NOTIFICATIONS` runtime permission, surfaced through the same Settings UI as the web permission flow |
-| Dark mode / themes | Identical CSS: the in-app light/dark/system toggle and all 6 color themes work unchanged; the WebView reports the system `prefers-color-scheme` |
-| External links | Open in the default browser |
-| Back button / gesture | Navigates WebView history before exiting |
+| Concern                 | Implementation                                                                                                                                                                                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI                      | `MainActivity` renders `assets/www` via `WebViewAssetLoader` at `https://appassets.androidplatform.net` (a real secure origin, fully offline)                                                                                                      |
+| SPA routes              | `SpaAssetsPathHandler` falls back to `index.html` for extension-less paths (`/home`, `/create-goal`)                                                                                                                                               |
+| Storage                 | WebView `localStorage` (key `life-manager:v1`) in the app's private data dir — persists across restarts, removed on uninstall/clear-data                                                                                                           |
+| JSON / ICS export       | `window.AndroidBridge.saveFile(...)` → native "Save as" dialog (Storage Access Framework)                                                                                                                                                          |
+| JSON import             | WebView's `<input type="file">` → `onShowFileChooser` → system file picker                                                                                                                                                                         |
+| Reminders               | `src/hooks/use-app-settings.ts` hands upcoming reminders to Kotlin; `NotificationScheduler` sets `AlarmManager` alarms (fire even when the app is backgrounded, honoring the "remind me ahead of time" setting) and re-registers them after reboot |
+| Notification permission | Android 13+ `POST_NOTIFICATIONS` runtime permission, surfaced through the same Settings UI as the web permission flow                                                                                                                              |
+| Dark mode / themes      | Identical CSS: the in-app light/dark/system toggle and all 6 color themes work unchanged; the WebView reports the system `prefers-color-scheme`                                                                                                    |
+| External links          | Open in the default browser                                                                                                                                                                                                                        |
+| Back button / gesture   | Navigates WebView history before exiting                                                                                                                                                                                                           |
 
 The JS side of the bridge lives in [`src/lib/native-bridge.ts`](src/lib/native-bridge.ts).
 Every helper is a no-op in a normal browser, so web behavior — and every
@@ -40,7 +40,7 @@ the web app stores it in your browser. Nothing is synced to any server.
 
 - Survives app restarts, device reboots, and app updates.
 - Deleted by uninstalling the app or "Clear data" in system settings.
-- **Backup**: use the in-app *Export JSON* (sidebar `⋮` menu). On Android this
+- **Backup**: use the in-app _Export JSON_ (sidebar `⋮` menu). On Android this
   opens a native "Save as" dialog. The file is byte-compatible with the web
   app's export (`EXPORT_VERSION = 1`), so you can move data freely between
   phone and browser via Export → Import.
@@ -122,10 +122,9 @@ signingConfigs {
 }
 ```
 
-   and `signingConfig = signingConfigs.getByName("release")` inside the
-   `release` build type.
-4. Uncomment the `release-apk` job in `.github/workflows/android.yml` and push
-   a `v*` tag.
+and `signingConfig = signingConfigs.getByName("release")` inside the
+`release` build type. 4. Uncomment the `release-apk` job in `.github/workflows/android.yml` and push
+a `v*` tag.
 
 ## Known issues (pre-existing, carried over intentionally)
 
