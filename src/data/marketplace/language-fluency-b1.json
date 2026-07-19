@@ -17,10 +17,26 @@
   "coverEmoji": "🗣️",
   "difficulty": "intermediate",
   "subGoals": [
-    { "title": "A1: Survival phrases (~500 words)", "dayOffset": 45, "description": "Greetings, numbers, basic needs. Most-frequent 500 words cover ~70% of spoken text." },
-    { "title": "A2: Everyday topics (~1500 words)", "dayOffset": 90, "description": "Can describe routine, immediate environment. First conversation partner sessions begin." },
-    { "title": "B1 listening threshold (~2500 words)", "dayOffset": 135, "description": "Native podcasts at 0.75x speed comprehensible. Krashen's i+1 zone reached." },
-    { "title": "B1: Independent user", "dayOffset": 180, "description": "Can hold a 15-min conversation on familiar topics. Self-assess against CEFR descriptors." }
+    {
+      "title": "A1: Survival phrases (~500 words)",
+      "dayOffset": 45,
+      "description": "Greetings, numbers, basic needs. Most-frequent 500 words cover ~70% of spoken text."
+    },
+    {
+      "title": "A2: Everyday topics (~1500 words)",
+      "dayOffset": 90,
+      "description": "Can describe routine, immediate environment. First conversation partner sessions begin."
+    },
+    {
+      "title": "B1 listening threshold (~2500 words)",
+      "dayOffset": 135,
+      "description": "Native podcasts at 0.75x speed comprehensible. Krashen's i+1 zone reached."
+    },
+    {
+      "title": "B1: Independent user",
+      "dayOffset": 180,
+      "description": "Can hold a 15-min conversation on familiar topics. Self-assess against CEFR descriptors."
+    }
   ],
   "tasks": [
     {

@@ -1,2 +1,2 @@
-import { getMusicTracks } from './src/lib/music.ts';
+import { getMusicTracks } from "./src/lib/music.ts";
 console.log(getMusicTracks());

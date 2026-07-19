@@ -16,10 +16,26 @@
   "coverEmoji": "🧠",
   "difficulty": "intermediate",
   "subGoals": [
-    { "title": "Week 1: Establish a 25-min daily block", "dayOffset": 7, "description": "Lowest-friction entry point. Build the cue → routine loop before extending duration." },
-    { "title": "Day 30: 50-min single block, 5 days/week", "dayOffset": 30, "description": "Crossing the half-ultradian threshold. Habit should feel automatic by now (Lally et al., 2010: ~66 days median to automaticity)." },
-    { "title": "Day 60: Two 50-min blocks per day", "dayOffset": 60, "description": "Add a second block with a 90-min recovery gap matching the BRAC cycle." },
-    { "title": "Day 90: One 90-min deep block daily", "dayOffset": 90, "description": "Full ultradian session. This is the target state — protected, scheduled, undistracted." }
+    {
+      "title": "Week 1: Establish a 25-min daily block",
+      "dayOffset": 7,
+      "description": "Lowest-friction entry point. Build the cue → routine loop before extending duration."
+    },
+    {
+      "title": "Day 30: 50-min single block, 5 days/week",
+      "dayOffset": 30,
+      "description": "Crossing the half-ultradian threshold. Habit should feel automatic by now (Lally et al., 2010: ~66 days median to automaticity)."
+    },
+    {
+      "title": "Day 60: Two 50-min blocks per day",
+      "dayOffset": 60,
+      "description": "Add a second block with a 90-min recovery gap matching the BRAC cycle."
+    },
+    {
+      "title": "Day 90: One 90-min deep block daily",
+      "dayOffset": 90,
+      "description": "Full ultradian session. This is the target state — protected, scheduled, undistracted."
+    }
   ],
   "tasks": [
     {

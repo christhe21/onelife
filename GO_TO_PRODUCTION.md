@@ -9,6 +9,7 @@
 **Overall Assessment**: The core end-to-end functionality is **solid and production-viable for personal / closed-beta use**. The app implements a clean hierarchical life-management model (Skill → Goal → SubGoal/Milestone → Task → SubTask) with strong local-first persistence, cascading completion logic, scheduling, auto-scheduling, calendar visualization, and data portability.
 
 **Strengths**:
+
 - Robust data layer (`src/lib/app-data.tsx`) with normalization, business rules, auto-complete cascades, hours tracking, and recurrence handling.
 - Calendar (`CalendarView.tsx`) fully integrated: month/week/day views, drag-to-reschedule, recurring projections, heatmaps/streaks, ICS export, event details/actions.
 - Goal/Task/SubTask wizards and forms allow full creation/editing flows.
@@ -17,6 +18,7 @@
 - Tests, CI (web + Android debug APK), and docs are present.
 
 **Gaps for Full Public Production**:
+
 - No signed release builds / Play Store setup.
 - Several documented placeholders, dead code, and minor UX inconsistencies (detailed below).
 - Limited advanced recurrence (basic types only; no full RRULE/BYDAY UI).
@@ -30,6 +32,7 @@
 ## Deep Dive: Functional E2E Flows
 
 ### 1. Goal Setting & Sub-Goals (Milestones)
+
 - **Entry Points**: `NewGoalWizard.tsx` (multi-step dialog with templates, basics → milestones → tasks → subtasks), direct `addGoal` in data layer, Marketplace import.
 - **Flow**: Basics (title, desc, skill, targetDate) → optional template pre-fill → add/edit milestones (targetDate clamped to goal window) → tasks → subtasks → persist via `addGoal` + `addSubGoal` + `addTask`.
 - **Data Model** (`app-data.tsx`): `Goal` has `subGoals: SubGoal[]` (id, title, targetDate, done). `ensureDefaultMilestone` creates "General" if none.
@@ -38,6 +41,7 @@
 - **Status**: Fully functional and connected. Wizards handle creation cleanly; editing via Goals.tsx / detail views.
 
 ### 2. Tasks & Sub-Tasks
+
 - **Creation**: `NewTaskWizard.tsx`, inline in wizards, `AddToScheduleDialog`.
 - **Hierarchy**: Task links via `subGoalId` (preferred) or `goalId` (for recurring/daily). `subtasks: SubTask[]`.
 - **Features**:
@@ -50,6 +54,7 @@
 - **Status**: Excellent E2E integration. Core flows (create → schedule → complete → cascade) work reliably. Minor: Advanced recurrence (weekdays/biweekly/custom BYDAY) planned in .lovable/plan.md but current model uses simple Recurrence enum + basic projection in CalendarView.
 
 ### 3. Calendar Integration
+
 - **Views**: Month (grid with heat + streak badges + event chips), Week (timeline grid), Day (hourly slots with now indicator).
 - **Data Source**: useMemo aggregates scheduled Tasks (those with startDate && no subtasks) + all SubTasks with startDate. Projects recurring via `getProjectedEvents` (simple addDays/Weeks/etc up to 365 horizon).
 - **Interactions**:
@@ -63,7 +68,8 @@
 - **Status**: Very polished and functional. Full round-trip from goal/task creation → scheduling → calendar visualization → reschedule/complete. Recurring projection works for basic patterns. Minor note: Projection doesn't handle complex rules yet.
 
 ### 4. Cross-Cutting & Data Flow
-- **Persistence**: localStorage ("life-manager:v1"), robust normalize* fns on import (ID regen on append, date correction for subtasks, validation).
+
+- **Persistence**: localStorage ("life-manager:v1"), robust normalize\* fns on import (ID regen on append, date correction for subtasks, validation).
 - **Cascades**: SubGoal done → linked tasks done; Task/SubTask done → spentHours bump on goal; Goal completion celebration.
 - **Notifications**: use-notifications.ts + Android NotificationScheduler (AlarmManager). Some duplication noted.
 - **Export/Import**: Full JSON roundtrip (versioned), ICS calendar export. Marketplace templates import with optional auto-schedule.
@@ -78,6 +84,7 @@
 These are drawn from code inspection, ANDROID.md (known issues section), plan.md, and verification artifacts. No catastrophic breaks; mostly polish items.
 
 ### High Priority / User-Facing
+
 1. **Placeholder / Incomplete Features** (from ANDROID.md & code):
    - Welcome video stub in `Welcome.tsx` (no actual video).
    - Frieren ambience music not implemented (`test-music.ts` references missing `src/lib/music.ts`; chimes are partial).
@@ -88,6 +95,7 @@ These are drawn from code inspection, ANDROID.md (known issues section), plan.md
 5. **Missing UI for Some Data Functions**: `autoScheduleGoal` / `autoScheduleSkill` exposed in context but limited/no prominent UI button in Goals/Skills views (marketplace import uses it optionally).
 
 ### Medium / Polish
+
 6. **Branding Inconsistency**: "Life Manager" (README, some headers, export filenames) vs "OneLife" (manifest, PWA, Android).
 7. **Route/UI Quirks**: `/create-goal` may lack full AppShell sidebar in some flows (per plan). Some dialogs or views have minor layout nits on mobile.
 8. **Android-Specific**:
@@ -98,6 +106,7 @@ These are drawn from code inspection, ANDROID.md (known issues section), plan.md
 10. **No Cloud Sync**: Pure local — multi-device requires manual JSON export/import. Privacy win but friction for some users.
 
 ### Low / Repo Hygiene
+
 - Stale verification/ assets and old plan files.
 - Some tests focus on specific wizards; broader E2E or accessibility coverage could expand.
 - Frieren theme SFX partial.
@@ -134,6 +143,7 @@ These are drawn from code inspection, ANDROID.md (known issues section), plan.md
 ---
 
 ## Created Artifacts
+
 - This `GO_TO_PRODUCTION.md` committed to main.
 - Key issues opened in repo for tracking (see GitHub Issues tab).
 
@@ -141,4 +151,4 @@ These are drawn from code inspection, ANDROID.md (known issues section), plan.md
 
 ---
 
-*Generated with deep code review of app-data.tsx, CalendarView.tsx, NewGoalWizard.tsx, ANDROID.md, plan.md, and related components.*
+_Generated with deep code review of app-data.tsx, CalendarView.tsx, NewGoalWizard.tsx, ANDROID.md, plan.md, and related components._

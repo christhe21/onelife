@@ -135,9 +135,7 @@ export function Skills() {
                       ≈ {est.hours.toFixed(1)}h remaining · ~{sessions} session
                       {sessions === 1 ? "" : "s"} @ {DEFAULT_SESSION_H}h
                       {est.unscheduled > 0 && (
-                        <span className="ml-1 opacity-70">
-                          · {est.unscheduled} unscheduled
-                        </span>
+                        <span className="ml-1 opacity-70">· {est.unscheduled} unscheduled</span>
                       )}
                     </p>
                     {est.unscheduled > 0 && (

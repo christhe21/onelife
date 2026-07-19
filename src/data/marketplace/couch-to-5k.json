@@ -16,10 +16,26 @@
   "coverEmoji": "🏃",
   "difficulty": "beginner",
   "subGoals": [
-    { "title": "Week 3: Run 3 min continuously", "dayOffset": 21, "description": "Aerobic base forming. Capillary density increases ~3-4 weeks in." },
-    { "title": "Week 5: Run 20 min continuously", "dayOffset": 35, "description": "First major aerobic milestone. Mitochondrial adaptations measurable." },
-    { "title": "Week 7: Run 25 min continuously", "dayOffset": 49, "description": "VO2max improvements typically appear here." },
-    { "title": "Week 9: Run 5K (30 min) continuously", "dayOffset": 63, "description": "Target distance. Pace is conversational — talk-test passable." }
+    {
+      "title": "Week 3: Run 3 min continuously",
+      "dayOffset": 21,
+      "description": "Aerobic base forming. Capillary density increases ~3-4 weeks in."
+    },
+    {
+      "title": "Week 5: Run 20 min continuously",
+      "dayOffset": 35,
+      "description": "First major aerobic milestone. Mitochondrial adaptations measurable."
+    },
+    {
+      "title": "Week 7: Run 25 min continuously",
+      "dayOffset": 49,
+      "description": "VO2max improvements typically appear here."
+    },
+    {
+      "title": "Week 9: Run 5K (30 min) continuously",
+      "dayOffset": 63,
+      "description": "Target distance. Pace is conversational — talk-test passable."
+    }
   ],
   "tasks": [
     {
@@ -34,8 +50,22 @@
         { "title": "Log perceived exertion (RPE 1-10)", "priority": "low" }
       ]
     },
-    { "title": "Run day 2", "priority": "high", "recurrence": "weekly", "plannedHours": 0.5, "description": "Same prescription as day 1. Full rest day between.", "subtasks": [] },
-    { "title": "Run day 3", "priority": "high", "recurrence": "weekly", "plannedHours": 0.5, "description": "Long-ish run of the week.", "subtasks": [] },
+    {
+      "title": "Run day 2",
+      "priority": "high",
+      "recurrence": "weekly",
+      "plannedHours": 0.5,
+      "description": "Same prescription as day 1. Full rest day between.",
+      "subtasks": []
+    },
+    {
+      "title": "Run day 3",
+      "priority": "high",
+      "recurrence": "weekly",
+      "plannedHours": 0.5,
+      "description": "Long-ish run of the week.",
+      "subtasks": []
+    },
     {
       "title": "Strength & mobility (20 min)",
       "priority": "medium",

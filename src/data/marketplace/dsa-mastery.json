@@ -50,9 +50,24 @@
       "description": "Warm up daily with two easy problems to build pattern recognition.",
       "notes": "Track time taken per problem to spot weak topics.",
       "subtasks": [
-        { "title": "Review theory on Arrays/HashMaps", "recurrence": "none", "plannedHours": 0.25, "priority": "medium" },
-        { "title": "Solve problem 1 without help", "recurrence": "weekly", "plannedHours": 0.5, "priority": "high" },
-        { "title": "Solve problem 2 without help", "recurrence": "weekly", "plannedHours": 0.5, "priority": "high" }
+        {
+          "title": "Review theory on Arrays/HashMaps",
+          "recurrence": "none",
+          "plannedHours": 0.25,
+          "priority": "medium"
+        },
+        {
+          "title": "Solve problem 1 without help",
+          "recurrence": "weekly",
+          "plannedHours": 0.5,
+          "priority": "high"
+        },
+        {
+          "title": "Solve problem 2 without help",
+          "recurrence": "weekly",
+          "plannedHours": 0.5,
+          "priority": "high"
+        }
       ]
     },
     {
@@ -65,7 +80,12 @@
       "plannedHours": 1.5,
       "description": "Focused medium-difficulty drills on the two flagship patterns.",
       "subtasks": [
-        { "title": "Solve 1 Medium Sliding Window problem", "recurrence": "weekly", "plannedHours": 0.75, "priority": "high" }
+        {
+          "title": "Solve 1 Medium Sliding Window problem",
+          "recurrence": "weekly",
+          "plannedHours": 0.75,
+          "priority": "high"
+        }
       ]
     },
     {

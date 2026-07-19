@@ -16,10 +16,26 @@
   "coverEmoji": "🧘",
   "difficulty": "beginner",
   "subGoals": [
-    { "title": "Weeks 1-2: Body scan", "dayOffset": 14, "description": "Lying-down body scan. Builds interoceptive awareness — the foundation skill in MBSR." },
-    { "title": "Weeks 3-4: Sitting with breath", "dayOffset": 28, "description": "Anchor attention on breath. Notice wandering, return without self-judgement." },
-    { "title": "Weeks 5-6: Open monitoring", "dayOffset": 42, "description": "Awareness of thoughts/emotions as events, not facts (defusion)." },
-    { "title": "Weeks 7-8: Choiceless awareness + daily integration", "dayOffset": 56, "description": "Integrate informal practice (mindful eating, walking) with formal sit." }
+    {
+      "title": "Weeks 1-2: Body scan",
+      "dayOffset": 14,
+      "description": "Lying-down body scan. Builds interoceptive awareness — the foundation skill in MBSR."
+    },
+    {
+      "title": "Weeks 3-4: Sitting with breath",
+      "dayOffset": 28,
+      "description": "Anchor attention on breath. Notice wandering, return without self-judgement."
+    },
+    {
+      "title": "Weeks 5-6: Open monitoring",
+      "dayOffset": 42,
+      "description": "Awareness of thoughts/emotions as events, not facts (defusion)."
+    },
+    {
+      "title": "Weeks 7-8: Choiceless awareness + daily integration",
+      "dayOffset": 56,
+      "description": "Integrate informal practice (mindful eating, walking) with formal sit."
+    }
   ],
   "tasks": [
     {
