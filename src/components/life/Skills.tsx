@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAppData } from "@/lib/app-data";
+import { useAppData, CORE_SKILLS } from "@/lib/app-data";
 import { toast } from "sonner";
 
 const DEFAULT_SESSION_H = 2;

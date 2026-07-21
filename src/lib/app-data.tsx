@@ -20,7 +20,13 @@ export const DEFAULT_SKILLS: Skill[] = [
   { id: "social", label: "Social", color: "#ec4899" },
   { id: "career", label: "Career", color: "#6366f1" },
   { id: "learning", label: "Learning", color: "#14b8a6" },
+  { id: "communication", label: "Communication", color: "#f59e0b" },
+  { id: "critical-thinking", label: "Critical Thinking", color: "#6b7280" },
+  { id: "adaptability", label: "Adaptability", color: "#8b5cf6" },
+  { id: "music", label: "Music", color: "#ec4899" },
 ];
+
+export const CORE_SKILLS = DEFAULT_SKILLS.map(s => s.id);
 
 export const SKILLS = DEFAULT_SKILLS;
 export type SkillId = string;
@@ -96,6 +102,8 @@ export type ThemeMode = "light" | "dark" | "system";
 export type ThemeColor = "sage" | "ocean" | "sunset" | "lavender" | "monochrome" | "frieren";
 
 export interface Settings {
+  profileImage?: string;
+  starredSkillId?: string;
   birthYear?: number;
   userName?: string;
   onboardedAt?: string;
@@ -378,6 +386,10 @@ function normalizeAppData(raw: any): AppData {
   const settings: Settings | undefined =
     raw.settings && typeof raw.settings === "object"
       ? {
+          profileImage:
+            typeof raw.settings.profileImage === "string" ? raw.settings.profileImage : undefined,
+          starredSkillId:
+            typeof raw.settings.starredSkillId === "string" ? raw.settings.starredSkillId : undefined,
           birthYear:
             typeof raw.settings.birthYear === "number" ? raw.settings.birthYear : undefined,
           userName: typeof raw.settings.userName === "string" ? raw.settings.userName : undefined,
@@ -443,6 +455,8 @@ SCHEMA (TypeScript-ish, all fields optional unless marked REQUIRED):
 
 Skill       = { id: string, label: string, color: "#RRGGBB" }
 Settings    = {
+  profileImage?: string,
+  starredSkillId?: string,
   birthYear?: number,                                  // for life-timeline / age math
   userName?: string,
   onboardedAt?: string,                                // ISO instant first onboarded
@@ -518,6 +532,8 @@ export const TEMPLATE_PAYLOAD = {
     settings: {
       description: "User profile and app preferences. All fields optional.",
       fields: {
+        profileImage: "base64 image string",
+        starredSkillId: "skill id for 3x multiplier",
         birthYear: "number — used for life-timeline calculations",
         userName: "display name",
         onboardedAt: "ISO instant the user first finished onboarding",
@@ -861,10 +877,22 @@ function loadInitial(): Stored {
               color: typeof s.color === "string" ? s.color : "#10b981",
             }))
         : DEFAULT_SKILLS;
+
+    // Ensure all core skills are present
+    const existingIds = new Set(skills.map((s: Skill) => s.id));
+    for (const coreSkill of DEFAULT_SKILLS) {
+      if (!existingIds.has(coreSkill.id)) {
+        skills.push(coreSkill);
+      }
+    }
     const settings: Settings =
       parsed?.settings && typeof parsed.settings === "object"
         ? {
-            birthYear:
+          profileImage:
+            typeof parsed.settings.profileImage === "string" ? parsed.settings.profileImage : undefined,
+          starredSkillId:
+            typeof parsed.settings.starredSkillId === "string" ? parsed.settings.starredSkillId : undefined,
+          birthYear:
               typeof parsed.settings.birthYear === "number" ? parsed.settings.birthYear : undefined,
             userName:
               typeof parsed.settings.userName === "string" ? parsed.settings.userName : undefined,
@@ -1161,7 +1189,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }),
     updateSkill: (id, patch) =>
       setSkills((cur) => cur.map((s) => (s.id === id ? { ...s, ...patch } : s))),
-    deleteSkill: (id) => setSkills((cur) => cur.filter((s) => s.id !== id)),
+    deleteSkill: (id) => {
+      if (CORE_SKILLS.includes(id)) return;
+      setSkills((cur) => cur.filter((s) => s.id !== id));
+    },
 
     addGoal: (g) => {
       const id = uid();
