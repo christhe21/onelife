@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Bell, BellOff, Type, Music, Volume2 } from "lucide-react";
+import { Bell, BellOff, Type, Music, Volume2, Upload, Star } from "lucide-react";
 import { toast } from "sonner";
-import { useAppData, type TextScale, type ThemeMode, type ThemeColor } from "@/lib/app-data";
+import { useAppData, type TextScale, type ThemeMode, type ThemeColor, CORE_SKILLS } from "@/lib/app-data";
+import { getSkillPoints, getSkillTitle, getOverallRank } from "@/lib/rank";
 import { celebrate } from "@/lib/celebrate";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
 import {
   isNativeApp,
   getNativeNotificationPermission,
@@ -55,8 +58,59 @@ const SPECIAL_THEMES: { id: ThemeColor; label: string; primary: string; secondar
   },
 ];
 
+
 export function SettingsView() {
-  const { settings, updateSettings } = useAppData();
+  const { settings, updateSettings, goals, tasks, skills } = useAppData();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_SIZE = 256;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+        updateSettings({ profileImage: dataUrl });
+        toast.success("Profile picture updated");
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const overallPoints = useMemo(() => {
+    return skills.reduce((total, skill) => {
+      return total + getSkillPoints(goals, tasks, skill.id, settings.starredSkillId);
+    }, 0);
+  }, [goals, tasks, skills, settings.starredSkillId]);
+
+  const overallRank = getOverallRank(overallPoints);
+
   const current: TextScale = settings.textScale ?? "base";
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
     () =>
@@ -113,6 +167,88 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6">
+
+      {/* Profile Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile & Rank</CardTitle>
+          <CardDescription>Your gamified journey and skills</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <Avatar className="h-24 w-24">
+                {settings.profileImage ? (
+                  <AvatarImage src={settings.profileImage} alt="Profile" />
+                ) : (
+                  <AvatarFallback className="text-2xl">{settings.userName?.[0] ?? "?"}</AvatarFallback>
+                )}
+              </Avatar>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+              />
+              <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" /> Upload
+              </Button>
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-2xl font-bold">{settings.userName || "Adventurer"}</h3>
+              <p className="text-muted-foreground text-lg">
+                Rank: <span className="font-semibold text-primary">{overallRank}</span> ({overallPoints} pts)
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Skills</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {skills.map(skill => {
+                const points = getSkillPoints(goals, tasks, skill.id, settings.starredSkillId);
+                const title = getSkillTitle(points);
+                const isCore = CORE_SKILLS.includes(skill.id);
+                const isStarred = settings.starredSkillId === skill.id;
+
+                return (
+                  <div key={skill.id} className="flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{skill.label}</span>
+                        {isCore && <span className="text-[10px] uppercase bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded">Core (2x)</span>}
+                        {isStarred && <span className="text-[10px] uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded">Starred (3x)</span>}
+                      </div>
+                      <span className="text-xs text-muted-foreground">{title} · {points} pts</span>
+                    </div>
+                    {!isCore && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={isStarred ? "Unstar skill" : "Star this custom skill for a 3x point multiplier!"}
+                        onClick={() => {
+                          if (isStarred) {
+                            updateSettings({ starredSkillId: undefined });
+                            toast.success("Skill unstarred");
+                          } else {
+                            updateSettings({ starredSkillId: skill.id });
+                            toast.success(`${skill.label} starred for 3x multiplier!`);
+                            celebrate("task");
+                          }
+                        }}
+                      >
+                        <Star className={`h-4 w-4 ${isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
