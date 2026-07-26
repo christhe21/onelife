@@ -26,7 +26,7 @@ export const DEFAULT_SKILLS: Skill[] = [
   { id: "music", label: "Music", color: "#ec4899" },
 ];
 
-export const CORE_SKILLS = DEFAULT_SKILLS.map(s => s.id);
+export const CORE_SKILLS = DEFAULT_SKILLS.map((s) => s.id);
 
 export const SKILLS = DEFAULT_SKILLS;
 export type SkillId = string;
@@ -389,7 +389,9 @@ function normalizeAppData(raw: any): AppData {
           profileImage:
             typeof raw.settings.profileImage === "string" ? raw.settings.profileImage : undefined,
           starredSkillId:
-            typeof raw.settings.starredSkillId === "string" ? raw.settings.starredSkillId : undefined,
+            typeof raw.settings.starredSkillId === "string"
+              ? raw.settings.starredSkillId
+              : undefined,
           birthYear:
             typeof raw.settings.birthYear === "number" ? raw.settings.birthYear : undefined,
           userName: typeof raw.settings.userName === "string" ? raw.settings.userName : undefined,
@@ -637,7 +639,7 @@ export const TEMPLATE_PAYLOAD = {
     onboardedAt: "2026-01-01T00:00:00.000Z",
     textScale: "base",
     themeMode: "system",
-    themeColor: "sage",
+    themeColor: "monochrome",
     notificationsEnabled: true,
     reminderLeadMinutes: 15,
     frierenSfx: false,
@@ -888,11 +890,15 @@ function loadInitial(): Stored {
     const settings: Settings =
       parsed?.settings && typeof parsed.settings === "object"
         ? {
-          profileImage:
-            typeof parsed.settings.profileImage === "string" ? parsed.settings.profileImage : undefined,
-          starredSkillId:
-            typeof parsed.settings.starredSkillId === "string" ? parsed.settings.starredSkillId : undefined,
-          birthYear:
+            profileImage:
+              typeof parsed.settings.profileImage === "string"
+                ? parsed.settings.profileImage
+                : undefined,
+            starredSkillId:
+              typeof parsed.settings.starredSkillId === "string"
+                ? parsed.settings.starredSkillId
+                : undefined,
+            birthYear:
               typeof parsed.settings.birthYear === "number" ? parsed.settings.birthYear : undefined,
             userName:
               typeof parsed.settings.userName === "string" ? parsed.settings.userName : undefined,

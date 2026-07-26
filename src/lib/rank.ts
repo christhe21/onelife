@@ -9,7 +9,7 @@ export function getSkillPoints(
   goals: Goal[],
   tasks: Task[],
   skillId: string,
-  starredSkillId?: string
+  starredSkillId?: string,
 ): number {
   let basePoints = 0;
 
@@ -32,7 +32,7 @@ export function getSkillPoints(
   const subGoalIds = new Set(skillGoals.flatMap((g) => g.subGoals.map((sg) => sg.id)));
 
   const skillTasks = tasks.filter(
-    (t) => (t.goalId && goalIds.has(t.goalId)) || (t.subGoalId && subGoalIds.has(t.subGoalId))
+    (t) => (t.goalId && goalIds.has(t.goalId)) || (t.subGoalId && subGoalIds.has(t.subGoalId)),
   );
 
   for (const task of skillTasks) {

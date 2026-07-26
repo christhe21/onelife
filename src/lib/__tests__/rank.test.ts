@@ -12,13 +12,24 @@ describe("rank utility functions", () => {
 
   it("calculates skill points accurately", () => {
     const goals: Goal[] = [
-      { id: "g1", skill: "music", status: "completed", subGoals: [{ id: "sg1", done: true, title: "sg1" }] } as any,
+      {
+        id: "g1",
+        skill: "music",
+        status: "completed",
+        subGoals: [{ id: "sg1", done: true, title: "sg1" }],
+      } as any,
       { id: "g2", skill: "tech", status: "not_started", subGoals: [] } as any,
     ];
 
     const tasks: Task[] = [
       { id: "t1", goalId: "g1", done: true, spentHours: 1, subtasks: [] } as any, // 15 points
-      { id: "t2", subGoalId: "sg1", done: true, spentHours: 0, subtasks: [{ id: "st1", done: true, spentHours: 2 }] } as any, // 10 + 20 = 30 points
+      {
+        id: "t2",
+        subGoalId: "sg1",
+        done: true,
+        spentHours: 0,
+        subtasks: [{ id: "st1", done: true, spentHours: 2 }],
+      } as any, // 10 + 20 = 30 points
     ];
 
     // Goal = 100
