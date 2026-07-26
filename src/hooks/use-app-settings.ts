@@ -74,7 +74,7 @@ export function useAppSettingsEffects() {
   useEffect(() => {
     if (typeof document === "undefined") return;
     const root = window.document.documentElement;
-    root.setAttribute("data-theme", settings.themeColor ?? "sage");
+    root.setAttribute("data-theme", settings.themeColor ?? "monochrome");
   }, [settings.themeColor]);
 
   // Reminders — native path (Android shell). The WebView has no Notification
