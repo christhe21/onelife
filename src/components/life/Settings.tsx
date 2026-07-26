@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Bell, BellOff, Type, Music, Volume2, Upload, Star } from "lucide-react";
+import { Bell, BellOff, Type, Music, Volume2, Upload, Star, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAppData,
@@ -64,7 +64,7 @@ const SPECIAL_THEMES: { id: ThemeColor; label: string; primary: string; secondar
 ];
 
 export function SettingsView() {
-  const { settings, updateSettings, goals, tasks, skills } = useAppData();
+  const { settings, updateSettings, goals, tasks, skills, updateSubGoal } = useAppData();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -441,6 +441,109 @@ export function SettingsView() {
                 </div>
               ))}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Mail className="h-4 w-4 text-primary" /> Email check-in reminders
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            On the target date of a milestone, receive an email check-in. This turns passive target dates into active accountability check-ins.
+          </p>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={settings.email ?? ""}
+              onChange={(e) => updateSettings({ email: e.target.value.trim() || undefined })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border p-3">
+            <div className="min-w-0">
+              <Label className="text-sm">Email me on milestone target dates</Label>
+            </div>
+            <Switch
+              checked={!!settings.emailRemindersEnabled}
+              onCheckedChange={(v) => updateSettings({ emailRemindersEnabled: v })}
+            />
+          </div>
+
+          <div className="pt-2">
+            <Button variant="outline" size="sm" onClick={async () => {
+              if (!settings.emailRemindersEnabled) {
+                toast.error("Email reminders are disabled.");
+                return;
+              }
+              if (!settings.email) {
+                toast.error("Please set an email address first.");
+                return;
+              }
+
+              toast.info("Checking due milestones...");
+
+              const todayStr = format(new Date(), "yyyy-MM-dd");
+              const dueMilestones = [];
+
+              for (const goal of goals) {
+                if (goal.status === "completed") continue;
+                for (const sg of goal.subGoals) {
+                  if (!sg.done && sg.targetDate === todayStr && sg.lastEmailReminderSent !== todayStr) {
+                    dueMilestones.push({
+                      id: sg.id,
+                      goalId: goal.id,
+                      title: sg.title,
+                      goalTitle: goal.title,
+                      targetDate: sg.targetDate,
+                    });
+                  }
+                }
+              }
+
+              if (dueMilestones.length === 0) {
+                toast.success("No milestones due for reminders right now.");
+                return;
+              }
+
+              try {
+                const response = await fetch("/api/send-reminders", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: settings.email, milestones: dueMilestones })
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.sentCount > 0) {
+                    // Update idempotency state
+                    dueMilestones.forEach(m => {
+                      updateSubGoal(m.goalId, m.id, { lastEmailReminderSent: todayStr });
+                    });
+                    toast.success(`Successfully sent ${data.sentCount} reminder(s).`);
+                  } else {
+                    toast.success("No milestones due for reminders right now.");
+                  }
+                } else {
+                  toast.error("Failed to send reminders");
+                }
+              } catch (e) {
+                toast.error("Error triggering reminders");
+              }
+            }}>
+              <Mail className="mr-2 h-4 w-4" /> Send today's due milestones
+            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Use this to manually test your email configuration and receive current due milestones.
+            </p>
           </div>
         </CardContent>
       </Card>
