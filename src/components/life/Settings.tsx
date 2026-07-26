@@ -7,8 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Bell, BellOff, Type, Music, Volume2, Upload, Star, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { useAppData, type TextScale, type ThemeMode, type ThemeColor, CORE_SKILLS } from "@/lib/app-data";
-import { format } from "date-fns";
+import {
+  useAppData,
+  type TextScale,
+  type ThemeMode,
+  type ThemeColor,
+  CORE_SKILLS,
+} from "@/lib/app-data";
 import { getSkillPoints, getSkillTitle, getOverallRank } from "@/lib/rank";
 import { celebrate } from "@/lib/celebrate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -57,7 +62,6 @@ const SPECIAL_THEMES: { id: ThemeColor; label: string; primary: string; secondar
     secondary: "bg-[#4da8a3]",
   },
 ];
-
 
 export function SettingsView() {
   const { settings, updateSettings, goals, tasks, skills, updateSubGoal } = useAppData();
@@ -167,7 +171,6 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6">
-
       {/* Profile Section */}
       <Card>
         <CardHeader>
@@ -181,7 +184,9 @@ export function SettingsView() {
                 {settings.profileImage ? (
                   <AvatarImage src={settings.profileImage} alt="Profile" />
                 ) : (
-                  <AvatarFallback className="text-2xl">{settings.userName?.[0] ?? "?"}</AvatarFallback>
+                  <AvatarFallback className="text-2xl">
+                    {settings.userName?.[0] ?? "?"}
+                  </AvatarFallback>
                 )}
               </Avatar>
               <input
@@ -198,35 +203,55 @@ export function SettingsView() {
             <div className="flex-1 text-center md:text-left">
               <h3 className="text-2xl font-bold">{settings.userName || "Adventurer"}</h3>
               <p className="text-muted-foreground text-lg">
-                Rank: <span className="font-semibold text-primary">{overallRank}</span> ({overallPoints} pts)
+                Rank: <span className="font-semibold text-primary">{overallRank}</span> (
+                {overallPoints} pts)
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Skills</h4>
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Your Skills
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {skills.map(skill => {
+              {skills.map((skill) => {
                 const points = getSkillPoints(goals, tasks, skill.id, settings.starredSkillId);
                 const title = getSkillTitle(points);
                 const isCore = CORE_SKILLS.includes(skill.id);
                 const isStarred = settings.starredSkillId === skill.id;
 
                 return (
-                  <div key={skill.id} className="flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm">
+                  <div
+                    key={skill.id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card text-card-foreground shadow-sm"
+                  >
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{skill.label}</span>
-                        {isCore && <span className="text-[10px] uppercase bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded">Core (2x)</span>}
-                        {isStarred && <span className="text-[10px] uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded">Starred (3x)</span>}
+                        {isCore && (
+                          <span className="text-[10px] uppercase bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded">
+                            Core (2x)
+                          </span>
+                        )}
+                        {isStarred && (
+                          <span className="text-[10px] uppercase bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                            Starred (3x)
+                          </span>
+                        )}
                       </div>
-                      <span className="text-xs text-muted-foreground">{title} · {points} pts</span>
+                      <span className="text-xs text-muted-foreground">
+                        {title} · {points} pts
+                      </span>
                     </div>
                     {!isCore && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        title={isStarred ? "Unstar skill" : "Star this custom skill for a 3x point multiplier!"}
+                        title={
+                          isStarred
+                            ? "Unstar skill"
+                            : "Star this custom skill for a 3x point multiplier!"
+                        }
                         onClick={() => {
                           if (isStarred) {
                             updateSettings({ starredSkillId: undefined });
@@ -238,7 +263,9 @@ export function SettingsView() {
                           }
                         }}
                       >
-                        <Star className={`h-4 w-4 ${isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+                        <Star
+                          className={`h-4 w-4 ${isStarred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`}
+                        />
                       </Button>
                     )}
                   </div>
@@ -285,7 +312,7 @@ export function SettingsView() {
                   onClick={() => updateSettings({ themeColor: c.id })}
                   className={
                     "flex items-center gap-3 rounded-xl border p-3 text-left transition " +
-                    ((settings.themeColor ?? "sage") === c.id
+                    ((settings.themeColor ?? "monochrome") === c.id
                       ? "border-primary bg-primary/5 ring-2 ring-primary/30"
                       : "hover:border-primary/40 hover:bg-muted/40")
                   }
@@ -311,7 +338,7 @@ export function SettingsView() {
                   onClick={() => updateSettings({ themeColor: c.id })}
                   className={
                     "flex items-center gap-3 rounded-xl border p-3 text-left transition " +
-                    ((settings.themeColor ?? "sage") === c.id
+                    ((settings.themeColor ?? "monochrome") === c.id
                       ? "border-primary bg-primary/5 ring-2 ring-primary/30"
                       : "hover:border-primary/40 hover:bg-muted/40")
                   }

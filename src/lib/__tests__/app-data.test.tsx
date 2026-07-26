@@ -132,7 +132,6 @@ describe("importMarketplaceGoal auto-schedule flag", () => {
 describe("toggleSubtask cascading completion", () => {
   test("completing all subtasks auto-completes the parent task", () => {
     const { result } = renderHook(() => useAppData(), { wrapper });
-
     act(() => {
       result.current.addTask({
         title: "Parent",

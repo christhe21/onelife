@@ -93,7 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/2a355cb6-62ea-4b7e-93c7-8b9d29bc8185",
       },
-      { name: "theme-color", content: "#7d9b76" },
+      { name: "theme-color", content: "#171717" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "OneLife" },
