@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Bell, BellOff, Type, Music, Volume2, Upload, Star, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 import {
   useAppData,
   type TextScale,
@@ -445,7 +446,6 @@ export function SettingsView() {
         </CardContent>
       </Card>
 
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
@@ -454,7 +454,8 @@ export function SettingsView() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            On the target date of a milestone, receive an email check-in. This turns passive target dates into active accountability check-ins.
+            On the target date of a milestone, receive an email check-in. This turns passive target
+            dates into active accountability check-ins.
           </p>
 
           <div className="space-y-1.5">
@@ -479,66 +480,79 @@ export function SettingsView() {
           </div>
 
           <div className="pt-2">
-            <Button variant="outline" size="sm" onClick={async () => {
-              if (!settings.emailRemindersEnabled) {
-                toast.error("Email reminders are disabled.");
-                return;
-              }
-              if (!settings.email) {
-                toast.error("Please set an email address first.");
-                return;
-              }
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                if (!settings.emailRemindersEnabled) {
+                  toast.error("Email reminders are disabled.");
+                  return;
+                }
+                if (!settings.email) {
+                  toast.error("Please set an email address first.");
+                  return;
+                }
 
-              toast.info("Checking due milestones...");
+                toast.info("Checking due milestones...");
 
-              const todayStr = format(new Date(), "yyyy-MM-dd");
-              const dueMilestones = [];
+                const todayStr = format(new Date(), "yyyy-MM-dd");
+                const dueMilestones: {
+                  id: string;
+                  goalId: string;
+                  title: string;
+                  goalTitle: string;
+                  targetDate: string;
+                }[] = [];
 
-              for (const goal of goals) {
-                if (goal.status === "completed") continue;
-                for (const sg of goal.subGoals) {
-                  if (!sg.done && sg.targetDate === todayStr && sg.lastEmailReminderSent !== todayStr) {
-                    dueMilestones.push({
-                      id: sg.id,
-                      goalId: goal.id,
-                      title: sg.title,
-                      goalTitle: goal.title,
-                      targetDate: sg.targetDate,
-                    });
+                for (const goal of goals) {
+                  if (goal.status === "completed") continue;
+                  for (const sg of goal.subGoals) {
+                    if (
+                      !sg.done &&
+                      sg.targetDate === todayStr &&
+                      sg.lastEmailReminderSent !== todayStr
+                    ) {
+                      dueMilestones.push({
+                        id: sg.id,
+                        goalId: goal.id,
+                        title: sg.title,
+                        goalTitle: goal.title,
+                        targetDate: sg.targetDate!,
+                      });
+                    }
                   }
                 }
-              }
 
-              if (dueMilestones.length === 0) {
-                toast.success("No milestones due for reminders right now.");
-                return;
-              }
+                if (dueMilestones.length === 0) {
+                  toast.success("No milestones due for reminders right now.");
+                  return;
+                }
 
-              try {
-                const response = await fetch("/api/send-reminders", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ email: settings.email, milestones: dueMilestones })
-                });
+                try {
+                  const response = await fetch("/api/send-reminders", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: settings.email, milestones: dueMilestones }),
+                  });
 
-                if (response.ok) {
-                  const data = await response.json();
-                  if (data.sentCount > 0) {
-                    // Update idempotency state
-                    dueMilestones.forEach(m => {
-                      updateSubGoal(m.goalId, m.id, { lastEmailReminderSent: todayStr });
-                    });
-                    toast.success(`Successfully sent ${data.sentCount} reminder(s).`);
+                  if (response.ok) {
+                    const data = await response.json();
+                    if (data.sentCount > 0) {
+                      dueMilestones.forEach((m) => {
+                        updateSubGoal(m.goalId, m.id, { lastEmailReminderSent: todayStr });
+                      });
+                      toast.success(`Successfully sent ${data.sentCount} reminder(s).`);
+                    } else {
+                      toast.success("No milestones due for reminders right now.");
+                    }
                   } else {
-                    toast.success("No milestones due for reminders right now.");
+                    toast.error("Failed to send reminders");
                   }
-                } else {
-                  toast.error("Failed to send reminders");
+                } catch {
+                  toast.error("Error triggering reminders");
                 }
-              } catch (e) {
-                toast.error("Error triggering reminders");
-              }
-            }}>
+              }}
+            >
               <Mail className="mr-2 h-4 w-4" /> Send today's due milestones
             </Button>
             <p className="mt-2 text-xs text-muted-foreground">
