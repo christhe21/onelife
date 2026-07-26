@@ -39,6 +39,7 @@ export interface SubGoal {
   title: string;
   targetDate?: string;
   done: boolean;
+  lastEmailReminderSent?: string;
 }
 
 export interface Goal {
@@ -113,6 +114,8 @@ export interface Settings {
   notificationsEnabled?: boolean;
   reminderLeadMinutes?: number;
   frierenSfx?: boolean;
+  email?: string;
+  emailRemindersEnabled?: boolean;
 }
 
 export interface AppData {
@@ -308,6 +311,7 @@ function normalizeGoal(raw: any): Goal {
         title: String(s?.title ?? "Untitled milestone"),
         targetDate: typeof s?.targetDate === "string" ? s.targetDate : undefined,
         done: Boolean(s?.done),
+        lastEmailReminderSent: typeof s?.lastEmailReminderSent === "string" ? s.lastEmailReminderSent : undefined,
       }))
     : [];
   return {
@@ -406,6 +410,8 @@ function normalizeAppData(raw: any): AppData {
             typeof raw.settings.reminderLeadMinutes === "number"
               ? raw.settings.reminderLeadMinutes
               : undefined,
+          email: typeof raw.settings.email === "string" ? raw.settings.email : undefined,
+          emailRemindersEnabled: typeof raw.settings.emailRemindersEnabled === "boolean" ? raw.settings.emailRemindersEnabled : undefined,
         }
       : undefined;
 
@@ -812,6 +818,7 @@ interface Ctx extends AppData {
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
   addSubGoal: (goalId: string, title: string, targetDate?: string) => string;
+  updateSubGoal: (goalId: string, subId: string, patch: Partial<SubGoal>) => void;
   toggleSubGoal: (goalId: string, subId: string) => void;
   deleteSubGoal: (goalId: string, subId: string) => void;
   ensureDefaultMilestone: (goalId: string) => string;
@@ -922,6 +929,14 @@ function loadInitial(): Stored {
             frierenSfx:
               typeof parsed.settings.frierenSfx === "boolean"
                 ? parsed.settings.frierenSfx
+                : undefined,
+            email:
+              typeof parsed.settings.email === "string"
+                ? parsed.settings.email
+                : undefined,
+            emailRemindersEnabled:
+              typeof parsed.settings.emailRemindersEnabled === "boolean"
+                ? parsed.settings.emailRemindersEnabled
                 : undefined,
           }
         : {};
@@ -1238,6 +1253,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       return id;
     },
 
+    updateSubGoal: (goalId, subId, patch) => {
+      setGoals((cur) =>
+        cur.map((g) => {
+          if (g.id !== goalId) return g;
+          return {
+            ...g,
+            subGoals: g.subGoals.map((s) => (s.id === subId ? { ...s, ...patch } : s)),
+          };
+        }),
+      );
+    },
     ensureDefaultMilestone: (goalId) => {
       const existing = goals.find((g) => g.id === goalId);
       const first = existing?.subGoals[0];
