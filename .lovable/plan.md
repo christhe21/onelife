@@ -1,27 +1,36 @@
-## 1. Rotating quotes on every refresh
+## Goal
 
-**File:** `src/lib/quotes.ts` (new) + `src/components/life/Today.tsx`
+Get rid of the OS-native color/time/date pickers (screenshots show Android's color dialog and clock time picker) and replace every `<Input type="color|time|date">` in the app with custom-built, theme-aware components that render inside our own UI so the experience is identical across web, mobile browser, and the Android WebView.
 
-- Bundle a curated list (~40–60) of quotes shipped with the app, split into two pools:
-  - **Famous authors** — growth/determination themed (Gandhi, Marcus Aurelius, Angelou, Mandela, Jobs, Goggins, Emerson, Rumi, Confucius, Roosevelt, etc.).
-  - **Anime** — each entry has `text`, `character`, `anime` (Naruto, One Piece, AoT, HxH, FMA:B, Frieren, JJK, Demon Slayer, Vinland Saga, Mushishi, etc.).
-- Export `getRandomQuote()` that picks one at random from the combined pool on each call.
-- In `Today.tsx`, replace the hard-coded `QUOTE` / `FRIEREN_QUOTE` constants with a `useState(() => getRandomQuote())` so a new quote is chosen on every mount/refresh. Frieren theme biases the pick toward anime quotes (still random inside that pool).
-- Render format:
-  - Famous: `"…text…" — Author`
-  - Anime: `"…text…" — Character, *Anime Name*`
-- No network fetch — quotes are curated & bundled (reliable offline, no rate limits, no CORS). The plan calls these "quotes from the internet" in the sense that they are real quotes sourced from public quote collections, not AI-generated.
+## What to build
 
-**Ask before build?** If you specifically want live fetching from a public quotes API (e.g. quotable.io) instead of a bundled list, say so — I'll swap in a fetch with the bundled list as fallback.
+Three new reusable components under `src/components/ui/pickers/`:
 
-## 2. Mindmap visual tweaks
+1. **`ColorPicker.tsx`** — trigger button showing the current swatch; opens a `Popover` with:
+   - A curated palette grid (12–16 tokens matching our design system).
+   - A "Custom" section with H/S/L sliders + hex input.
+   - Live preview + Set / Cancel.
 
-**File:** `src/components/life/MindMapCanvas.tsx`
+2. **`TimePicker.tsx`** — trigger button (`HH:MM`) opens a `Popover` with:
+   - Two scrollable wheel columns (hours 00–23, minutes in 5-min steps) plus a free-type `HH:MM` field.
+   - AM/PM label derived from 24h value; still stores `HH:MM` 24h string so existing consumers don't change.
 
-- **Edge color:** change the connector stroke from black/near-black to a dark grey that adapts to theme. Use `hsl(var(--muted-foreground) / 0.55)` for light mode and slightly brighter in dark mode, so lines read as dark grey on light bg and light grey on dark bg (currently they're hard black). If you want a fixed grey regardless of theme, I'll use `#4b5563` (Tailwind slate-600) instead — tell me which.
-- **Node label font:** switch the SVG `<text>` `font-family` from the default system stack to a friendlier sans. Default choice: **Google Sans / Product Sans** stack with graceful fallback:
-  `"Google Sans", "Google Sans Text", "Open Sans", "Segoe UI", system-ui, sans-serif`.
-  Google Sans isn't a free web font; if it's not installed locally it'll fall back to Open Sans. To guarantee it renders everywhere, I'll add an Open Sans `<link>` in `src/routes/__root.tsx` head (per project rule against remote `@import` in `styles.css`).
-  If you prefer Comic Sans instead, I'll use `"Comic Sans MS", "Comic Neue", cursive` and skip the font link.
+3. **`DatePicker.tsx`** — thin wrapper over the existing shadcn `Calendar` (`src/components/ui/calendar.tsx`) inside a `Popover`. Trigger shows the formatted date; value stays a `YYYY-MM-DD` string so callers don't change. Respects `min` / `max` props for the goal-window clamping we already do.
 
-No other Mindmap behavior (layout, node fills, ink contrast) changes.
+All three:
+- Use design tokens only (no hardcoded colors).
+- Accept the same `value` / `onChange` shape their current `<Input>` uses, so swapping is a one-line change per call site.
+- Work inside `Dialog`s (add `pointer-events-auto` on the calendar wrapper per project rule).
+
+## Call sites to migrate
+
+- **Color** (`type="color"`): `Skills.tsx` (2).
+- **Time** (`type="time"`): `AddToScheduleDialog.tsx` (2), `SubtaskFormDialog.tsx` (2), `CreateGoalWizard.tsx` (1).
+- **Date** (`type="date"`): `Goals.tsx` (3), `Tasks.tsx` (4), `NewTaskWizard.tsx` (3), `NewGoalWizard.tsx` (3), `CreateGoalWizard.tsx` (4), `SubtaskFormDialog.tsx` (1), `Onboarding.tsx` (3), `OnboardingWizard.tsx` (1).
+
+Each replacement preserves the existing `min`/`max` constraints and value format so no data-layer changes are needed.
+
+## Out of scope
+
+- No changes to data model, scheduling logic, or Android bridge.
+- Native Android date/time system dialogs (only invoked from JS `<input>`s) disappear automatically once these inputs are replaced.
