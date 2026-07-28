@@ -16,6 +16,7 @@ import {
 import { useAppData, DEFAULT_SKILLS } from "@/lib/app-data";
 import { TEMPLATES, type GoalTemplate } from "@/lib/templates";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
 
 const STEPS = ["basics", "template", "milestones", "tasks", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
@@ -273,11 +274,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                 </div>
                 <div>
                   <Label className="text-xs">Target date</Label>
-                  <Input
-                    type="date"
-                    value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
-                  />
+                  <DatePicker value={targetDate} onChange={setTargetDate} />
                 </div>
               </div>
             </div>
