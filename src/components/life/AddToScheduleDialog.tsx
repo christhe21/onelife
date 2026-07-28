@@ -279,12 +279,7 @@ export function AddToScheduleDialog({
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <label className="min-w-0 space-y-1">
               <span className="text-[11px] font-medium text-muted-foreground">From</span>
-              <Input
-                type="time"
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="text-base"
-              />
+              <TimePicker value={from} onChange={setFrom} />
             </label>
             <label className="min-w-0 space-y-1">
               <span className="text-[11px] font-medium text-muted-foreground">Till</span>
