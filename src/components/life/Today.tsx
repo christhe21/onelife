@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { ArrowRight, Quote, CalendarDays } from "lucide-react";
 import { useAppData, type Task } from "@/lib/app-data";
 import { cn } from "@/lib/utils";
 import { useFrierenVocabulary } from "@/lib/frieren";
+import { getRandomQuote } from "@/lib/quotes";
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -18,20 +19,10 @@ interface Props {
   onGoCalendar?: () => void;
 }
 
-const QUOTE = {
-  text: "The future depends on what you do today.",
-  author: "Mahatma Gandhi",
-};
-
-const FRIEREN_QUOTE = {
-  text: "The greatest joy of magic lies in searching for it.",
-  author: "Frieren",
-};
-
 export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
   const { tasks, goals, skills, settings, toggleTask } = useAppData();
   const vocab = useFrierenVocabulary();
-  const quote = vocab.isFrieren ? FRIEREN_QUOTE : QUOTE;
+  const [quote] = useState(() => getRandomQuote({ preferAnime: vocab.isFrieren }));
   const today = todayISO();
   const name = settings.userName?.trim();
 
