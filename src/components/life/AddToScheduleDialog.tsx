@@ -225,15 +225,6 @@ export function AddToScheduleDialog({
                 </button>
               )}
             </div>
-          )}
-          {blockedParent && (
-            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              This task has sub-tasks. Schedule each sub-task instead — the parent task
-              auto-completes when all sub-tasks are done.
-            </p>
-          )}
-          {false && (
-            <div>{/* structural placeholder — original block preserved below */}</div>
           ) : preselect ? (
             <p className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
               Loading item…
