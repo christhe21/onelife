@@ -326,7 +326,7 @@ export function AddToScheduleDialog({
           </Button>
           <Button
             onClick={submit}
-            disabled={!selected || from >= till}
+            disabled={!selected || from >= till || blockedParent}
             className="w-full sm:w-auto"
           >
             Schedule
