@@ -333,7 +333,7 @@ function AddTaskBar() {
         <PopoverContent align="end" className="w-64 space-y-2">
           <div>
             <Label className="text-xs">Due date</Label>
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <DatePicker value={dueDate} onChange={setDueDate} />
           </div>
           <div>
             <Label className="text-xs">Priority</Label>
