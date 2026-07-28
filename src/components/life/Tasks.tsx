@@ -14,6 +14,7 @@ import {
 import { NewTaskWizard } from "./NewTaskWizard";
 import { SubtaskFormDialog } from "./SubtaskFormDialog";
 import { AddToScheduleDialog } from "./AddToScheduleDialog";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
 import { useFrierenVocabulary } from "@/lib/frieren";
 import type { Recurrence } from "@/lib/app-data";
 import { Button } from "@/components/ui/button";
@@ -99,10 +100,9 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
               <Label>
                 Due <span className="text-red-500">*</span>
               </Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.dueDate}
-                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                onChange={(v) => setForm({ ...form, dueDate: v })}
               />
             </div>
             <div>
@@ -123,18 +123,16 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
             </div>
             <div>
               <Label>Started</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.startDate}
-                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                onChange={(v) => setForm({ ...form, startDate: v })}
               />
             </div>
             <div>
               <Label>Completed</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.endDate}
-                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                onChange={(v) => setForm({ ...form, endDate: v })}
               />
             </div>
           </div>
@@ -335,7 +333,7 @@ function AddTaskBar() {
         <PopoverContent align="end" className="w-64 space-y-2">
           <div>
             <Label className="text-xs">Due date</Label>
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <DatePicker value={dueDate} onChange={setDueDate} />
           </div>
           <div>
             <Label className="text-xs">Priority</Label>

@@ -17,6 +17,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAppData, autoScheduleTasks, type Recurrence, type Task } from "@/lib/app-data";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
+import { TimePicker } from "@/components/ui/pickers/TimePicker";
 
 type Priority = "low" | "medium" | "high";
 
@@ -368,11 +370,11 @@ export function CreateGoalWizard() {
           </div>
           <div>
             <Label>Start date</Label>
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <DatePicker value={startDate} onChange={setStartDate} />
           </div>
           <div>
             <Label>Target date</Label>
-            <Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
+            <DatePicker value={targetDate} onChange={setTargetDate} />
           </div>
         </CardContent>
       </Card>
@@ -399,10 +401,9 @@ export function CreateGoalWizard() {
                 onChange={(e) => updateSub(s.key, { title: e.target.value })}
                 placeholder="Milestone title"
               />
-              <Input
-                type="date"
+              <DatePicker
                 value={s.targetDate ?? ""}
-                onChange={(e) => updateSub(s.key, { targetDate: e.target.value || undefined })}
+                onChange={(v) => updateSub(s.key, { targetDate: v || undefined })}
               />
               <Button
                 variant="ghost"
@@ -682,19 +683,17 @@ function SchedulePresetPicker({
         </div>
         <div>
           <Label className="text-xs">Start date</Label>
-          <Input
-            type="date"
+          <DatePicker
             value={startDate ?? ""}
-            onChange={(e) => onChange({ startDate: e.target.value || undefined })}
+            onChange={(v) => onChange({ startDate: v || undefined })}
             disabled={autoPlace}
           />
         </div>
         <div>
           <Label className="text-xs">Start time</Label>
-          <Input
-            type="time"
+          <TimePicker
             value={startTime ?? ""}
-            onChange={(e) => onChange({ startTime: e.target.value || undefined })}
+            onChange={(v) => onChange({ startTime: v || undefined })}
             disabled={autoPlace}
           />
         </div>
@@ -713,10 +712,9 @@ function SchedulePresetPicker({
         {dueDate !== undefined && (
           <div>
             <Label className="text-xs">Due date</Label>
-            <Input
-              type="date"
+            <DatePicker
               value={dueDate ?? ""}
-              onChange={(e) => onChange({ dueDate: e.target.value || undefined })}
+              onChange={(v) => onChange({ dueDate: v || undefined })}
             />
           </div>
         )}

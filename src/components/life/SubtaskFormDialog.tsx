@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CalendarClock } from "lucide-react";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
+import { TimePicker } from "@/components/ui/pickers/TimePicker";
 import {
   Select,
   SelectContent,
@@ -161,12 +163,11 @@ export function SubtaskFormDialog({
               <Label className="text-xs">
                 Deadline <span className="text-red-500">*</span>
               </Label>
-              <Input
-                type="date"
+              <DatePicker
                 min={minDate}
                 max={maxDate}
                 value={form.endDate}
-                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                onChange={(v) => setForm({ ...form, endDate: v })}
               />
               {dateOutOfRange && (
                 <p className="mt-1 text-[11px] text-destructive">
@@ -195,19 +196,11 @@ export function SubtaskFormDialog({
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Start</Label>
-                  <Input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                  />
+                  <TimePicker value={startTime} onChange={setStartTime} />
                 </div>
                 <div>
                   <Label className="text-xs">End</Label>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
+                  <TimePicker value={endTime} onChange={setEndTime} />
                 </div>
                 {timeInvalid && (
                   <p className="col-span-2 text-[11px] text-destructive">

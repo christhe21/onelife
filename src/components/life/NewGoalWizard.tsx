@@ -16,6 +16,7 @@ import {
 import { useAppData, DEFAULT_SKILLS } from "@/lib/app-data";
 import { TEMPLATES, type GoalTemplate } from "@/lib/templates";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
 
 const STEPS = ["basics", "template", "milestones", "tasks", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
@@ -273,11 +274,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                 </div>
                 <div>
                   <Label className="text-xs">Target date</Label>
-                  <Input
-                    type="date"
-                    value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
-                  />
+                  <DatePicker value={targetDate} onChange={setTargetDate} />
                 </div>
               </div>
             </div>
@@ -345,18 +342,18 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                         )
                       }
                     />
-                    <Input
-                      type="date"
-                      className="sm:w-44"
-                      min={today}
-                      max={targetDate}
-                      value={m.date}
-                      onChange={(e) =>
-                        setMilestones((cur) =>
-                          cur.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)),
-                        )
-                      }
-                    />
+                    <div className="sm:w-44">
+                      <DatePicker
+                        min={today}
+                        max={targetDate}
+                        value={m.date}
+                        onChange={(v) =>
+                          setMilestones((cur) =>
+                            cur.map((x, j) => (j === i ? { ...x, date: v } : x)),
+                          )
+                        }
+                      />
+                    </div>
 
                     <Button
                       variant="ghost"
@@ -408,16 +405,16 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                       }
                     />
                     <div className="flex gap-2">
-                      <Input
-                        type="date"
-                        className="w-full sm:w-40"
-                        value={t.due}
-                        onChange={(e) =>
-                          setTasks((cur) =>
-                            cur.map((x, j) => (j === i ? { ...x, due: e.target.value } : x)),
-                          )
-                        }
-                      />
+                      <div className="w-full sm:w-40">
+                        <DatePicker
+                          value={t.due}
+                          onChange={(v) =>
+                            setTasks((cur) =>
+                              cur.map((x, j) => (j === i ? { ...x, due: v } : x)),
+                            )
+                          }
+                        />
+                      </div>
                       <Select
                         value={t.priority}
                         onValueChange={(v) =>

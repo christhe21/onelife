@@ -16,6 +16,7 @@ import {
 import { useAppData, type Task } from "@/lib/app-data";
 import { cn } from "@/lib/utils";
 import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
 
 const STEPS = ["basics", "priority", "link", "schedule", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
@@ -278,12 +279,11 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
               {!isDaily ? (
                 <div>
                   <Label className="text-xs">Due date</Label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     min={minDate}
                     max={goalMax}
                     value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                    onChange={setDueDate}
                   />
                   {!dueInRange && (
                     <p className="mt-1 text-[11px] text-destructive">
@@ -296,22 +296,20 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Start date</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         min={minDate}
                         max={goalMax}
                         value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
+                        onChange={setStartDate}
                       />
                     </div>
                     <div>
                       <Label className="text-xs">End date</Label>
-                      <Input
-                        type="date"
+                      <DatePicker
                         min={startDate || minDate}
                         max={goalMax}
                         value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
+                        onChange={setEndDate}
                       />
                     </div>
                   </div>
