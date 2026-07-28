@@ -74,12 +74,8 @@ export function Skills() {
           </div>
           <div>
             <Label className="text-xs">Color</Label>
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="h-9 w-14 cursor-pointer rounded-md border border-input bg-transparent p-1"
-            />
+            <ColorPicker value={color} onChange={setColor} />
+
           </div>
           <Button onClick={submit}>
             <Plus className="mr-2 h-4 w-4" />
@@ -97,12 +93,9 @@ export function Skills() {
             <Card key={s.id}>
               <CardContent className="space-y-2 py-4">
                 <div className="flex items-center gap-3">
-                  <input
-                    type="color"
+                  <ColorPicker
                     value={s.color}
-                    onChange={(e) => updateSkill(s.id, { color: e.target.value })}
-                    className="h-9 w-10 cursor-pointer rounded-md border border-input bg-transparent p-1"
-                    title="Change color"
+                    onChange={(c) => updateSkill(s.id, { color: c })}
                   />
                   <Input
                     value={s.label}
