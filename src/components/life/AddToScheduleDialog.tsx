@@ -124,6 +124,8 @@ export function AddToScheduleDialog({
     setPlannedHoursStr(i.plannedHours != null ? String(i.plannedHours) : "");
   };
 
+  const blockedParent = selected?.kind === "task" && !!selected.hasSubtasks;
+
   // Apply preselect on open
   useEffect(() => {
     if (!open || !preselect) return;
