@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAppData } from "@/lib/app-data";
 import { TEMPLATES, CATEGORIES, type Category, type GoalTemplate } from "@/lib/templates";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
 
 interface Props {
   trigger: React.ReactNode;
@@ -170,7 +171,7 @@ export function OnboardingWizard({ trigger, initialTemplate }: Props) {
             </div>
             <div>
               <Label className="text-xs">Start date</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <DatePicker value={startDate} onChange={setStartDate} />
             </div>
             <div className="rounded-md border bg-muted/40 p-3 text-xs">
               <p className="font-medium">You&apos;ll get:</p>
