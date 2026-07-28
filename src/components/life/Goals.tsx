@@ -479,14 +479,14 @@ function GoalDetailsDialog({
                 value={subTitle}
                 onChange={(e) => setSubTitle(e.target.value)}
               />
-              <Input
-                type="date"
-                className="w-40"
-                min={goal.startDate}
-                max={goal.targetDate}
-                value={subDate}
-                onChange={(e) => setSubDate(e.target.value)}
-              />
+              <div className="w-40">
+                <DatePicker
+                  min={goal.startDate}
+                  max={goal.targetDate}
+                  value={subDate}
+                  onChange={setSubDate}
+                />
+              </div>
               <Button
                 size="sm"
                 disabled={
