@@ -56,12 +56,15 @@ export function TimePicker({
 
   React.useEffect(() => {
     if (!open) return;
-    // Scroll selected into view
+    // Scroll selected into view after open
     requestAnimationFrame(() => {
       hoursRef.current?.querySelector<HTMLButtonElement>(`[data-h="${h}"]`)?.scrollIntoView({
         block: "center",
       });
-      const nearestM = minutes.reduce((p, c) => (Math.abs(c - m) < Math.abs(p - m) ? c : p), minutes[0]);
+      const nearestM = minutes.reduce(
+        (p, c) => (Math.abs(c - m) < Math.abs(p - m) ? c : p),
+        minutes[0],
+      );
       minsRef.current?.querySelector<HTMLButtonElement>(`[data-m="${nearestM}"]`)?.scrollIntoView({
         block: "center",
       });
@@ -70,6 +73,11 @@ export function TimePicker({
 
   const set = (nh: number, nm: number) => {
     onChange(`${pad(nh)}:${pad(nm)}`);
+  };
+
+  // Prevent parent (Popover / Dialog) from stealing touch scroll gestures
+  const stopTouchPropagation = (e: React.TouchEvent) => {
+    e.stopPropagation();
   };
 
   return (
@@ -90,16 +98,25 @@ export function TimePicker({
           {value ? format12(h, m) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-3" align="start">
+      <PopoverContent
+        className="w-64 p-3"
+        align="start"
+        onOpenAutoFocus={(e) => e.preventDefault()} // keep focus out of lists so scroll works
+      >
         <div className="mb-2 text-center text-lg font-semibold tabular-nums">
           {format12(h, m)}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <div className="mb-1 text-center text-[11px] font-medium text-muted-foreground">Hour</div>
+            <div className="mb-1 text-center text-[11px] font-medium text-muted-foreground">
+              Hour
+            </div>
             <div
               ref={hoursRef}
-              className="h-40 overflow-y-auto rounded-md border bg-muted/30"
+              className="h-40 overflow-y-auto overscroll-contain rounded-md border bg-muted/30 touch-pan-y"
+              style={{ WebkitOverflowScrolling: "touch" }}
+              onTouchStart={stopTouchPropagation}
+              onTouchMove={stopTouchPropagation}
             >
               {Array.from({ length: 24 }, (_, i) => i).map((hh) => (
                 <button
@@ -118,10 +135,15 @@ export function TimePicker({
             </div>
           </div>
           <div>
-            <div className="mb-1 text-center text-[11px] font-medium text-muted-foreground">Min</div>
+            <div className="mb-1 text-center text-[11px] font-medium text-muted-foreground">
+              Min
+            </div>
             <div
               ref={minsRef}
-              className="h-40 overflow-y-auto rounded-md border bg-muted/30"
+              className="h-40 overflow-y-auto overscroll-contain rounded-md border bg-muted/30 touch-pan-y"
+              style={{ WebkitOverflowScrolling: "touch" }}
+              onTouchStart={stopTouchPropagation}
+              onTouchMove={stopTouchPropagation}
             >
               {minutes.map((mm) => (
                 <button
@@ -150,7 +172,9 @@ export function TimePicker({
             className="h-8 text-sm tabular-nums"
             placeholder="HH:MM"
           />
-          <Button size="sm" onClick={() => setOpen(false)}>Done</Button>
+          <Button size="sm" onClick={() => setOpen(false)}>
+            Done
+          </Button>
         </div>
       </PopoverContent>
     </Popover>
