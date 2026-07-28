@@ -85,7 +85,16 @@ export function Today({ onGoTasks, onGoGoals, onGoCalendar }: Props) {
             "{quote.text}"
           </p>
           <p className="mt-4 text-sm font-semibold text-primary/80 uppercase tracking-widest">
-            — {quote.author}
+            {quote.kind === "anime" ? (
+              <>
+                — {quote.character}
+                <span className="ml-1 normal-case tracking-normal text-primary/60 italic">
+                  , {quote.anime}
+                </span>
+              </>
+            ) : (
+              <>— {quote.author}</>
+            )}
           </p>
         </CardContent>
       </Card>
