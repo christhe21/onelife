@@ -275,9 +275,11 @@ function SubtasksPanel({ task }: { task: Task }) {
         minDate={minDate}
         maxDate={maxDate}
         onSubmit={(d) => {
+          const scheduled = d.scheduledStart && d.scheduledEnd;
           addSubtask(task.id, {
             title: d.title,
-            endDate: d.endDate,
+            endDate: scheduled ? d.scheduledEnd! : d.endDate,
+            startDate: scheduled ? d.scheduledStart! : undefined,
             priority: d.priority,
             description: d.description,
           });
