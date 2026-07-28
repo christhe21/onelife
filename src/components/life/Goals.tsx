@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SkillProgress } from "@/components/life/SkillProgress";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
 import { NewGoalButton } from "@/components/life/NewGoalButton";
 import {
   Select,
@@ -138,18 +139,16 @@ function GoalDialog({ goal, trigger }: GoalDialogProps) {
             </div>
             <div>
               <Label>Start date</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.startDate}
-                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                onChange={(v) => setForm({ ...form, startDate: v })}
               />
             </div>
             <div>
               <Label>Target date</Label>
-              <Input
-                type="date"
+              <DatePicker
                 value={form.targetDate}
-                onChange={(e) => setForm({ ...form, targetDate: e.target.value })}
+                onChange={(v) => setForm({ ...form, targetDate: v })}
               />
             </div>
           </div>
