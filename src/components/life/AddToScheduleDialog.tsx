@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAppData } from "@/lib/app-data";
+import { TimePicker } from "@/components/ui/pickers/TimePicker";
 
 function hmToTodayISO(hm: string, dateYMD?: string): string {
   const [h, m] = hm.split(":").map(Number);
@@ -283,12 +284,7 @@ export function AddToScheduleDialog({
             </label>
             <label className="min-w-0 space-y-1">
               <span className="text-[11px] font-medium text-muted-foreground">Till</span>
-              <Input
-                type="time"
-                value={till}
-                onChange={(e) => setTill(e.target.value)}
-                className="text-base"
-              />
+              <TimePicker value={till} onChange={setTill} />
             </label>
           </div>
 
