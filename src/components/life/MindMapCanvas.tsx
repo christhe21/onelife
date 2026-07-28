@@ -662,7 +662,7 @@ export function MindMapCanvas() {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M0,0 L10,5 L0,10 z" fill={ink} />
+              <path d="M0,0 L10,5 L0,10 z" fill={edge} />
             </marker>
           </defs>
 
@@ -688,8 +688,8 @@ export function MindMapCanvas() {
                 key={i}
                 d={`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`}
                 fill="none"
-                stroke={ink}
-                strokeOpacity={0.75}
+                stroke={edge}
+                strokeOpacity={0.9}
                 strokeWidth={w}
                 strokeLinecap="round"
                 markerEnd="url(#mm-arrow)"
