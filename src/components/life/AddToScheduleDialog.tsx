@@ -38,6 +38,7 @@ interface FlatItem {
   skillColor?: string;
   plannedHours?: number;
   spentHours?: number;
+  hasSubtasks?: boolean;
 }
 
 export function AddToScheduleDialog({
@@ -74,6 +75,7 @@ export function AddToScheduleDialog({
         skillColor: sk?.color,
         plannedHours: t.plannedHours,
         spentHours: t.spentHours,
+        hasSubtasks: t.subtasks.length > 0,
       });
       for (const s of t.subtasks) {
         out.push({
