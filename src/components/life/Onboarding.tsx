@@ -14,6 +14,7 @@ import {
 import { useAppData, DEFAULT_SKILLS } from "@/lib/app-data";
 import { TEMPLATES, CATEGORIES, type Category, type GoalTemplate } from "@/lib/templates";
 import { cn } from "@/lib/utils";
+import { DatePicker } from "@/components/ui/pickers/DatePicker";
 
 const STEPS = [
   "welcome",
@@ -375,11 +376,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                     </div>
                     <div>
                       <Label className="text-xs">Target date</Label>
-                      <Input
-                        type="date"
-                        value={targetDate}
-                        onChange={(e) => setTargetDate(e.target.value)}
-                      />
+                      <DatePicker value={targetDate} onChange={setTargetDate} />
                     </div>
                   </div>
                 </div>
@@ -407,16 +404,16 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                           )
                         }
                       />
-                      <Input
-                        type="date"
-                        className="sm:w-44"
-                        value={m.date}
-                        onChange={(e) =>
-                          setMilestones((cur) =>
-                            cur.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)),
-                          )
-                        }
-                      />
+                      <div className="sm:w-44">
+                        <DatePicker
+                          value={m.date}
+                          onChange={(v) =>
+                            setMilestones((cur) =>
+                              cur.map((x, j) => (j === i ? { ...x, date: v } : x)),
+                            )
+                          }
+                        />
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
