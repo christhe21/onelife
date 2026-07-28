@@ -196,19 +196,11 @@ export function SubtaskFormDialog({
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Start</Label>
-                  <Input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                  />
+                  <TimePicker value={startTime} onChange={setStartTime} />
                 </div>
                 <div>
                   <Label className="text-xs">End</Label>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
+                  <TimePicker value={endTime} onChange={setEndTime} />
                 </div>
                 {timeInvalid && (
                   <p className="col-span-2 text-[11px] text-destructive">
