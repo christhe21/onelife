@@ -100,6 +100,8 @@ export function MindMapCanvas() {
   const { skills, goals, tasks, settings } = useAppData();
   const { isDark } = useTheme();
   const ink = isDark ? "#e5e7eb" : "#1f2937"; // text-gray-200 : text-gray-800
+  // Softer dark-grey for edges/arrows so they don't read as harsh black.
+  const edge = isDark ? "#9ca3af" : "#4b5563"; // gray-400 : gray-600
 
   const [tx, setTx] = useState(0);
   const [ty, setTy] = useState(0);
@@ -506,7 +508,8 @@ export function MindMapCanvas() {
     : "relative h-[70vh] w-full cursor-grab touch-none overflow-hidden rounded-lg border active:cursor-grabbing";
 
   const labelFont = (kind: Kind) => {
-    const family = "'Manrope', ui-sans-serif, system-ui, sans-serif";
+    const family =
+      "'Google Sans', 'Google Sans Text', 'Open Sans', 'Segoe UI', ui-sans-serif, system-ui, sans-serif";
     if (kind === "root") return { family, size: 22, weight: 700 };
     if (kind === "skill") return { family, size: 16, weight: 700 };
     if (kind === "goal") return { family, size: 14, weight: 600 };
@@ -659,7 +662,7 @@ export function MindMapCanvas() {
               markerHeight="6"
               orient="auto-start-reverse"
             >
-              <path d="M0,0 L10,5 L0,10 z" fill={ink} />
+              <path d="M0,0 L10,5 L0,10 z" fill={edge} />
             </marker>
           </defs>
 
@@ -685,8 +688,8 @@ export function MindMapCanvas() {
                 key={i}
                 d={`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`}
                 fill="none"
-                stroke={ink}
-                strokeOpacity={0.75}
+                stroke={edge}
+                strokeOpacity={0.9}
                 strokeWidth={w}
                 strokeLinecap="round"
                 markerEnd="url(#mm-arrow)"
