@@ -71,7 +71,8 @@ export default function SkillsRadarChart({ data }: { data: RadarDatum[] }) {
         {
           anchor: "bottom",
           direction: "row",
-          translateY: 44,
+          translateY: 46,
+          itemsSpacing: 8,
           itemWidth: 90,
           itemHeight: 18,
           itemTextColor: palette.text,
