@@ -6,6 +6,14 @@ import type { RadarDatum } from "@/components/life/SkillsRadarChart";
 
 const SkillsRadarChart = lazy(() => import("@/components/life/SkillsRadarChart"));
 
+/** Keep axis labels short so they never clip the chart's edges. */
+function shortLabel(label: string) {
+  const base = label.replace(/\s*Skills?$/i, "").trim();
+  if (base.length <= 12) return base;
+  const first = base.split(/\s+/)[0];
+  return first.length <= 12 ? first : `${base.slice(0, 11)}…`;
+}
+
 export function SkillsRadar() {
   const { goals, skills, tasks } = useAppData();
 
