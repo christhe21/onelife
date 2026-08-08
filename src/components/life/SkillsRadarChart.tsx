@@ -14,9 +14,9 @@ function tokenColor(name: string, fallback: string) {
   if (typeof window === "undefined") return fallback;
   const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   if (!raw) return fallback;
-  return raw.startsWith("#") || raw.startsWith("rgb") || raw.startsWith("hsl")
-    ? raw
-    : `hsl(${raw})`;
+  // Some browsers resolve custom properties to full colors (rgb()/lab()/#hex),
+  // others keep raw HSL channel triplets that still need the hsl() wrapper.
+  return raw.includes("(") || raw.startsWith("#") ? raw : `hsl(${raw})`;
 }
 
 export default function SkillsRadarChart({ data }: { data: RadarDatum[] }) {
