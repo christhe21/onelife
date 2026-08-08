@@ -51,13 +51,13 @@ export default function SkillsRadarChart({ data }: { data: RadarDatum[] }) {
       keys={["Planned", "Achieved"]}
       indexBy="skill"
       maxValue={100}
-      margin={{ top: 44, right: 104, bottom: 56, left: 104 }}
+      margin={{ top: 44, right: 118, bottom: 56, left: 118 }}
       curve="linearClosed"
       borderWidth={2}
       borderColor={{ from: "color" }}
       gridLevels={4}
       gridShape="circular"
-      gridLabelOffset={18}
+      gridLabelOffset={12}
       enableDots
       dotSize={7}
       dotColor={{ theme: "background" }}
@@ -80,7 +80,7 @@ export default function SkillsRadarChart({ data }: { data: RadarDatum[] }) {
         },
       ]}
       theme={{
-        text: { fill: palette.text, fontSize: 12, fontFamily: "Manrope, Open Sans, sans-serif" },
+        text: { fill: palette.text, fontSize: 11, fontFamily: "Manrope, Open Sans, sans-serif" },
         axis: { ticks: { text: { fill: palette.text } } },
         grid: { line: { stroke: palette.grid, strokeOpacity: 0.6 } },
         tooltip: {
