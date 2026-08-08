@@ -67,49 +67,15 @@ export function SkillsRadar() {
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart
                 data={data}
-                outerRadius="68%"
+                outerRadius="60%"
                 cx="50%"
-                cy="52%"
-                margin={{ top: 24, right: 56, bottom: 24, left: 56 }}
+                cy="50%"
+                margin={{ top: 32, right: 64, bottom: 32, left: 64 }}
               >
-                <defs>
-                  <linearGradient id="radarAchieved" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.95} />
-                    <stop offset="25%" stopColor="#8b5cf6" stopOpacity={0.95} />
-                    <stop offset="50%" stopColor="#ec4899" stopOpacity={0.95} />
-                    <stop offset="75%" stopColor="#f59e0b" stopOpacity={0.95} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.95} />
-                  </linearGradient>
-                  <linearGradient id="radarPlanned" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.18} />
-                    <stop offset="50%" stopColor="#ec4899" stopOpacity={0.18} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0.18} />
-                  </linearGradient>
-                  {/* 3D depth: soft drop shadow + inner highlight */}
-                  <filter id="radar3d" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="4" />
-                    <feOffset dx="3" dy="6" result="offsetblur" />
-                    <feComponentTransfer>
-                      <feFuncA type="linear" slope="0.55" />
-                    </feComponentTransfer>
-                    <feMerge>
-                      <feMergeNode />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                  <filter id="radarGlow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="6" result="coloredBlur" />
-                    <feMerge>
-                      <feMergeNode in="coloredBlur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
-
                 <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.5} />
                 <PolarAngleAxis
                   dataKey="skill"
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  tick={{ fill: "hsl(var(--foreground))", fontSize: 12, fontFamily: "Manrope, sans-serif" }}
                   tickFormatter={(v: string) => v.replace(/\s*Skills?$/i, "")}
                 />
                 <PolarRadiusAxis
@@ -134,49 +100,63 @@ export function SkillsRadar() {
                     return [val, name];
                   }}
                 />
-                <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" />
+                <Legend
+                  content={(props) => {
+                    const { payload } = props;
+                    return (
+                      <div className="flex w-full items-center justify-center gap-6 pt-4">
+                        {payload?.map((entry, index) => (
+                          <div key={`item-${index}`} className="flex items-center gap-2">
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{
+                                backgroundColor: entry.color,
+                                opacity: entry.value === "Planned" ? 0.2 : 0.8
+                              }}
+                            />
+                            <span className="text-sm font-medium text-foreground font-sans">
+                              {entry.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
 
-                {/* Planned ceiling — translucent outer shell */}
+                {/* Planned ceiling — semi-transparent fill with dashed border */}
                 <Radar
                   name="Planned"
                   dataKey="planned"
                   stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.6}
+                  strokeOpacity={0.8}
                   strokeWidth={1.5}
                   strokeDasharray="4 4"
-                  fill="url(#radarPlanned)"
-                  fillOpacity={1}
+                  fill="hsl(var(--muted-foreground))"
+                  fillOpacity={0.15}
                   isAnimationActive
                 />
 
-                {/* 3D shadow layer (offset, blurred) */}
-                <Radar
-                  name="shadow"
-                  dataKey="achieved"
-                  stroke="none"
-                  fill="#000"
-                  fillOpacity={0.18}
-                  legendType="none"
-                  isAnimationActive={false}
-                  style={{ filter: "url(#radar3d)", transform: "translate(4px, 8px)" }}
-                />
-
-                {/* Achieved — vivid gradient with glow */}
+                {/* Achieved — clean solid color with sharp border */}
                 <Radar
                   name="Achieved"
                   dataKey="achieved"
                   stroke="hsl(var(--primary))"
                   strokeWidth={2}
-                  fill="url(#radarAchieved)"
-                  fillOpacity={0.85}
+                  fill="hsl(var(--primary))"
+                  fillOpacity={0.6}
                   dot={{
-                    r: 3,
+                    r: 3.5,
                     fill: "hsl(var(--primary))",
                     stroke: "hsl(var(--background))",
-                    strokeWidth: 1.5,
+                    strokeWidth: 2.5,
                   }}
-                  activeDot={{ r: 5 }}
-                  style={{ filter: "url(#radarGlow)" }}
+                  activeDot={{
+                    r: 5,
+                    fill: "hsl(var(--primary))",
+                    stroke: "hsl(var(--background))",
+                    strokeWidth: 2,
+                  }}
                 />
               </RadarChart>
             </ResponsiveContainer>
