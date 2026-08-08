@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Trash2, Pencil, Store, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Pencil, Store, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -614,7 +614,19 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
   const vocab = useFrierenVocabulary();
   const navigate = useNavigate();
   const [filter, setFilter] = useState<SkillId | "all">("all");
-  const filtered = filter === "all" ? goals : goals.filter((g) => g.skill === filter);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filtered = goals.filter((g) => {
+    if (filter !== "all" && g.skill !== filter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        g.title.toLowerCase().includes(q) ||
+        (g.description ?? "").toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-4">
@@ -634,6 +646,15 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
               ))}
             </SelectContent>
           </Select>
+          <div className="relative w-48 max-w-full">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={`Search ${vocab.goals.toLowerCase()}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-9 text-sm"
+            />
+          </div>
         </div>
         <div className="flex gap-2">
           <Button

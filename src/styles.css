@@ -530,3 +530,27 @@
 :root[data-theme="frieren"].dark body::after {
   opacity: 0.1;
 }
+
+@keyframes long-press-fill {
+  0% {
+    box-shadow: inset 0 0 0 0px hsl(var(--primary) / 0.1), 0 0 0 0px hsl(var(--primary) / 0.5);
+  }
+  100% {
+    box-shadow: inset 0 0 0 20px hsl(var(--primary) / 0.2), 0 0 0 4px hsl(var(--primary) / 0.8);
+  }
+}
+.animate-long-press {
+  animation: long-press-fill 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes long-press-fill-block {
+  0% {
+    box-shadow: inset 0 0 0 0px hsl(var(--primary) / 0.1);
+  }
+  100% {
+    box-shadow: inset 0 0 0 100px hsl(var(--primary) / 0.2);
+  }
+}
+.animate-long-press-block {
+  animation: long-press-fill-block 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

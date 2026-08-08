@@ -67,6 +67,7 @@ function getProjectedEvents(
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { NewTaskWizard } from "./NewTaskWizard";
 import { AddToScheduleDialog } from "@/components/life/AddToScheduleDialog";
 
 type ViewMode = "month" | "week" | "day";
@@ -289,10 +290,22 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     });
   }, [view, cursor]);
 
+
+
+  const [taskWizardOpen, setTaskWizardOpen] = useState(false);
+  const [taskWizardDate, setTaskWizardDate] = useState<Date | undefined>(undefined);
+
   const openAdd = (d?: Date) => {
     setDialogDate(d ? ymd(d) : undefined);
     setDialogOpen(true);
   };
+
+  const openCreateTask = (d?: Date) => {
+    setTaskWizardDate(d);
+    setTaskWizardOpen(true);
+  };
+
+
 
   return (
     <div className="space-y-4 h-full flex flex-col">
@@ -362,9 +375,14 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
             >
               <Download className="mr-1 h-3.5 w-3.5" /> Export .ics
             </Button>
-            <Button size="sm" onClick={() => openAdd(cursor)} className="h-8">
-              <Plus className="mr-1 h-3.5 w-3.5" /> Add
+
+            <Button size="sm" onClick={() => openCreateTask(cursor)} className="h-8">
+              <Plus className="mr-1 h-3.5 w-3.5" /> Create Task
             </Button>
+            <Button size="sm" variant="secondary" onClick={() => openAdd(cursor)} className="h-8">
+              Schedule Existing
+            </Button>
+
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
@@ -375,31 +393,42 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
               dayStats={dayStats}
               streaks={streaks}
               isMobile={isMobile}
+
+
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
               onDropDay={onDropDay}
               onEventClick={onEventClick}
+              onLongPressDay={openCreateTask}
+
             />
           )}
           {view === "week" && (
             <WeekGrid
               cursor={cursor}
               events={events}
+
+
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
               onDropDay={onDropDay}
               onEventClick={onEventClick}
+              onLongPressDay={openCreateTask}
+
             />
           )}
           {view === "day" && (
             <DayGrid
+
               cursor={cursor}
               events={events.filter((e) => sameDay(e.start, cursor))}
               onEventClick={onEventClick}
+              onLongPressEmpty={openCreateTask}
+
             />
           )}
         </CardContent>
@@ -522,11 +551,18 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
         </DialogContent>
       </Dialog>
 
+
       <AddToScheduleDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         defaultDate={dialogDate}
       />
+      <NewTaskWizard
+        open={taskWizardOpen}
+        onOpenChange={setTaskWizardOpen}
+        defaultDate={taskWizardDate}
+      />
+
     </div>
   );
 }
@@ -586,17 +622,21 @@ function MonthGrid({
   onPickDay,
   onDropDay,
   onEventClick,
+  onLongPressDay,
 }: {
   cursor: Date;
   eventsByDay: Map<string, Event[]>;
   dayStats: Map<string, { completed: number; total: number }>;
   streaks: Map<string, number>;
   isMobile: boolean;
+
   onPickDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
+  onLongPressDay: (d: Date) => void;
 }) {
   const first = startOfMonth(cursor);
+
   const gridStart = startOfWeek(first);
   const cells: Date[] = [];
   for (let i = 0; i < 42; i++) cells.push(addDays(gridStart, i));
@@ -675,17 +715,42 @@ function MonthGrid({
               style={{ backgroundColor: heatBg(stats?.completed ?? 0) }}
             >
               <div className="flex items-start justify-between">
+
+
                 <button
                   type="button"
+                  onPointerDown={(e) => {
+                    const el = e.currentTarget;
+                    el.classList.add('animate-long-press');
+                    const timer = setTimeout(() => {
+                      onLongPressDay(d);
+                      el.classList.remove('animate-long-press');
+                    }, 2000);
+                    el.setAttribute('data-timer', timer.toString());
+                  }}
+                  onPointerUp={(e) => {
+                    const el = e.currentTarget;
+                    el.classList.remove('animate-long-press');
+                    const timer = el.getAttribute('data-timer');
+                    if (timer) clearTimeout(parseInt(timer));
+                  }}
+                  onPointerLeave={(e) => {
+                    const el = e.currentTarget;
+                    el.classList.remove('animate-long-press');
+                    const timer = el.getAttribute('data-timer');
+                    if (timer) clearTimeout(parseInt(timer));
+                  }}
+
                   onClick={(e) => {
                     e.stopPropagation();
                     onPickDay(d);
                   }}
-                  className="rounded transition hover:scale-110"
+                  className="rounded-full transition-all duration-300 pointer-events-auto select-none outline-none"
                   aria-label={`Open ${key}`}
                 >
                   <DayBadge day={d.getDate()} ratio={ratio} isToday={isToday} />
                 </button>
+
                 {streak >= 2 && (
                   <span
                     className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-orange-500"
@@ -762,14 +827,18 @@ function WeekGrid({
   onPickDay,
   onDropDay,
   onEventClick,
+  onLongPressDay,
 }: {
   cursor: Date;
   events: Event[];
+
   onPickDay: (d: Date) => void;
   onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
+  onLongPressDay: (d: Date) => void;
 }) {
   const [dragOver, setDragOver] = useState<number | null>(null);
+
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDaysLocal(start, i));
   const baseHour = HOURS[0];
@@ -800,14 +869,39 @@ function WeekGrid({
           {days.map((d, i) => {
             const isToday = sameDay(d, today);
             return (
+
+
               <button
                 key={i}
+                onPointerDown={(e) => {
+                  const el = e.currentTarget;
+                  el.classList.add('animate-long-press-block');
+                  const timer = setTimeout(() => {
+                    onLongPressDay(d);
+                    el.classList.remove('animate-long-press-block');
+                  }, 2000);
+                  el.setAttribute('data-timer', timer.toString());
+                }}
+                onPointerUp={(e) => {
+                  const el = e.currentTarget;
+                  el.classList.remove('animate-long-press-block');
+                  const timer = el.getAttribute('data-timer');
+                  if (timer) clearTimeout(parseInt(timer));
+                }}
+                onPointerLeave={(e) => {
+                  const el = e.currentTarget;
+                  el.classList.remove('animate-long-press-block');
+                  const timer = el.getAttribute('data-timer');
+                  if (timer) clearTimeout(parseInt(timer));
+                }}
+
                 onClick={() => onPickDay(d)}
                 className={cn(
-                  "py-2 transition hover:bg-muted/40",
+                  "py-2 transition-all duration-300 hover:bg-muted/40 select-none",
                   isToday && "bg-primary/10 text-primary font-semibold",
                 )}
               >
+
                 <div className="uppercase tracking-wider text-muted-foreground">
                   {d.toLocaleDateString(undefined, { weekday: "short" })}
                 </div>
@@ -945,12 +1039,16 @@ function DayGrid({
   cursor,
   events,
   onEventClick,
+  onLongPressEmpty,
 }: {
   cursor: Date;
   events: Event[];
+
   onEventClick: (e: Event) => void;
+  onLongPressEmpty: (d: Date) => void;
 }) {
   const baseHour = HOURS[0];
+
   const isToday = sameDay(cursor, startOfDay(new Date()));
 
   const [nowH, setNowH] = useState(() => {
@@ -982,7 +1080,36 @@ function DayGrid({
             <span className="w-12 shrink-0 pl-2 pt-0.5 text-[10px] tabular-nums text-muted-foreground">
               {`${h % 12 || 12}:00 ${h >= 12 ? "PM" : "AM"}`}
             </span>
-            <div className="flex-1" />
+
+
+            <div
+              className="flex-1 transition-colors duration-300 select-none cursor-pointer"
+              onPointerDown={(e) => {
+                  const el = e.currentTarget;
+                  el.classList.add('animate-long-press-block');
+                  const d = new Date(cursor);
+                  d.setHours(h, 0, 0, 0);
+                  const timer = setTimeout(() => {
+                    onLongPressEmpty(d);
+                    el.classList.remove('animate-long-press-block');
+                  }, 2000);
+                  el.setAttribute('data-timer', timer.toString());
+              }}
+              onPointerUp={(e) => {
+                  const el = e.currentTarget;
+                  el.classList.remove('animate-long-press-block');
+                  const timer = el.getAttribute('data-timer');
+                  if (timer) clearTimeout(parseInt(timer));
+              }}
+              onPointerLeave={(e) => {
+                  const el = e.currentTarget;
+                  el.classList.remove('animate-long-press-block');
+                  const timer = el.getAttribute('data-timer');
+                  if (timer) clearTimeout(parseInt(timer));
+              }}
+            />
+
+
           </div>
         ))}
         <div className="pointer-events-none absolute inset-0 pl-12 pr-2">
