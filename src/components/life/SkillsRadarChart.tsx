@@ -51,7 +51,7 @@ export default function SkillsRadarChart({ data }: { data: RadarDatum[] }) {
       keys={["Planned", "Achieved"]}
       indexBy="skill"
       maxValue={100}
-      margin={{ top: 48, right: 72, bottom: 56, left: 72 }}
+      margin={{ top: 44, right: 104, bottom: 56, left: 104 }}
       curve="linearClosed"
       borderWidth={2}
       borderColor={{ from: "color" }}
