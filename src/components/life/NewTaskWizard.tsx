@@ -23,10 +23,13 @@ type Step = (typeof STEPS)[number];
 
 type SubDraft = SubtaskDraft;
 
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultDate?: Date;
 }
+
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -37,25 +40,43 @@ function addDaysIso(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export function NewTaskWizard({ open, onOpenChange }: Props) {
+export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
   const { goals, addTask } = useAppData();
 
   const [step, setStep] = useState<Step>("basics");
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
   const [isDaily, setIsDaily] = useState(false);
-  const [dueDate, setDueDate] = useState<string>(addDaysIso(1));
-  const [startDate, setStartDate] = useState<string>(todayIso());
-  const [endDate, setEndDate] = useState<string>(addDaysIso(30));
+
+  const initialDateStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : addDaysIso(1);
+  const initialStartDateStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : todayIso();
+
+  const [dueDate, setDueDate] = useState<string>(initialDateStr);
+  const [startDate, setStartDate] = useState<string>(initialStartDateStr);
+  const [endDate, setEndDate] = useState<string>(initialDateStr);
   const [goalId, setGoalId] = useState<string>("");
   const [subGoalId, setSubGoalId] = useState<string>("");
+
   const [subs, setSubs] = useState<SubDraft[]>([]);
   const [subEditorOpen, setSubEditorOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
   // visibleIdx defined below after isDaily-aware visibleSteps memo
+
+  useEffect(() => {
+    if (open && defaultDate) {
+      const dStr = defaultDate.toISOString().slice(0, 10);
+      setDueDate(dStr);
+      setStartDate(dStr);
+      setEndDate(dStr);
+    }
+  }, [open, defaultDate]);
+
   const selectedGoal = useMemo(() => goals.find((g) => g.id === goalId), [goals, goalId]);
+
+
 
   const reset = () => {
     setStep("basics");
@@ -63,14 +84,17 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
     setDescription("");
     setPriority("medium");
     setIsDaily(false);
-    setDueDate(addDaysIso(1));
-    setStartDate(todayIso());
-    setEndDate(addDaysIso(30));
+    const dStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : addDaysIso(1);
+    const sdStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : todayIso();
+    setDueDate(dStr);
+    setStartDate(sdStr);
+    setEndDate(dStr);
     setGoalId("");
     setSubGoalId("");
     setSubs([]);
     setEditIdx(null);
   };
+
 
   const handleOpenChange = (o: boolean) => {
     onOpenChange(o);
@@ -97,13 +121,15 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
   const scheduleOk = isDaily
     ? !!(startDate && endDate) && dailyStartInRange && dailyEndInRange && startDate <= endDate
     : !!dueDate && dueInRange;
+
   const canNext =
     (step === "basics" && title.trim().length > 0) ||
     step === "priority" ||
     (step === "schedule" && scheduleOk) ||
-    (step === "link" && !!goalId && (isDaily || !!subGoalId)) ||
+    (step === "link" && !!goalId && (isDaily || goalId === "none" || !!subGoalId)) ||
     step === "subtasks" ||
     step === "done";
+
 
   // When entering the schedule step (or when the picked goal changes), clamp
   // the defaults to fit within the goal's [start, target] window so the user
@@ -145,8 +171,10 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
       dueDate: isDaily ? undefined : dueDate || undefined,
       startDate: isDaily ? startDate || undefined : undefined,
       endDate: isDaily ? endDate || undefined : undefined,
-      subGoalId: isDaily ? undefined : subGoalId || undefined,
-      goalId: isDaily ? goalId || undefined : undefined,
+
+      subGoalId: isDaily ? undefined : (goalId === "none" ? "none" : subGoalId || undefined),
+      goalId: isDaily ? (goalId === "none" ? undefined : goalId || undefined) : undefined,
+
       subtasks: subs
         .filter((s) => s.title.trim() && s.endDate)
         .map((s) => {
@@ -341,19 +369,25 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                 </p>
               ) : (
                 <div className="space-y-3">
+
                   <div>
                     <Label className="text-xs">Goal</Label>
                     <Select
                       value={goalId}
                       onValueChange={(v) => {
                         setGoalId(v);
-                        setSubGoalId("");
+                        if (v === "none") {
+                          setSubGoalId("none");
+                        } else {
+                          setSubGoalId("");
+                        }
                       }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a goal" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">General / Daily</SelectItem>
                         {goals.map((g) => (
                           <SelectItem key={g.id} value={g.id}>
                             {g.title}
@@ -362,10 +396,11 @@ export function NewTaskWizard({ open, onOpenChange }: Props) {
                       </SelectContent>
                     </Select>
                   </div>
-                  {!isDaily && selectedGoal && (
+                  {!isDaily && selectedGoal && goalId !== "none" && (
                     <div>
                       <Label className="text-xs">Milestone</Label>
                       <Select value={subGoalId} onValueChange={setSubGoalId}>
+
                         <SelectTrigger>
                           <SelectValue placeholder="Select a milestone" />
                         </SelectTrigger>

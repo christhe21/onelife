@@ -10,6 +10,7 @@ import {
   Link2,
   ChevronDown,
   Repeat,
+  Search,
 } from "lucide-react";
 import { NewTaskWizard } from "./NewTaskWizard";
 import { SubtaskFormDialog } from "./SubtaskFormDialog";
@@ -503,8 +504,23 @@ export function Tasks() {
   const { tasks, goals } = useAppData();
   const vocab = useFrierenVocabulary();
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const sorted = [...tasks].sort((a, b) => {
+  const filteredTasks = tasks.filter((t) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const titleMatch = t.title.toLowerCase().includes(q);
+    const subMatch = t.subtasks.some((s) => s.title.toLowerCase().includes(q));
+    const evidenceMatch = (t.evidence ?? "").toLowerCase().includes(q);
+
+    // Check if the goal matches the search query
+    const g = goals.find((g) => g.subGoals?.some((sg) => sg.id === t.subGoalId) || g.id === t.goalId);
+    const goalMatch = g && g.title.toLowerCase().includes(q);
+
+    return titleMatch || subMatch || evidenceMatch || goalMatch;
+  });
+
+  const sorted = [...filteredTasks].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
     const ad = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
     const bd = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
@@ -520,14 +536,25 @@ export function Tasks() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground max-w-[50%]">
           20-min focus blocks. Sub-{vocab.tasks.toLowerCase()} with h/wk auto-schedule until end
           date.
         </p>
-        <Button size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={exportSchedule}>
-          <Download className="mr-1 h-3.5 w-3.5" />
-          .ics
-        </Button>
+        <div className="flex items-center gap-2 max-w-[50%] flex-1 justify-end">
+          <div className="relative flex-1 min-w-[120px] max-w-[200px]">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={`Search ${vocab.tasks.toLowerCase()}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 h-8 text-xs"
+            />
+          </div>
+          <Button size="sm" variant="ghost" className="h-8 px-2 text-xs shrink-0" onClick={exportSchedule}>
+            <Download className="mr-1 h-3.5 w-3.5" />
+            .ics
+          </Button>
+        </div>
       </div>
 
       <Button className="w-full" onClick={() => setWizardOpen(true)}>
