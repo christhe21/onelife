@@ -27,7 +27,7 @@ export function SkillsRadar() {
         total === 0 ? 0 : Math.round(gs.reduce((a, g) => a + progressFor(g, tasks), 0) / total);
 
       return {
-        skill: s.label.replace(/\s*Skills?$/i, ""),
+        skill: shortLabel(s.label),
         Achieved: achieved,
         Planned: total === 0 ? 0 : 100,
         totalGoals: total,
