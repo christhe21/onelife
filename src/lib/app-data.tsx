@@ -961,21 +961,92 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [bucketList, setBucketList] = useState<BucketItem[]>(initial.current.bucketList);
   const [skills, setSkills] = useState<Skill[]>(initial.current.skills ?? DEFAULT_SKILLS);
   const [settings, setSettings] = useState<Settings>(initial.current.settings ?? {});
+  const [userId, setUserId] = useState<string | null>(null);
+  const [cloudReady, setCloudReady] = useState(false);
 
+  // Track the signed-in user.
+  useEffect(() => {
+    let mounted = true;
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setUserId(session?.user?.id ?? null);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setUserId(data.session?.user?.id ?? null);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Load this user's cloud snapshot (or seed it from local data on first sign-in).
+  useEffect(() => {
+    if (!userId) {
+      setCloudReady(false);
+      return;
+    }
+    let cancelled = false;
+    setCloudReady(false);
+    (async () => {
+      const { data, error } = await supabase
+        .from("user_app_data")
+        .select("data")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        toast.error("Could not load your saved data.");
+        return;
+      }
+      const remote = (data?.data ?? null) as Stored | null;
+      if (remote && (remote.goals || remote.tasks || remote.bucketList)) {
+        const norm = normalizeAppData(remote);
+        setGoals(norm.goals);
+        setTasks(norm.tasks);
+        setBucketList(norm.bucketList);
+        setSkills(remote.skills?.length ? remote.skills : DEFAULT_SKILLS);
+        setSettings(remote.settings ?? {});
+      } else {
+        // First sign-in: keep whatever is on this device and push it up.
+        await supabase.from("user_app_data").upsert(
+          {
+            user_id: userId,
+            data: { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings },
+          },
+          { onConflict: "user_id" },
+        );
+      }
+      if (!cancelled) setCloudReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  // Persist: cloud for signed-in users, local storage for guests.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const snapshot = { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings };
     const t = setTimeout(() => {
+      if (userId) {
+        if (!cloudReady) return;
+        void supabase
+          .from("user_app_data")
+          .upsert({ user_id: userId, data: snapshot }, { onConflict: "user_id" });
+        return;
+      }
       try {
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({ version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings }),
-        );
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
       } catch {
         /* ignore */
       }
-    }, 200);
+    }, 400);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList, skills, settings]);
+  }, [goals, tasks, bucketList, skills, settings, userId, cloudReady]);
+
 
   useEffect(() => {
     // Auto-complete subGoals and goals when their linked tasks are all completed.
