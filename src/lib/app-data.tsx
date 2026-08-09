@@ -1014,7 +1014,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         await supabase.from("user_app_data").upsert(
           {
             user_id: userId,
-            data: { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings },
+            data: { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings } as unknown as Record<string, unknown>,
           },
           { onConflict: "user_id" },
         );
@@ -1036,7 +1036,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         if (!cloudReady) return;
         void supabase
           .from("user_app_data")
-          .upsert({ user_id: userId, data: snapshot }, { onConflict: "user_id" });
+          .upsert(
+            { user_id: userId, data: snapshot as unknown as Record<string, unknown> },
+            { onConflict: "user_id" },
+          );
         return;
       }
       try {
