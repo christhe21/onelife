@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AccountCard } from "./AccountCard";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -172,6 +173,8 @@ export function SettingsView() {
 
   return (
     <div className="space-y-6">
+      <AccountCard />
+
       {/* Profile Section */}
       <Card>
         <CardHeader>
