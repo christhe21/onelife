@@ -1,5 +1,6 @@
 import { MarketplaceGoalTemplate } from "./marketplace";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { getFrierenVocabulary } from "./frieren";
 import { celebrate } from "./celebrate";
