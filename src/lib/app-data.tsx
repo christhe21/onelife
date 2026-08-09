@@ -848,6 +848,8 @@ interface Ctx extends AppData {
   appendJSON: (file: File) => Promise<{ goals: number; tasks: number; bucket: number }>;
   replaceAll: (data: AppData) => void;
   clearAll: () => void;
+  userId: string | null;
+  signOut: () => Promise<void>;
   importMarketplaceGoal: (
     template: MarketplaceGoalTemplate,
     opts?: { autoSchedule?: boolean },
@@ -1014,7 +1016,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         await supabase.from("user_app_data").upsert(
           {
             user_id: userId,
-            data: { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings } as unknown as Record<string, unknown>,
+            data: { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings } as unknown as never,
           },
           { onConflict: "user_id" },
         );
@@ -1037,7 +1039,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         void supabase
           .from("user_app_data")
           .upsert(
-            { user_id: userId, data: snapshot as unknown as Record<string, unknown> },
+            { user_id: userId, data: snapshot as unknown as never },
             { onConflict: "user_id" },
           );
         return;
