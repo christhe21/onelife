@@ -1704,8 +1704,36 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       } catch {
         /* ignore */
       }
+      const uid = userId;
+      const done = () => {
+        window.location.href = "/home";
+      };
+      if (uid) {
+        void supabase
+          .from("user_app_data")
+          .delete()
+          .eq("user_id", uid)
+          .then(done, done);
+      } else {
+        done();
+      }
+    },
+    userId,
+    signOut: async () => {
+      await supabase.auth.signOut();
+      setGoals([]);
+      setTasks([]);
+      setBucketList([]);
+      setSkills(DEFAULT_SKILLS);
+      setSettings({});
+      try {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        /* ignore */
+      }
       window.location.href = "/home";
     },
+
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
