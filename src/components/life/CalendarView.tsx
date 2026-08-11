@@ -579,45 +579,39 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
               dayStats={dayStats}
               streaks={streaks}
               isMobile={isMobile}
-
-
+              drag={drag}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
-              onDropDay={onDropDay}
               onEventClick={onEventClick}
               onLongPressDay={openCreateTask}
-
             />
           )}
           {view === "week" && (
             <WeekGrid
               cursor={cursor}
               events={events}
-
-
+              drag={drag}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
-              onDropDay={onDropDay}
               onEventClick={onEventClick}
               onLongPressDay={openCreateTask}
-
             />
           )}
           {view === "day" && (
             <DayGrid
-
               cursor={cursor}
               events={events.filter((e) => sameDay(e.start, cursor))}
+              drag={drag}
               onEventClick={onEventClick}
               onLongPressEmpty={openCreateTask}
-
             />
           )}
         </CardContent>
+
       </Card>
 
       <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
