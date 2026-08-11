@@ -866,23 +866,13 @@ function MonthGrid({
           const streak = streaks.get(key) ?? 0;
           const isOtherMonth = d.getMonth() !== month;
           const isToday = sameDay(d, today);
-          const isDragOver = dragOver === key;
+          const isDragOver = drag.dragging && drag.target?.day === key;
           return (
             <div
               key={i}
-              onClick={() => onPickDay(d)}
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (dragOver !== key) setDragOver(key);
-              }}
-              onDragLeave={() => {
-                if (dragOver === key) setDragOver(null);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const payload = e.dataTransfer.getData("text/plain");
-                setDragOver(null);
-                if (payload) onDropDay(d, payload);
+              data-drop-date={key}
+              onClick={() => {
+                if (!drag.dragging) onPickDay(d);
               }}
               className={cn(
                 "group relative flex cursor-pointer flex-col gap-1 border-b border-r p-1.5 text-left transition hover:bg-muted/40",
@@ -893,6 +883,7 @@ function MonthGrid({
               )}
               style={{ backgroundColor: heatBg(stats?.completed ?? 0) }}
             >
+
               <div className="flex items-start justify-between">
 
 
