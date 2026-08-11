@@ -830,7 +830,7 @@ interface Ctx extends AppData {
   updateTask: (id: string, patch: Partial<Task>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
-  rescheduleTask: (id: string, newYmd: string) => void;
+  rescheduleTask: (id: string, newYmd: string, newStartHM?: string) => void;
 
   addSubtask: (taskId: string, st: Omit<SubTask, "id" | "done">) => void;
   updateSubtask: (taskId: string, subId: string, patch: Partial<SubTask>) => void;
