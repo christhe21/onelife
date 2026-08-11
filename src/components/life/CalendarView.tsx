@@ -265,6 +265,9 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
   return { begin, dragging, dragId: item?.id ?? null, target, ghost };
 }
 
+type CalDrag = ReturnType<typeof useCalendarDrag>;
+
+
 /* ============== Long press to create ============== */
 
 const LONG_PRESS_MS = 1200;
