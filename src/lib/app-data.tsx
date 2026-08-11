@@ -1471,21 +1471,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
-    rescheduleTask: (id, newYmd) => {
-      const shift = (iso: string | undefined) => (iso ? newYmd + iso.slice(10) : iso);
+    rescheduleTask: (id, newYmd, newStartHM) => {
       setTasks((cur) =>
         cur.map((t) =>
           t.id === id
             ? {
                 ...t,
                 dueDate: t.dueDate ? newYmd : t.dueDate,
-                startDate: shift(t.startDate),
-                endDate: shift(t.endDate),
+                ...shiftBlock(t.startDate, t.endDate, newYmd, newStartHM),
               }
             : t,
         ),
       );
-      toast.success(`Moved to ${newYmd}`);
+      toast.success(newStartHM ? `Moved to ${newYmd} ${newStartHM}` : `Moved to ${newYmd}`);
     },
 
     addSubtask: (taskId, st) =>
