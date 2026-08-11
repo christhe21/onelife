@@ -336,16 +336,18 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     setSelectedEvent({ ...selectedEvent, done: isDone });
   };
 
-  const onDropDay = (d: Date, payload: string) => {
-    const newYmd = ymd(d);
+  const applyMove = (payload: string, day: string, time: string | null) => {
     const base = payload.replace(/_\d+$/, "");
     if (base.startsWith("task:")) {
-      rescheduleTask(base.slice(5), newYmd);
+      rescheduleTask(base.slice(5), day, time ?? undefined);
     } else if (base.startsWith("sub:")) {
       const [tid, sid] = base.slice(4).split("|");
-      if (tid && sid) rescheduleSubtask(tid, sid, newYmd);
+      if (tid && sid) rescheduleSubtask(tid, sid, day, time ?? undefined);
     }
   };
+
+  const drag = useCalendarDrag((item, target) => applyMove(item.id, target.day, target.time));
+
 
   const events = useMemo<Event[]>(() => {
     const out: Event[] = [];
