@@ -799,8 +799,8 @@ function MonthGrid({
   dayStats,
   streaks,
   isMobile,
+  drag,
   onPickDay,
-  onDropDay,
   onEventClick,
   onLongPressDay,
 }: {
@@ -809,9 +809,8 @@ function MonthGrid({
   dayStats: Map<string, { completed: number; total: number }>;
   streaks: Map<string, number>;
   isMobile: boolean;
-
+  drag: CalDrag;
   onPickDay: (d: Date) => void;
-  onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
   onLongPressDay: (d: Date) => void;
 }) {
@@ -822,7 +821,7 @@ function MonthGrid({
   for (let i = 0; i < 42; i++) cells.push(addDays(gridStart, i));
   const month = cursor.getMonth();
   const today = startOfDay(new Date());
-  const [dragOver, setDragOver] = useState<string | null>(null);
+
 
   const weekdays = isMobile
     ? ["M", "T", "W", "T", "F", "S", "S"]
