@@ -1114,20 +1114,20 @@ function WeekGrid({
                     return (
                       <div
                         key={e.id}
-                        draggable
-                        onDragStart={(ev) => {
-                          ev.dataTransfer.setData("text/plain", e.id);
-                          ev.dataTransfer.effectAllowed = "move";
-                        }}
+                        onPointerDown={(ev) =>
+                          drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                        }
                         onClick={(ev) => {
                           ev.stopPropagation();
-                          onEventClick(e);
+                          if (!drag.dragging) onEventClick(e);
                         }}
                         title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
-                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col transition-all hover:scale-[1.02] hover:shadow-md hover:z-10",
+                          "absolute inset-x-1 cursor-grab touch-none overflow-hidden rounded-md px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col transition-all hover:scale-[1.02] hover:shadow-md hover:z-10",
                           e.done && "opacity-60 line-through",
+                          drag.dragId === e.id && "opacity-40",
                         )}
+
                         style={{
                           top,
                           height,
