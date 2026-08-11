@@ -1577,8 +1577,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           t.id === taskId ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subId) } : t,
         ),
       ),
-    rescheduleSubtask: (taskId, subId, newYmd) => {
-      const shift = (iso: string | undefined) => (iso ? newYmd + iso.slice(10) : iso);
+    rescheduleSubtask: (taskId, subId, newYmd, newStartHM) => {
       setTasks((cur) =>
         cur.map((t) =>
           t.id === taskId
@@ -1586,14 +1585,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                 ...t,
                 subtasks: t.subtasks.map((s) =>
                   s.id === subId
-                    ? { ...s, startDate: shift(s.startDate), endDate: shift(s.endDate) }
+                    ? { ...s, ...shiftBlock(s.startDate, s.endDate, newYmd, newStartHM) }
                     : s,
                 ),
               }
             : t,
         ),
       );
-      toast.success(`Moved to ${newYmd}`);
+      toast.success(newStartHM ? `Moved to ${newYmd} ${newStartHM}` : `Moved to ${newYmd}`);
     },
 
     addBucket: (b) => setBucketList((cur) => [...cur, { ...b, id: uid(), achieved: false }]),
