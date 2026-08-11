@@ -888,32 +888,9 @@ function MonthGrid({
             >
 
               <div className="flex items-start justify-between">
-
-
                 <button
                   type="button"
-                  onPointerDown={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.add('animate-long-press');
-                    const timer = setTimeout(() => {
-                      onLongPressDay(d);
-                      el.classList.remove('animate-long-press');
-                    }, 2000);
-                    el.setAttribute('data-timer', timer.toString());
-                  }}
-                  onPointerUp={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.remove('animate-long-press');
-                    const timer = el.getAttribute('data-timer');
-                    if (timer) clearTimeout(parseInt(timer));
-                  }}
-                  onPointerLeave={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.remove('animate-long-press');
-                    const timer = el.getAttribute('data-timer');
-                    if (timer) clearTimeout(parseInt(timer));
-                  }}
-
+                  {...longPressHandlers(() => onLongPressDay(d), "animate-long-press")}
                   onClick={(e) => {
                     e.stopPropagation();
                     onPickDay(d);
@@ -939,9 +916,13 @@ function MonthGrid({
                     {dayEvents.slice(0, 4).map((e) => (
                       <span
                         key={e.id}
-                        draggable
-                        onDragStart={(ev) => ev.dataTransfer.setData("text/plain", e.id)}
-                        className="h-1.5 w-1.5 cursor-grab rounded-full active:cursor-grabbing"
+                        onPointerDown={(ev) =>
+                          drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                        }
+                        className={cn(
+                          "h-2 w-2 cursor-grab touch-none rounded-full active:cursor-grabbing",
+                          drag.dragId === e.id && "opacity-40",
+                        )}
                         style={{ backgroundColor: e.color }}
                       />
                     ))}
@@ -957,19 +938,17 @@ function MonthGrid({
                   {dayEvents.map((e) => (
                     <span
                       key={e.id}
-                      draggable
-                      onDragStart={(ev) => {
-                        ev.stopPropagation();
-                        ev.dataTransfer.setData("text/plain", e.id);
-                        ev.dataTransfer.effectAllowed = "move";
-                      }}
+                      onPointerDown={(ev) =>
+                        drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                      }
                       onClick={(ev) => {
                         ev.stopPropagation();
-                        onEventClick(e);
+                        if (!drag.dragging) onEventClick(e);
                       }}
                       className={cn(
-                        "cursor-grab truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-sm shrink-0",
+                        "cursor-grab touch-none truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-sm shrink-0",
                         e.done && "line-through opacity-60",
+                        drag.dragId === e.id && "opacity-40",
                       )}
                       style={{
                         backgroundColor: `color-mix(in oklab, ${e.color} 15%, transparent)`,
@@ -986,6 +965,7 @@ function MonthGrid({
               )}
             </div>
           );
+
         })}
       </div>
     </div>
