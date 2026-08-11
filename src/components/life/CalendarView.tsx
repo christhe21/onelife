@@ -1166,15 +1166,17 @@ function WeekGrid({
 function DayGrid({
   cursor,
   events,
+  drag,
   onEventClick,
   onLongPressEmpty,
 }: {
   cursor: Date;
   events: Event[];
-
+  drag: CalDrag;
   onEventClick: (e: Event) => void;
   onLongPressEmpty: (d: Date) => void;
 }) {
+
   const baseHour = HOURS[0];
 
   const isToday = sameDay(cursor, startOfDay(new Date()));
