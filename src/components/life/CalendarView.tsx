@@ -269,9 +269,7 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
 
 const LONG_PRESS_MS = 1200;
 
-function useLongPress(onFire: (...args: never[]) => void) {
-  return onFire;
-}
+
 
 function longPressHandlers(fire: () => void, cls: string) {
   const stop = (el: HTMLElement) => {
