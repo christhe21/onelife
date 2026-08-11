@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -121,6 +121,194 @@ function hm(d: Date) {
   return `${h12}:${m} ${ampm}`;
 }
 
+function buzz(ms = 12) {
+  try {
+    navigator.vibrate?.(ms);
+  } catch {
+    /* no-op */
+  }
+}
+
+/* ============== Drag to move (pointer based: works with mouse + touch) ============== */
+
+type DragItem = { id: string; title: string; color: string };
+type DropTarget = { day: string; time: string | null };
+
+function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
+  const [item, setItem] = useState<DragItem | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [target, setTarget] = useState<DropTarget | null>(null);
+  const ref = useRef<{
+    item: DragItem | null;
+    active: boolean;
+    touch: boolean;
+    x: number;
+    y: number;
+    timer: number | null;
+    target: DropTarget | null;
+  }>({ item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null });
+  const onDropRef = useRef(onDrop);
+  onDropRef.current = onDrop;
+
+  const resolve = (x: number, y: number): DropTarget | null => {
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    const zone = el?.closest?.("[data-drop-date]") as HTMLElement | null;
+    if (!zone) return null;
+    const day = zone.getAttribute("data-drop-date") ?? "";
+    if (zone.getAttribute("data-drop-time") !== "1") return { day, time: null };
+    const rect = zone.getBoundingClientRect();
+    const base = Number(zone.getAttribute("data-drop-base") ?? 0) * 60;
+    const raw = base + ((y - rect.top) / HOUR_PX) * 60;
+    const mins = Math.max(0, Math.min(23 * 60 + 45, Math.round(raw / 15) * 15));
+    return {
+      day,
+      time: `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`,
+    };
+  };
+
+  const reset = () => {
+    const s = ref.current;
+    if (s.timer) window.clearTimeout(s.timer);
+    ref.current = { item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null };
+    setItem(null);
+    setTarget(null);
+  };
+
+  useEffect(() => {
+    const activate = () => {
+      const s = ref.current;
+      if (!s.item || s.active) return;
+      s.active = true;
+      setItem(s.item);
+      buzz(15);
+    };
+    const move = (e: PointerEvent) => {
+      const s = ref.current;
+      if (!s.item) return;
+      const moved = Math.hypot(e.clientX - s.x, e.clientY - s.y);
+      if (!s.active) {
+        if (s.touch) {
+          if (moved > 10) reset(); // let the page scroll
+          return;
+        }
+        if (moved > 5) activate();
+        else return;
+      }
+      e.preventDefault();
+      setPos({ x: e.clientX, y: e.clientY });
+      const t = resolve(e.clientX, e.clientY);
+      s.target = t;
+      setTarget(t);
+    };
+    const up = () => {
+      const s = ref.current;
+      if (s.active && s.item && s.target) {
+        onDropRef.current(s.item, s.target);
+        buzz(20);
+      }
+      reset();
+    };
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
+
+  const begin = (e: React.PointerEvent, dragItem: DragItem) => {
+    if (e.button != null && e.button !== 0) return;
+    e.stopPropagation();
+    const touch = e.pointerType !== "mouse";
+    const s = ref.current;
+    if (s.timer) window.clearTimeout(s.timer);
+    ref.current = {
+      item: dragItem,
+      active: false,
+      touch,
+      x: e.clientX,
+      y: e.clientY,
+      timer: touch
+        ? window.setTimeout(() => {
+            const cur = ref.current;
+            if (!cur.item || cur.active) return;
+            cur.active = true;
+            setPos({ x: cur.x, y: cur.y });
+            setItem(cur.item);
+            buzz(15);
+          }, 220)
+        : null,
+      target: null,
+    };
+    setPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const dragging = item !== null;
+
+  const ghost = dragging ? (
+    <div
+      className="pointer-events-none fixed z-[100] -translate-x-1/2 -translate-y-1/2 animate-scale-in rounded-md px-2 py-1 text-[11px] font-medium shadow-lg"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        backgroundColor: `color-mix(in oklab, ${item!.color} 25%, hsl(var(--background)))`,
+        border: `1px solid ${item!.color}`,
+        color: `color-mix(in oklab, ${item!.color} 85%, currentColor)`,
+      }}
+    >
+      {item!.title}
+      {target?.time && <span className="ml-1 opacity-70 tabular-nums">→ {target.time}</span>}
+    </div>
+  ) : null;
+
+  return { begin, dragging, dragId: item?.id ?? null, target, ghost };
+}
+
+type CalDrag = ReturnType<typeof useCalendarDrag>;
+
+
+/* ============== Long press to create ============== */
+
+const LONG_PRESS_MS = 1200;
+
+
+
+function longPressHandlers(fire: () => void, cls: string) {
+  const stop = (el: HTMLElement) => {
+    el.classList.remove(cls);
+    const t = el.getAttribute("data-lp-timer");
+    if (t) window.clearTimeout(parseInt(t));
+    el.removeAttribute("data-lp-timer");
+  };
+  return {
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+      const el = e.currentTarget;
+      stop(el);
+      el.classList.add(cls);
+      const timer = window.setTimeout(() => {
+        el.classList.remove(cls);
+        el.removeAttribute("data-lp-timer");
+        buzz(25);
+        fire();
+      }, LONG_PRESS_MS);
+      el.setAttribute("data-lp-timer", String(timer));
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLElement>) => stop(e.currentTarget),
+    onPointerLeave: (e: React.PointerEvent<HTMLElement>) => stop(e.currentTarget),
+    onPointerCancel: (e: React.PointerEvent<HTMLElement>) => stop(e.currentTarget),
+    onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+      // cancel if the finger travels (scroll intent)
+      if (e.currentTarget.hasAttribute("data-lp-timer") && (e.movementX || e.movementY)) {
+        if (Math.abs(e.movementX) + Math.abs(e.movementY) > 8) stop(e.currentTarget);
+      }
+    },
+  };
+}
+
+
+
 export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
   const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } =
     useAppData();
@@ -152,16 +340,18 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     setSelectedEvent({ ...selectedEvent, done: isDone });
   };
 
-  const onDropDay = (d: Date, payload: string) => {
-    const newYmd = ymd(d);
+  const applyMove = (payload: string, day: string, time: string | null) => {
     const base = payload.replace(/_\d+$/, "");
     if (base.startsWith("task:")) {
-      rescheduleTask(base.slice(5), newYmd);
+      rescheduleTask(base.slice(5), day, time ?? undefined);
     } else if (base.startsWith("sub:")) {
       const [tid, sid] = base.slice(4).split("|");
-      if (tid && sid) rescheduleSubtask(tid, sid, newYmd);
+      if (tid && sid) rescheduleSubtask(tid, sid, day, time ?? undefined);
     }
   };
+
+  const drag = useCalendarDrag((item, target) => applyMove(item.id, target.day, target.time));
+
 
   const events = useMemo<Event[]>(() => {
     const out: Event[] = [];
@@ -393,46 +583,42 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
               dayStats={dayStats}
               streaks={streaks}
               isMobile={isMobile}
-
-
+              drag={drag}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
-              onDropDay={onDropDay}
               onEventClick={onEventClick}
               onLongPressDay={openCreateTask}
-
             />
           )}
           {view === "week" && (
             <WeekGrid
               cursor={cursor}
               events={events}
-
-
+              drag={drag}
               onPickDay={(d) => {
                 setCursor(d);
                 setView("day");
               }}
-              onDropDay={onDropDay}
               onEventClick={onEventClick}
               onLongPressDay={openCreateTask}
-
             />
           )}
           {view === "day" && (
             <DayGrid
-
               cursor={cursor}
               events={events.filter((e) => sameDay(e.start, cursor))}
+              drag={drag}
               onEventClick={onEventClick}
               onLongPressEmpty={openCreateTask}
-
             />
           )}
         </CardContent>
+
       </Card>
+      {drag.ghost}
+
 
       <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
         <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-6 overflow-x-hidden overflow-y-auto border-2 border-primary/20 p-6">
@@ -619,8 +805,8 @@ function MonthGrid({
   dayStats,
   streaks,
   isMobile,
+  drag,
   onPickDay,
-  onDropDay,
   onEventClick,
   onLongPressDay,
 }: {
@@ -629,9 +815,8 @@ function MonthGrid({
   dayStats: Map<string, { completed: number; total: number }>;
   streaks: Map<string, number>;
   isMobile: boolean;
-
+  drag: CalDrag;
   onPickDay: (d: Date) => void;
-  onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
   onLongPressDay: (d: Date) => void;
 }) {
@@ -642,7 +827,7 @@ function MonthGrid({
   for (let i = 0; i < 42; i++) cells.push(addDays(gridStart, i));
   const month = cursor.getMonth();
   const today = startOfDay(new Date());
-  const [dragOver, setDragOver] = useState<string | null>(null);
+
 
   const weekdays = isMobile
     ? ["M", "T", "W", "T", "F", "S", "S"]
@@ -687,23 +872,13 @@ function MonthGrid({
           const streak = streaks.get(key) ?? 0;
           const isOtherMonth = d.getMonth() !== month;
           const isToday = sameDay(d, today);
-          const isDragOver = dragOver === key;
+          const isDragOver = drag.dragging && drag.target?.day === key;
           return (
             <div
               key={i}
-              onClick={() => onPickDay(d)}
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (dragOver !== key) setDragOver(key);
-              }}
-              onDragLeave={() => {
-                if (dragOver === key) setDragOver(null);
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const payload = e.dataTransfer.getData("text/plain");
-                setDragOver(null);
-                if (payload) onDropDay(d, payload);
+              data-drop-date={key}
+              onClick={() => {
+                if (!drag.dragging) onPickDay(d);
               }}
               className={cn(
                 "group relative flex cursor-pointer flex-col gap-1 border-b border-r p-1.5 text-left transition hover:bg-muted/40",
@@ -714,33 +889,11 @@ function MonthGrid({
               )}
               style={{ backgroundColor: heatBg(stats?.completed ?? 0) }}
             >
+
               <div className="flex items-start justify-between">
-
-
                 <button
                   type="button"
-                  onPointerDown={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.add('animate-long-press');
-                    const timer = setTimeout(() => {
-                      onLongPressDay(d);
-                      el.classList.remove('animate-long-press');
-                    }, 2000);
-                    el.setAttribute('data-timer', timer.toString());
-                  }}
-                  onPointerUp={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.remove('animate-long-press');
-                    const timer = el.getAttribute('data-timer');
-                    if (timer) clearTimeout(parseInt(timer));
-                  }}
-                  onPointerLeave={(e) => {
-                    const el = e.currentTarget;
-                    el.classList.remove('animate-long-press');
-                    const timer = el.getAttribute('data-timer');
-                    if (timer) clearTimeout(parseInt(timer));
-                  }}
-
+                  {...longPressHandlers(() => onLongPressDay(d), "animate-long-press")}
                   onClick={(e) => {
                     e.stopPropagation();
                     onPickDay(d);
@@ -766,9 +919,13 @@ function MonthGrid({
                     {dayEvents.slice(0, 4).map((e) => (
                       <span
                         key={e.id}
-                        draggable
-                        onDragStart={(ev) => ev.dataTransfer.setData("text/plain", e.id)}
-                        className="h-1.5 w-1.5 cursor-grab rounded-full active:cursor-grabbing"
+                        onPointerDown={(ev) =>
+                          drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                        }
+                        className={cn(
+                          "h-2 w-2 cursor-grab touch-none rounded-full active:cursor-grabbing",
+                          drag.dragId === e.id && "opacity-40",
+                        )}
                         style={{ backgroundColor: e.color }}
                       />
                     ))}
@@ -784,19 +941,17 @@ function MonthGrid({
                   {dayEvents.map((e) => (
                     <span
                       key={e.id}
-                      draggable
-                      onDragStart={(ev) => {
-                        ev.stopPropagation();
-                        ev.dataTransfer.setData("text/plain", e.id);
-                        ev.dataTransfer.effectAllowed = "move";
-                      }}
+                      onPointerDown={(ev) =>
+                        drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                      }
                       onClick={(ev) => {
                         ev.stopPropagation();
-                        onEventClick(e);
+                        if (!drag.dragging) onEventClick(e);
                       }}
                       className={cn(
-                        "cursor-grab truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-sm shrink-0",
+                        "cursor-grab touch-none truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-sm shrink-0",
                         e.done && "line-through opacity-60",
+                        drag.dragId === e.id && "opacity-40",
                       )}
                       style={{
                         backgroundColor: `color-mix(in oklab, ${e.color} 15%, transparent)`,
@@ -813,6 +968,7 @@ function MonthGrid({
               )}
             </div>
           );
+
         })}
       </div>
     </div>
@@ -824,20 +980,19 @@ function MonthGrid({
 function WeekGrid({
   cursor,
   events,
+  drag,
   onPickDay,
-  onDropDay,
   onEventClick,
   onLongPressDay,
 }: {
   cursor: Date;
   events: Event[];
-
+  drag: CalDrag;
   onPickDay: (d: Date) => void;
-  onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
   onLongPressDay: (d: Date) => void;
 }) {
-  const [dragOver, setDragOver] = useState<number | null>(null);
+
 
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDaysLocal(start, i));
@@ -873,27 +1028,8 @@ function WeekGrid({
 
               <button
                 key={i}
-                onPointerDown={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.add('animate-long-press-block');
-                  const timer = setTimeout(() => {
-                    onLongPressDay(d);
-                    el.classList.remove('animate-long-press-block');
-                  }, 2000);
-                  el.setAttribute('data-timer', timer.toString());
-                }}
-                onPointerUp={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-                }}
-                onPointerLeave={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-                }}
+                {...longPressHandlers(() => onLongPressDay(d), "animate-long-press-block")}
+
 
                 onClick={() => onPickDay(d)}
                 className={cn(
@@ -941,24 +1077,19 @@ function WeekGrid({
             {days.map((d, i) => {
               const dayEvents = events.filter((e) => sameDay(e.start, d));
               const isCurrentDay = sameDay(d, new Date());
+              const key = ymd(d);
               return (
                 <div
                   key={i}
-                  className={cn("relative border-l", dragOver === i && "bg-primary/10")}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    if (dragOver !== i) setDragOver(i);
-                  }}
-                  onDragLeave={() => {
-                    if (dragOver === i) setDragOver(null);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const payload = e.dataTransfer.getData("text/plain");
-                    setDragOver(null);
-                    if (payload) onDropDay(d, payload);
-                  }}
+                  data-drop-date={key}
+                  data-drop-time="1"
+                  data-drop-base={baseHour}
+                  className={cn(
+                    "relative border-l",
+                    drag.dragging && drag.target?.day === key && "bg-primary/10",
+                  )}
                 >
+
                   {isCurrentDay && showNow && (
                     <div
                       className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
@@ -986,20 +1117,20 @@ function WeekGrid({
                     return (
                       <div
                         key={e.id}
-                        draggable
-                        onDragStart={(ev) => {
-                          ev.dataTransfer.setData("text/plain", e.id);
-                          ev.dataTransfer.effectAllowed = "move";
-                        }}
+                        onPointerDown={(ev) =>
+                          drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                        }
                         onClick={(ev) => {
                           ev.stopPropagation();
-                          onEventClick(e);
+                          if (!drag.dragging) onEventClick(e);
                         }}
                         title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
-                          "absolute inset-x-1 cursor-grab overflow-hidden rounded-md px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col transition-all hover:scale-[1.02] hover:shadow-md hover:z-10",
+                          "absolute inset-x-1 cursor-grab touch-none overflow-hidden rounded-md px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col transition-all hover:scale-[1.02] hover:shadow-md hover:z-10",
                           e.done && "opacity-60 line-through",
+                          drag.dragId === e.id && "opacity-40",
                         )}
+
                         style={{
                           top,
                           height,
@@ -1038,15 +1169,17 @@ function WeekGrid({
 function DayGrid({
   cursor,
   events,
+  drag,
   onEventClick,
   onLongPressEmpty,
 }: {
   cursor: Date;
   events: Event[];
-
+  drag: CalDrag;
   onEventClick: (e: Event) => void;
   onLongPressEmpty: (d: Date) => void;
 }) {
+
   const baseHour = HOURS[0];
 
   const isToday = sameDay(cursor, startOfDay(new Date()));
@@ -1070,7 +1203,15 @@ function DayGrid({
 
   return (
     <div className="relative max-h-[70vh] overflow-y-auto overflow-x-hidden">
-      <div className="relative">
+      <div
+        className={cn(
+          "relative",
+          drag.dragging && drag.target?.day === ymd(cursor) && "bg-primary/5",
+        )}
+        data-drop-date={ymd(cursor)}
+        data-drop-time="1"
+        data-drop-base={baseHour}
+      >
         {HOURS.map((h) => (
           <div
             key={h}
@@ -1081,38 +1222,30 @@ function DayGrid({
               {`${h % 12 || 12}:00 ${h >= 12 ? "PM" : "AM"}`}
             </span>
 
-
             <div
               className="flex-1 transition-colors duration-300 select-none cursor-pointer"
-              onPointerDown={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.add('animate-long-press-block');
-                  const d = new Date(cursor);
-                  d.setHours(h, 0, 0, 0);
-                  const timer = setTimeout(() => {
-                    onLongPressEmpty(d);
-                    el.classList.remove('animate-long-press-block');
-                  }, 2000);
-                  el.setAttribute('data-timer', timer.toString());
-              }}
-              onPointerUp={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-              }}
-              onPointerLeave={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-              }}
+              {...longPressHandlers(() => {
+                const d = new Date(cursor);
+                d.setHours(h, 0, 0, 0);
+                onLongPressEmpty(d);
+              }, "animate-long-press-block")}
             />
-
-
           </div>
         ))}
+        {drag.dragging && drag.target?.day === ymd(cursor) && drag.target.time && (
+          <div
+            className="pointer-events-none absolute left-12 right-2 z-40 h-0.5 bg-primary"
+            style={{
+              top:
+                (Number(drag.target.time.slice(0, 2)) +
+                  Number(drag.target.time.slice(3)) / 60 -
+                  baseHour) *
+                HOUR_PX,
+            }}
+          />
+        )}
         <div className="pointer-events-none absolute inset-0 pl-12 pr-2">
+
           <div className="relative h-full w-full">
             {events.length === 0 && (
               <div className="pointer-events-auto absolute inset-x-2 top-4 rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
@@ -1149,14 +1282,19 @@ function DayGrid({
               return (
                 <div
                   key={e.id}
+                  onPointerDown={(ev) =>
+                    drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                  }
                   onClick={(ev) => {
                     ev.stopPropagation();
-                    onEventClick(e);
+                    if (!drag.dragging) onEventClick(e);
                   }}
                   className={cn(
-                    "pointer-events-auto absolute right-1 rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-30 cursor-pointer",
+                    "pointer-events-auto absolute right-1 touch-none rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-30 cursor-grab active:cursor-grabbing",
                     e.done && "opacity-60 line-through",
+                    drag.dragId === e.id && "opacity-40",
                   )}
+
                   style={{
                     top,
                     height,

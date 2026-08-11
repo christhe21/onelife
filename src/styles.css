@@ -540,7 +540,7 @@
   }
 }
 .animate-long-press {
-  animation: long-press-fill 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: long-press-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes long-press-fill-block {
@@ -552,5 +552,5 @@
   }
 }
 .animate-long-press-block {
-  animation: long-press-fill-block 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: long-press-fill-block 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

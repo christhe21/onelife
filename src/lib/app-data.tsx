@@ -131,6 +131,28 @@ export const EXPORT_VERSION = 1;
 const STORAGE_KEY = "life-manager:v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+/** Move a scheduled block to a new day (and optionally a new HH:MM), preserving duration. */
+function shiftBlock(
+  startIso: string | undefined,
+  endIso: string | undefined,
+  newYmd: string,
+  newStartHM?: string,
+): { startDate?: string; endDate?: string } {
+  if (!startIso) return { startDate: startIso, endDate: endIso };
+  const oldStart = new Date(startIso);
+  const oldEnd = endIso ? new Date(endIso) : new Date(oldStart.getTime() + 60 * 60 * 1000);
+  const durMs = Math.max(15 * 60 * 1000, oldEnd.getTime() - oldStart.getTime());
+  const [y, m, d] = newYmd.split("-").map(Number);
+  const next = new Date(oldStart);
+  next.setFullYear(y, (m || 1) - 1, d || 1);
+  if (newStartHM) {
+    const [hh, mm] = newStartHM.split(":").map(Number);
+    next.setHours(hh || 0, mm || 0, 0, 0);
+  }
+  const nextEnd = new Date(next.getTime() + durMs);
+  return { startDate: next.toISOString(), endDate: endIso ? nextEnd.toISOString() : endIso };
+}
 const STATUSES: GoalStatus[] = ["not_started", "in_progress", "completed"];
 const PRIORITIES: Task["priority"][] = ["low", "medium", "high"];
 
@@ -830,13 +852,13 @@ interface Ctx extends AppData {
   updateTask: (id: string, patch: Partial<Task>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
-  rescheduleTask: (id: string, newYmd: string) => void;
+  rescheduleTask: (id: string, newYmd: string, newStartHM?: string) => void;
 
   addSubtask: (taskId: string, st: Omit<SubTask, "id" | "done">) => void;
   updateSubtask: (taskId: string, subId: string, patch: Partial<SubTask>) => void;
   toggleSubtask: (taskId: string, subId: string) => void;
   deleteSubtask: (taskId: string, subId: string) => void;
-  rescheduleSubtask: (taskId: string, subId: string, newYmd: string) => void;
+  rescheduleSubtask: (taskId: string, subId: string, newYmd: string, newStartHM?: string) => void;
 
   addBucket: (b: Omit<BucketItem, "id" | "achieved">) => void;
   updateBucket: (id: string, patch: Partial<BucketItem>) => void;
@@ -1449,21 +1471,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (goalIdForDelta && goalDelta !== 0) bumpGoalSpent(goalIdForDelta, goalDelta);
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
-    rescheduleTask: (id, newYmd) => {
-      const shift = (iso: string | undefined) => (iso ? newYmd + iso.slice(10) : iso);
+    rescheduleTask: (id, newYmd, newStartHM) => {
       setTasks((cur) =>
         cur.map((t) =>
           t.id === id
             ? {
                 ...t,
                 dueDate: t.dueDate ? newYmd : t.dueDate,
-                startDate: shift(t.startDate),
-                endDate: shift(t.endDate),
+                ...shiftBlock(t.startDate, t.endDate, newYmd, newStartHM),
               }
             : t,
         ),
       );
-      toast.success(`Moved to ${newYmd}`);
+      toast.success(newStartHM ? `Moved to ${newYmd} ${newStartHM}` : `Moved to ${newYmd}`);
     },
 
     addSubtask: (taskId, st) =>
@@ -1557,8 +1577,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           t.id === taskId ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subId) } : t,
         ),
       ),
-    rescheduleSubtask: (taskId, subId, newYmd) => {
-      const shift = (iso: string | undefined) => (iso ? newYmd + iso.slice(10) : iso);
+    rescheduleSubtask: (taskId, subId, newYmd, newStartHM) => {
       setTasks((cur) =>
         cur.map((t) =>
           t.id === taskId
@@ -1566,14 +1585,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
                 ...t,
                 subtasks: t.subtasks.map((s) =>
                   s.id === subId
-                    ? { ...s, startDate: shift(s.startDate), endDate: shift(s.endDate) }
+                    ? { ...s, ...shiftBlock(s.startDate, s.endDate, newYmd, newStartHM) }
                     : s,
                 ),
               }
             : t,
         ),
       );
-      toast.success(`Moved to ${newYmd}`);
+      toast.success(newStartHM ? `Moved to ${newYmd} ${newStartHM}` : `Moved to ${newYmd}`);
     },
 
     addBucket: (b) => setBucketList((cur) => [...cur, { ...b, id: uid(), achieved: false }]),
