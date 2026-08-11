@@ -1025,27 +1025,8 @@ function WeekGrid({
 
               <button
                 key={i}
-                onPointerDown={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.add('animate-long-press-block');
-                  const timer = setTimeout(() => {
-                    onLongPressDay(d);
-                    el.classList.remove('animate-long-press-block');
-                  }, 2000);
-                  el.setAttribute('data-timer', timer.toString());
-                }}
-                onPointerUp={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-                }}
-                onPointerLeave={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-                }}
+                {...longPressHandlers(() => onLongPressDay(d), "animate-long-press-block")}
+
 
                 onClick={() => onPickDay(d)}
                 className={cn(
