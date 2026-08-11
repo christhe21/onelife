@@ -977,20 +977,19 @@ function MonthGrid({
 function WeekGrid({
   cursor,
   events,
+  drag,
   onPickDay,
-  onDropDay,
   onEventClick,
   onLongPressDay,
 }: {
   cursor: Date;
   events: Event[];
-
+  drag: CalDrag;
   onPickDay: (d: Date) => void;
-  onDropDay: (d: Date, payload: string) => void;
   onEventClick: (e: Event) => void;
   onLongPressDay: (d: Date) => void;
 }) {
-  const [dragOver, setDragOver] = useState<number | null>(null);
+
 
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDaysLocal(start, i));
