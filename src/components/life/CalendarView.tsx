@@ -1200,7 +1200,15 @@ function DayGrid({
 
   return (
     <div className="relative max-h-[70vh] overflow-y-auto overflow-x-hidden">
-      <div className="relative">
+      <div
+        className={cn(
+          "relative",
+          drag.dragging && drag.target?.day === ymd(cursor) && "bg-primary/5",
+        )}
+        data-drop-date={ymd(cursor)}
+        data-drop-time="1"
+        data-drop-base={baseHour}
+      >
         {HOURS.map((h) => (
           <div
             key={h}
@@ -1211,38 +1219,30 @@ function DayGrid({
               {`${h % 12 || 12}:00 ${h >= 12 ? "PM" : "AM"}`}
             </span>
 
-
             <div
               className="flex-1 transition-colors duration-300 select-none cursor-pointer"
-              onPointerDown={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.add('animate-long-press-block');
-                  const d = new Date(cursor);
-                  d.setHours(h, 0, 0, 0);
-                  const timer = setTimeout(() => {
-                    onLongPressEmpty(d);
-                    el.classList.remove('animate-long-press-block');
-                  }, 2000);
-                  el.setAttribute('data-timer', timer.toString());
-              }}
-              onPointerUp={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-              }}
-              onPointerLeave={(e) => {
-                  const el = e.currentTarget;
-                  el.classList.remove('animate-long-press-block');
-                  const timer = el.getAttribute('data-timer');
-                  if (timer) clearTimeout(parseInt(timer));
-              }}
+              {...longPressHandlers(() => {
+                const d = new Date(cursor);
+                d.setHours(h, 0, 0, 0);
+                onLongPressEmpty(d);
+              }, "animate-long-press-block")}
             />
-
-
           </div>
         ))}
+        {drag.dragging && drag.target?.day === ymd(cursor) && drag.target.time && (
+          <div
+            className="pointer-events-none absolute left-12 right-2 z-40 h-0.5 bg-primary"
+            style={{
+              top:
+                (Number(drag.target.time.slice(0, 2)) +
+                  Number(drag.target.time.slice(3)) / 60 -
+                  baseHour) *
+                HOUR_PX,
+            }}
+          />
+        )}
         <div className="pointer-events-none absolute inset-0 pl-12 pr-2">
+
           <div className="relative h-full w-full">
             {events.length === 0 && (
               <div className="pointer-events-auto absolute inset-x-2 top-4 rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
