@@ -157,7 +157,8 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
     const day = zone.getAttribute("data-drop-date") ?? "";
     if (zone.getAttribute("data-drop-time") !== "1") return { day, time: null };
     const rect = zone.getBoundingClientRect();
-    const raw = ((y - rect.top) / HOUR_PX) * 60;
+    const base = Number(zone.getAttribute("data-drop-base") ?? 0) * 60;
+    const raw = base + ((y - rect.top) / HOUR_PX) * 60;
     const mins = Math.max(0, Math.min(23 * 60 + 45, Math.round(raw / 15) * 15));
     return {
       day,
