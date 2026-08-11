@@ -131,6 +131,28 @@ export const EXPORT_VERSION = 1;
 const STORAGE_KEY = "life-manager:v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+/** Move a scheduled block to a new day (and optionally a new HH:MM), preserving duration. */
+function shiftBlock(
+  startIso: string | undefined,
+  endIso: string | undefined,
+  newYmd: string,
+  newStartHM?: string,
+): { startDate?: string; endDate?: string } {
+  if (!startIso) return { startDate: startIso, endDate: endIso };
+  const oldStart = new Date(startIso);
+  const oldEnd = endIso ? new Date(endIso) : new Date(oldStart.getTime() + 60 * 60 * 1000);
+  const durMs = Math.max(15 * 60 * 1000, oldEnd.getTime() - oldStart.getTime());
+  const [y, m, d] = newYmd.split("-").map(Number);
+  const next = new Date(oldStart);
+  next.setFullYear(y, (m || 1) - 1, d || 1);
+  if (newStartHM) {
+    const [hh, mm] = newStartHM.split(":").map(Number);
+    next.setHours(hh || 0, mm || 0, 0, 0);
+  }
+  const nextEnd = new Date(next.getTime() + durMs);
+  return { startDate: next.toISOString(), endDate: endIso ? nextEnd.toISOString() : endIso };
+}
 const STATUSES: GoalStatus[] = ["not_started", "in_progress", "completed"];
 const PRIORITIES: Task["priority"][] = ["low", "medium", "high"];
 
