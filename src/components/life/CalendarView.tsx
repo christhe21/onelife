@@ -1074,24 +1074,19 @@ function WeekGrid({
             {days.map((d, i) => {
               const dayEvents = events.filter((e) => sameDay(e.start, d));
               const isCurrentDay = sameDay(d, new Date());
+              const key = ymd(d);
               return (
                 <div
                   key={i}
-                  className={cn("relative border-l", dragOver === i && "bg-primary/10")}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    if (dragOver !== i) setDragOver(i);
-                  }}
-                  onDragLeave={() => {
-                    if (dragOver === i) setDragOver(null);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const payload = e.dataTransfer.getData("text/plain");
-                    setDragOver(null);
-                    if (payload) onDropDay(d, payload);
-                  }}
+                  data-drop-date={key}
+                  data-drop-time="1"
+                  data-drop-base={baseHour}
+                  className={cn(
+                    "relative border-l",
+                    drag.dragging && drag.target?.day === key && "bg-primary/10",
+                  )}
                 >
+
                   {isCurrentDay && showNow && (
                     <div
                       className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
