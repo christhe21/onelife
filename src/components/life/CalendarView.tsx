@@ -121,6 +121,192 @@ function hm(d: Date) {
   return `${h12}:${m} ${ampm}`;
 }
 
+function buzz(ms = 12) {
+  try {
+    navigator.vibrate?.(ms);
+  } catch {
+    /* no-op */
+  }
+}
+
+/* ============== Drag to move (pointer based: works with mouse + touch) ============== */
+
+type DragItem = { id: string; title: string; color: string };
+type DropTarget = { day: string; time: string | null };
+
+function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
+  const [item, setItem] = useState<DragItem | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [target, setTarget] = useState<DropTarget | null>(null);
+  const ref = useRef<{
+    item: DragItem | null;
+    active: boolean;
+    touch: boolean;
+    x: number;
+    y: number;
+    timer: number | null;
+    target: DropTarget | null;
+  }>({ item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null });
+  const onDropRef = useRef(onDrop);
+  onDropRef.current = onDrop;
+
+  const resolve = (x: number, y: number): DropTarget | null => {
+    const el = document.elementFromPoint(x, y) as HTMLElement | null;
+    const zone = el?.closest?.("[data-drop-date]") as HTMLElement | null;
+    if (!zone) return null;
+    const day = zone.getAttribute("data-drop-date") ?? "";
+    if (zone.getAttribute("data-drop-time") !== "1") return { day, time: null };
+    const rect = zone.getBoundingClientRect();
+    const raw = ((y - rect.top) / HOUR_PX) * 60;
+    const mins = Math.max(0, Math.min(23 * 60 + 45, Math.round(raw / 15) * 15));
+    return {
+      day,
+      time: `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`,
+    };
+  };
+
+  const reset = () => {
+    const s = ref.current;
+    if (s.timer) window.clearTimeout(s.timer);
+    ref.current = { item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null };
+    setItem(null);
+    setTarget(null);
+  };
+
+  useEffect(() => {
+    const activate = () => {
+      const s = ref.current;
+      if (!s.item || s.active) return;
+      s.active = true;
+      setItem(s.item);
+      buzz(15);
+    };
+    const move = (e: PointerEvent) => {
+      const s = ref.current;
+      if (!s.item) return;
+      const moved = Math.hypot(e.clientX - s.x, e.clientY - s.y);
+      if (!s.active) {
+        if (s.touch) {
+          if (moved > 10) reset(); // let the page scroll
+          return;
+        }
+        if (moved > 5) activate();
+        else return;
+      }
+      e.preventDefault();
+      setPos({ x: e.clientX, y: e.clientY });
+      const t = resolve(e.clientX, e.clientY);
+      s.target = t;
+      setTarget(t);
+    };
+    const up = () => {
+      const s = ref.current;
+      if (s.active && s.item && s.target) {
+        onDropRef.current(s.item, s.target);
+        buzz(20);
+      }
+      reset();
+    };
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, []);
+
+  const begin = (e: React.PointerEvent, dragItem: DragItem) => {
+    if (e.button != null && e.button !== 0) return;
+    e.stopPropagation();
+    const touch = e.pointerType !== "mouse";
+    const s = ref.current;
+    if (s.timer) window.clearTimeout(s.timer);
+    ref.current = {
+      item: dragItem,
+      active: false,
+      touch,
+      x: e.clientX,
+      y: e.clientY,
+      timer: touch
+        ? window.setTimeout(() => {
+            const cur = ref.current;
+            if (!cur.item || cur.active) return;
+            cur.active = true;
+            setPos({ x: cur.x, y: cur.y });
+            setItem(cur.item);
+            buzz(15);
+          }, 220)
+        : null,
+      target: null,
+    };
+    setPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const dragging = item !== null;
+
+  const ghost = dragging ? (
+    <div
+      className="pointer-events-none fixed z-[100] -translate-x-1/2 -translate-y-1/2 animate-scale-in rounded-md px-2 py-1 text-[11px] font-medium shadow-lg"
+      style={{
+        left: pos.x,
+        top: pos.y,
+        backgroundColor: `color-mix(in oklab, ${item!.color} 25%, hsl(var(--background)))`,
+        border: `1px solid ${item!.color}`,
+        color: `color-mix(in oklab, ${item!.color} 85%, currentColor)`,
+      }}
+    >
+      {item!.title}
+      {target?.time && <span className="ml-1 opacity-70 tabular-nums">→ {target.time}</span>}
+    </div>
+  ) : null;
+
+  return { begin, dragging, dragId: item?.id ?? null, target, ghost };
+}
+
+/* ============== Long press to create ============== */
+
+const LONG_PRESS_MS = 1200;
+
+function useLongPress(onFire: (...args: never[]) => void) {
+  return onFire;
+}
+
+function longPressHandlers(fire: () => void, cls: string) {
+  const stop = (el: HTMLElement) => {
+    el.classList.remove(cls);
+    const t = el.getAttribute("data-lp-timer");
+    if (t) window.clearTimeout(parseInt(t));
+    el.removeAttribute("data-lp-timer");
+  };
+  return {
+    onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+      const el = e.currentTarget;
+      stop(el);
+      el.classList.add(cls);
+      const timer = window.setTimeout(() => {
+        el.classList.remove(cls);
+        el.removeAttribute("data-lp-timer");
+        buzz(25);
+        fire();
+      }, LONG_PRESS_MS);
+      el.setAttribute("data-lp-timer", String(timer));
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLElement>) => stop(e.currentTarget),
+    onPointerLeave: (e: React.PointerEvent<HTMLElement>) => stop(e.currentTarget),
+    onPointerCancel: (e: React.PointerEvent<HTMLElement>) => stop(e.currentTarget),
+    onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+      // cancel if the finger travels (scroll intent)
+      if (e.currentTarget.hasAttribute("data-lp-timer") && (e.movementX || e.movementY)) {
+        if (Math.abs(e.movementX) + Math.abs(e.movementY) > 8) stop(e.currentTarget);
+      }
+    },
+  };
+}
+
+
+
 export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
   const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } =
     useAppData();
