@@ -1279,14 +1279,19 @@ function DayGrid({
               return (
                 <div
                   key={e.id}
+                  onPointerDown={(ev) =>
+                    drag.begin(ev, { id: e.id, title: e.title, color: e.color })
+                  }
                   onClick={(ev) => {
                     ev.stopPropagation();
-                    onEventClick(e);
+                    if (!drag.dragging) onEventClick(e);
                   }}
                   className={cn(
-                    "pointer-events-auto absolute right-1 rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-30 cursor-pointer",
+                    "pointer-events-auto absolute right-1 touch-none rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-30 cursor-grab active:cursor-grabbing",
                     e.done && "opacity-60 line-through",
+                    drag.dragId === e.id && "opacity-40",
                   )}
+
                   style={{
                     top,
                     height,
