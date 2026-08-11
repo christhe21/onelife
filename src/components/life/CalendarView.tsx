@@ -617,6 +617,8 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
         </CardContent>
 
       </Card>
+      {drag.ghost}
+
 
       <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
         <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-6 overflow-x-hidden overflow-y-auto border-2 border-primary/20 p-6">
