@@ -179,6 +179,7 @@ function useCalendarDrag(
     ref.current = { item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null };
     setItem(null);
     setTarget(null);
+    setConflicts(0);
   };
 
   useEffect(() => {
