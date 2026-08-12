@@ -134,10 +134,14 @@ function buzz(ms = 12) {
 type DragItem = { id: string; title: string; color: string };
 type DropTarget = { day: string; time: string | null };
 
-function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
+function useCalendarDrag(
+  onDrop: (item: DragItem, target: DropTarget) => void,
+  checkConflict?: (item: DragItem, target: DropTarget) => number,
+) {
   const [item, setItem] = useState<DragItem | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [target, setTarget] = useState<DropTarget | null>(null);
+  const [conflicts, setConflicts] = useState(0);
   const ref = useRef<{
     item: DragItem | null;
     active: boolean;
@@ -149,6 +153,9 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
   }>({ item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null });
   const onDropRef = useRef(onDrop);
   onDropRef.current = onDrop;
+  const checkRef = useRef(checkConflict);
+  checkRef.current = checkConflict;
+
 
   const resolve = (x: number, y: number): DropTarget | null => {
     const el = document.elementFromPoint(x, y) as HTMLElement | null;
@@ -172,6 +179,7 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
     ref.current = { item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null };
     setItem(null);
     setTarget(null);
+    setConflicts(0);
   };
 
   useEffect(() => {
@@ -199,6 +207,7 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
       const t = resolve(e.clientX, e.clientY);
       s.target = t;
       setTarget(t);
+      setConflicts(t && checkRef.current ? checkRef.current(s.item, t) : 0);
     };
     const up = () => {
       const s = ref.current;
@@ -246,6 +255,7 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
   };
 
   const dragging = item !== null;
+  const conflicting = dragging && conflicts > 0;
 
   const ghost = dragging ? (
     <div
@@ -253,18 +263,28 @@ function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
       style={{
         left: pos.x,
         top: pos.y,
-        backgroundColor: `color-mix(in oklab, ${item!.color} 25%, hsl(var(--background)))`,
-        border: `1px solid ${item!.color}`,
-        color: `color-mix(in oklab, ${item!.color} 85%, currentColor)`,
+        backgroundColor: conflicting
+          ? "hsl(var(--destructive) / 0.18)"
+          : `color-mix(in oklab, ${item!.color} 25%, hsl(var(--background)))`,
+        border: `1px solid ${conflicting ? "hsl(var(--destructive))" : item!.color}`,
+        color: conflicting
+          ? "hsl(var(--destructive))"
+          : `color-mix(in oklab, ${item!.color} 85%, currentColor)`,
       }}
     >
       {item!.title}
       {target?.time && <span className="ml-1 opacity-70 tabular-nums">→ {target.time}</span>}
+      {conflicting && (
+        <span className="ml-1 font-semibold">
+          ⚠ {conflicts} conflict{conflicts > 1 ? "s" : ""}
+        </span>
+      )}
     </div>
   ) : null;
 
-  return { begin, dragging, dragId: item?.id ?? null, target, ghost };
+  return { begin, dragging, dragId: item?.id ?? null, target, ghost, conflicts, conflicting };
 }
+
 
 type CalDrag = ReturnType<typeof useCalendarDrag>;
 
@@ -350,7 +370,59 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     }
   };
 
-  const drag = useCalendarDrag((item, target) => applyMove(item.id, target.day, target.time));
+  const baseIdOf = (id: string) => id.replace(/_\d+$/, "");
+
+  const findConflicts = (payload: string, day: string, time: string | null): Event[] => {
+    const base = baseIdOf(payload);
+    const src = events.find((e) => baseIdOf(e.id) === base);
+    if (!src) return [];
+    const dur = Math.max(15 * 60000, src.end.getTime() - src.start.getTime());
+    const [y, m, d] = day.split("-").map(Number);
+    const h = time ? Number(time.slice(0, 2)) : src.start.getHours();
+    const mi = time ? Number(time.slice(3, 5)) : src.start.getMinutes();
+    const ns = new Date(y, (m ?? 1) - 1, d, h, mi, 0, 0);
+    const ne = new Date(ns.getTime() + dur);
+    const sameDayEvents = [
+      ...(eventsByDay.get(day) ?? []),
+      ...(eventsByDay.get(ymd(new Date(ns.getTime() - 86400000))) ?? []),
+    ];
+    const seen = new Set<string>();
+    return sameDayEvents.filter((e) => {
+      if (baseIdOf(e.id) === base || e.done) return false;
+      if (!(e.start < ne && e.end > ns)) return false;
+      if (seen.has(e.id)) return false;
+      seen.add(e.id);
+      return true;
+    });
+  };
+
+  const [pendingMove, setPendingMove] = useState<{
+    payload: string;
+    title: string;
+    day: string;
+    time: string | null;
+    conflicts: Event[];
+  } | null>(null);
+
+  const drag = useCalendarDrag(
+    (item, target) => {
+      const conflicts = findConflicts(item.id, target.day, target.time);
+      if (conflicts.length > 0) {
+        setPendingMove({
+          payload: item.id,
+          title: item.title,
+          day: target.day,
+          time: target.time,
+          conflicts,
+        });
+        return;
+      }
+      applyMove(item.id, target.day, target.time);
+    },
+    (item, target) => findConflicts(item.id, target.day, target.time).length,
+  );
+
+
 
 
   const events = useMemo<Event[]>(() => {
@@ -732,6 +804,60 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
             </Button>
             <Button className="w-full sm:w-auto" onClick={toggleCompletion}>
               {selectedEvent?.done ? "Mark Pending" : "Mark Done"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pendingMove !== null} onOpenChange={(o) => !o && setPendingMove(null)}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Scheduling conflict</DialogTitle>
+            <DialogDescription>
+              “{pendingMove?.title}” would overlap {pendingMove?.conflicts.length} existing item
+              {(pendingMove?.conflicts.length ?? 0) > 1 ? "s" : ""} on{" "}
+              {pendingMove
+                ? new Date(`${pendingMove.day}T00:00:00`).toLocaleDateString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : ""}
+              {pendingMove?.time ? ` at ${pendingMove.time}` : ""}.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2">
+            {pendingMove?.conflicts.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm"
+              >
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color }} />
+                <span className="min-w-0 flex-1 truncate">{c.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  {hm(c.start)} – {hm(c.end)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setPendingMove(null)}
+            >
+              Keep original time
+            </Button>
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                if (pendingMove)
+                  applyMove(pendingMove.payload, pendingMove.day, pendingMove.time);
+                setPendingMove(null);
+              }}
+            >
+              Move anyway
             </Button>
           </DialogFooter>
         </DialogContent>
