@@ -255,6 +255,7 @@ function useCalendarDrag(
   };
 
   const dragging = item !== null;
+  const conflicting = dragging && conflicts > 0;
 
   const ghost = dragging ? (
     <div
@@ -262,18 +263,28 @@ function useCalendarDrag(
       style={{
         left: pos.x,
         top: pos.y,
-        backgroundColor: `color-mix(in oklab, ${item!.color} 25%, hsl(var(--background)))`,
-        border: `1px solid ${item!.color}`,
-        color: `color-mix(in oklab, ${item!.color} 85%, currentColor)`,
+        backgroundColor: conflicting
+          ? "hsl(var(--destructive) / 0.18)"
+          : `color-mix(in oklab, ${item!.color} 25%, hsl(var(--background)))`,
+        border: `1px solid ${conflicting ? "hsl(var(--destructive))" : item!.color}`,
+        color: conflicting
+          ? "hsl(var(--destructive))"
+          : `color-mix(in oklab, ${item!.color} 85%, currentColor)`,
       }}
     >
       {item!.title}
       {target?.time && <span className="ml-1 opacity-70 tabular-nums">→ {target.time}</span>}
+      {conflicting && (
+        <span className="ml-1 font-semibold">
+          ⚠ {conflicts} conflict{conflicts > 1 ? "s" : ""}
+        </span>
+      )}
     </div>
   ) : null;
 
-  return { begin, dragging, dragId: item?.id ?? null, target, ghost };
+  return { begin, dragging, dragId: item?.id ?? null, target, ghost, conflicts, conflicting };
 }
+
 
 type CalDrag = ReturnType<typeof useCalendarDrag>;
 
