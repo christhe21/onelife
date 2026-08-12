@@ -809,6 +809,60 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={pendingMove !== null} onOpenChange={(o) => !o && setPendingMove(null)}>
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Scheduling conflict</DialogTitle>
+            <DialogDescription>
+              “{pendingMove?.title}” would overlap {pendingMove?.conflicts.length} existing item
+              {(pendingMove?.conflicts.length ?? 0) > 1 ? "s" : ""} on{" "}
+              {pendingMove
+                ? new Date(`${pendingMove.day}T00:00:00`).toLocaleDateString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : ""}
+              {pendingMove?.time ? ` at ${pendingMove.time}` : ""}.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2">
+            {pendingMove?.conflicts.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm"
+              >
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color }} />
+                <span className="min-w-0 flex-1 truncate">{c.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  {hm(c.start)} – {hm(c.end)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setPendingMove(null)}
+            >
+              Keep original time
+            </Button>
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                if (pendingMove)
+                  applyMove(pendingMove.payload, pendingMove.day, pendingMove.time);
+                setPendingMove(null);
+              }}
+            >
+              Move anyway
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <AddToScheduleDialog
         open={dialogOpen}
