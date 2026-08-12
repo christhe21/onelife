@@ -370,7 +370,59 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     }
   };
 
-  const drag = useCalendarDrag((item, target) => applyMove(item.id, target.day, target.time));
+  const baseIdOf = (id: string) => id.replace(/_\d+$/, "");
+
+  const findConflicts = (payload: string, day: string, time: string | null): Event[] => {
+    const base = baseIdOf(payload);
+    const src = events.find((e) => baseIdOf(e.id) === base);
+    if (!src) return [];
+    const dur = Math.max(15 * 60000, src.end.getTime() - src.start.getTime());
+    const [y, m, d] = day.split("-").map(Number);
+    const h = time ? Number(time.slice(0, 2)) : src.start.getHours();
+    const mi = time ? Number(time.slice(3, 5)) : src.start.getMinutes();
+    const ns = new Date(y, (m ?? 1) - 1, d, h, mi, 0, 0);
+    const ne = new Date(ns.getTime() + dur);
+    const sameDayEvents = [
+      ...(eventsByDay.get(day) ?? []),
+      ...(eventsByDay.get(ymd(new Date(ns.getTime() - 86400000))) ?? []),
+    ];
+    const seen = new Set<string>();
+    return sameDayEvents.filter((e) => {
+      if (baseIdOf(e.id) === base || e.done) return false;
+      if (!(e.start < ne && e.end > ns)) return false;
+      if (seen.has(e.id)) return false;
+      seen.add(e.id);
+      return true;
+    });
+  };
+
+  const [pendingMove, setPendingMove] = useState<{
+    payload: string;
+    title: string;
+    day: string;
+    time: string | null;
+    conflicts: Event[];
+  } | null>(null);
+
+  const drag = useCalendarDrag(
+    (item, target) => {
+      const conflicts = findConflicts(item.id, target.day, target.time);
+      if (conflicts.length > 0) {
+        setPendingMove({
+          payload: item.id,
+          title: item.title,
+          day: target.day,
+          time: target.time,
+          conflicts,
+        });
+        return;
+      }
+      applyMove(item.id, target.day, target.time);
+    },
+    (item, target) => findConflicts(item.id, target.day, target.time).length,
+  );
+
+
 
 
   const events = useMemo<Event[]>(() => {
