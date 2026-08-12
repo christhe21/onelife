@@ -141,6 +141,7 @@ function useCalendarDrag(
   const [item, setItem] = useState<DragItem | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [target, setTarget] = useState<DropTarget | null>(null);
+  const [conflicts, setConflicts] = useState(0);
   const ref = useRef<{
     item: DragItem | null;
     active: boolean;
@@ -152,6 +153,9 @@ function useCalendarDrag(
   }>({ item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null });
   const onDropRef = useRef(onDrop);
   onDropRef.current = onDrop;
+  const checkRef = useRef(checkConflict);
+  checkRef.current = checkConflict;
+
 
   const resolve = (x: number, y: number): DropTarget | null => {
     const el = document.elementFromPoint(x, y) as HTMLElement | null;
