@@ -134,7 +134,10 @@ function buzz(ms = 12) {
 type DragItem = { id: string; title: string; color: string };
 type DropTarget = { day: string; time: string | null };
 
-function useCalendarDrag(onDrop: (item: DragItem, target: DropTarget) => void) {
+function useCalendarDrag(
+  onDrop: (item: DragItem, target: DropTarget) => void,
+  checkConflict?: (item: DragItem, target: DropTarget) => number,
+) {
   const [item, setItem] = useState<DragItem | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [target, setTarget] = useState<DropTarget | null>(null);
