@@ -207,6 +207,7 @@ function useCalendarDrag(
       const t = resolve(e.clientX, e.clientY);
       s.target = t;
       setTarget(t);
+      setConflicts(t && checkRef.current ? checkRef.current(s.item, t) : 0);
     };
     const up = () => {
       const s = ref.current;
