@@ -396,12 +396,57 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     });
   };
 
+  const WORK_START = 9 * 60;
+  const WORK_END = 21 * 60;
+
+  const findNearestFreeSlot = (
+    payload: string,
+    day: string,
+    time: string | null,
+  ): { day: string; time: string } | null => {
+    const base = baseIdOf(payload);
+    const src = events.find((e) => baseIdOf(e.id) === base);
+    if (!src) return null;
+    const dur = Math.max(15 * 60000, src.end.getTime() - src.start.getTime());
+    const durMin = Math.round(dur / 60000);
+    const toHM = (min: number) =>
+      `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+    const fits = (d: string, startMin: number) => {
+      if (startMin < WORK_START || startMin + durMin > WORK_END) return false;
+      return findConflicts(payload, d, toHM(startMin)).length === 0;
+    };
+
+    const dropMin = time
+      ? Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5))
+      : src.start.getHours() * 60 + src.start.getMinutes();
+    const anchor = Math.round(dropMin / 15) * 15;
+
+    for (let step = 1; step <= (WORK_END - WORK_START) / 15; step++) {
+      const later = anchor + step * 15;
+      if (fits(day, later)) return { day, time: toHM(later) };
+      const earlier = anchor - step * 15;
+      if (fits(day, earlier)) return { day, time: toHM(earlier) };
+    }
+
+    const [y, m, d] = day.split("-").map(Number);
+    for (let ahead = 1; ahead <= 7; ahead++) {
+      const next = new Date(y!, (m ?? 1) - 1, (d ?? 1) + ahead);
+      const nd = ymd(next);
+      for (let min = WORK_START; min + durMin <= WORK_END; min += 15) {
+        if (fits(nd, min)) return { day: nd, time: toHM(min) };
+      }
+    }
+    return null;
+  };
+
   const [pendingMove, setPendingMove] = useState<{
     payload: string;
     title: string;
     day: string;
     time: string | null;
     conflicts: Event[];
+    suggestion: { day: string; time: string } | null;
   } | null>(null);
 
   const drag = useCalendarDrag(
@@ -414,6 +459,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
           day: target.day,
           time: target.time,
           conflicts,
+          suggestion: findNearestFreeSlot(item.id, target.day, target.time),
         });
         return;
       }
@@ -421,6 +467,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     },
     (item, target) => findConflicts(item.id, target.day, target.time).length,
   );
+
 
 
 
@@ -840,6 +887,29 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
               </li>
             ))}
           </ul>
+          {pendingMove?.suggestion && (
+            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">Nearest free slot: </span>
+              <span className="font-medium">
+                {new Date(`${pendingMove.suggestion.day}T00:00:00`).toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                · {pendingMove.suggestion.time}
+                {(() => {
+                  const src = events.find(
+                    (e) => baseIdOf(e.id) === baseIdOf(pendingMove.payload),
+                  );
+                  if (!src) return null;
+                  const dur = Math.max(15 * 60000, src.end.getTime() - src.start.getTime());
+                  const [sh, sm] = pendingMove.suggestion!.time.split(":").map(Number);
+                  const endMin = (sh ?? 0) * 60 + (sm ?? 0) + Math.round(dur / 60000);
+                  return ` – ${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+                })()}
+              </span>
+            </p>
+          )}
           <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
@@ -848,6 +918,23 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
             >
               Keep original time
             </Button>
+            {pendingMove?.suggestion && (
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  if (pendingMove?.suggestion)
+                    applyMove(
+                      pendingMove.payload,
+                      pendingMove.suggestion.day,
+                      pendingMove.suggestion.time,
+                    );
+                  setPendingMove(null);
+                }}
+              >
+                Use nearest free slot
+              </Button>
+            )}
+
             <Button
               variant="destructive"
               className="w-full sm:w-auto"
