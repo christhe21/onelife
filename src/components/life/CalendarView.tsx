@@ -887,6 +887,29 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
               </li>
             ))}
           </ul>
+          {pendingMove?.suggestion && (
+            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">Nearest free slot: </span>
+              <span className="font-medium">
+                {new Date(`${pendingMove.suggestion.day}T00:00:00`).toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                · {pendingMove.suggestion.time}
+                {(() => {
+                  const src = events.find(
+                    (e) => baseIdOf(e.id) === baseIdOf(pendingMove.payload),
+                  );
+                  if (!src) return null;
+                  const dur = Math.max(15 * 60000, src.end.getTime() - src.start.getTime());
+                  const [sh, sm] = pendingMove.suggestion!.time.split(":").map(Number);
+                  const endMin = (sh ?? 0) * 60 + (sm ?? 0) + Math.round(dur / 60000);
+                  return ` – ${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+                })()}
+              </span>
+            </p>
+          )}
           <DialogFooter className="flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"
@@ -895,6 +918,23 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
             >
               Keep original time
             </Button>
+            {pendingMove?.suggestion && (
+              <Button
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  if (pendingMove?.suggestion)
+                    applyMove(
+                      pendingMove.payload,
+                      pendingMove.suggestion.day,
+                      pendingMove.suggestion.time,
+                    );
+                  setPendingMove(null);
+                }}
+              >
+                Use nearest free slot
+              </Button>
+            )}
+
             <Button
               variant="destructive"
               className="w-full sm:w-auto"
