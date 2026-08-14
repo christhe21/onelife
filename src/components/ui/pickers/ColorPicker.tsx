@@ -14,36 +14,67 @@ export interface ColorPickerProps {
 }
 
 const PRESETS = [
-  "#ef4444", "#f97316", "#f59e0b", "#eab308",
-  "#84cc16", "#22c55e", "#10b981", "#14b8a6",
-  "#06b6d4", "#0ea5e9", "#3b82f6", "#6366f1",
-  "#8b5cf6", "#a855f7", "#d946ef", "#ec4899",
+  "#ef4444",
+  "#f97316",
+  "#f59e0b",
+  "#eab308",
+  "#84cc16",
+  "#22c55e",
+  "#10b981",
+  "#14b8a6",
+  "#06b6d4",
+  "#0ea5e9",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#a855f7",
+  "#d946ef",
+  "#ec4899",
 ];
 
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
-  const v = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const v =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
   const n = parseInt(v || "000000", 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
 function rgbToHex(r: number, g: number, b: number): string {
-  const to = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  const to = (n: number) =>
+    Math.max(0, Math.min(255, Math.round(n)))
+      .toString(16)
+      .padStart(2, "0");
   return `#${to(r)}${to(g)}${to(b)}`;
 }
 
 function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0, s = 0;
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h = 0,
+    s = 0;
   const l = (max + min) / 2;
   if (max !== min) {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
     switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
     }
     h *= 60;
   }
@@ -51,8 +82,13 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
 }
 
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  h /= 360; s /= 100; l /= 100;
-  if (s === 0) { const v = l * 255; return [v, v, v]; }
+  h /= 360;
+  s /= 100;
+  l /= 100;
+  if (s === 0) {
+    const v = l * 255;
+    return [v, v, v];
+  }
   const hue2rgb = (p: number, q: number, t: number) => {
     if (t < 0) t += 1;
     if (t > 1) t -= 1;
@@ -124,7 +160,8 @@ export function ColorPicker({ value, onChange, className, disabled, id }: ColorP
               onClick={() => onChange(c)}
               className={cn(
                 "h-6 w-6 rounded-sm border border-border transition-transform hover:scale-110",
-                current.toLowerCase() === c.toLowerCase() && "ring-2 ring-ring ring-offset-1 ring-offset-background",
+                current.toLowerCase() === c.toLowerCase() &&
+                  "ring-2 ring-ring ring-offset-1 ring-offset-background",
               )}
               style={{ backgroundColor: c }}
               aria-label={c}
@@ -134,21 +171,42 @@ export function ColorPicker({ value, onChange, className, disabled, id }: ColorP
         <div className="space-y-2">
           <div>
             <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
-              <span>Hue</span><span className="tabular-nums">{Math.round(h)}°</span>
+              <span>Hue</span>
+              <span className="tabular-nums">{Math.round(h)}°</span>
             </div>
-            <Slider value={[h]} min={0} max={360} step={1} onValueChange={([v]) => setHsl(v, s, l)} />
+            <Slider
+              value={[h]}
+              min={0}
+              max={360}
+              step={1}
+              onValueChange={([v]) => setHsl(v, s, l)}
+            />
           </div>
           <div>
             <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
-              <span>Saturation</span><span className="tabular-nums">{Math.round(s)}%</span>
+              <span>Saturation</span>
+              <span className="tabular-nums">{Math.round(s)}%</span>
             </div>
-            <Slider value={[s]} min={0} max={100} step={1} onValueChange={([v]) => setHsl(h, v, l)} />
+            <Slider
+              value={[s]}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={([v]) => setHsl(h, v, l)}
+            />
           </div>
           <div>
             <div className="mb-1 flex justify-between text-[11px] text-muted-foreground">
-              <span>Lightness</span><span className="tabular-nums">{Math.round(l)}%</span>
+              <span>Lightness</span>
+              <span className="tabular-nums">{Math.round(l)}%</span>
             </div>
-            <Slider value={[l]} min={0} max={100} step={1} onValueChange={([v]) => setHsl(h, s, v)} />
+            <Slider
+              value={[l]}
+              min={0}
+              max={100}
+              step={1}
+              onValueChange={([v]) => setHsl(h, s, v)}
+            />
           </div>
         </div>
       </PopoverContent>

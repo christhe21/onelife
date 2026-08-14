@@ -93,7 +93,15 @@ export function SubtaskFormDialog({
       setStartTime(timeFromIso(initial?.scheduledStart) || "09:00");
       setEndTime(timeFromIso(initial?.scheduledEnd) || "10:00");
     }
-  }, [open, initial?.title, initial?.description, initial?.priority, initial?.endDate, initial?.scheduledStart, initial?.scheduledEnd]);
+  }, [
+    open,
+    initial?.title,
+    initial?.description,
+    initial?.priority,
+    initial?.endDate,
+    initial?.scheduledStart,
+    initial?.scheduledEnd,
+  ]);
 
   const dateOutOfRange =
     !!form.endDate &&

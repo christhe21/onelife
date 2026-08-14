@@ -103,9 +103,7 @@ export function TimePicker({
         align="start"
         onOpenAutoFocus={(e) => e.preventDefault()} // keep focus out of lists so scroll works
       >
-        <div className="mb-2 text-center text-lg font-semibold tabular-nums">
-          {format12(h, m)}
-        </div>
+        <div className="mb-2 text-center text-lg font-semibold tabular-nums">{format12(h, m)}</div>
         <div className="grid grid-cols-2 gap-2">
           <div>
             <div className="mb-1 text-center text-[11px] font-medium text-muted-foreground">

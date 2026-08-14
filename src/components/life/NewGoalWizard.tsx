@@ -409,9 +409,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                         <DatePicker
                           value={t.due}
                           onChange={(v) =>
-                            setTasks((cur) =>
-                              cur.map((x, j) => (j === i ? { ...x, due: v } : x)),
-                            )
+                            setTasks((cur) => cur.map((x, j) => (j === i ? { ...x, due: v } : x)))
                           }
                         />
                       </div>

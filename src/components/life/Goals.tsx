@@ -620,10 +620,7 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
     if (filter !== "all" && g.skill !== filter) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      return (
-        g.title.toLowerCase().includes(q) ||
-        (g.description ?? "").toLowerCase().includes(q)
-      );
+      return g.title.toLowerCase().includes(q) || (g.description ?? "").toLowerCase().includes(q);
     }
     return true;
   });

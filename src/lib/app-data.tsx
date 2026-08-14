@@ -334,7 +334,8 @@ function normalizeGoal(raw: any): Goal {
         title: String(s?.title ?? "Untitled milestone"),
         targetDate: typeof s?.targetDate === "string" ? s.targetDate : undefined,
         done: Boolean(s?.done),
-        lastEmailReminderSent: typeof s?.lastEmailReminderSent === "string" ? s.lastEmailReminderSent : undefined,
+        lastEmailReminderSent:
+          typeof s?.lastEmailReminderSent === "string" ? s.lastEmailReminderSent : undefined,
       }))
     : [];
   return {
@@ -436,7 +437,10 @@ function normalizeAppData(raw: any): AppData {
               ? raw.settings.reminderLeadMinutes
               : undefined,
           email: typeof raw.settings.email === "string" ? raw.settings.email : undefined,
-          emailRemindersEnabled: typeof raw.settings.emailRemindersEnabled === "boolean" ? raw.settings.emailRemindersEnabled : undefined,
+          emailRemindersEnabled:
+            typeof raw.settings.emailRemindersEnabled === "boolean"
+              ? raw.settings.emailRemindersEnabled
+              : undefined,
         }
       : undefined;
 
@@ -961,10 +965,7 @@ function loadInitial(): Stored {
               typeof parsed.settings.frierenSfx === "boolean"
                 ? parsed.settings.frierenSfx
                 : undefined,
-            email:
-              typeof parsed.settings.email === "string"
-                ? parsed.settings.email
-                : undefined,
+            email: typeof parsed.settings.email === "string" ? parsed.settings.email : undefined,
             emailRemindersEnabled:
               typeof parsed.settings.emailRemindersEnabled === "boolean"
                 ? parsed.settings.emailRemindersEnabled
@@ -1038,7 +1039,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         await supabase.from("user_app_data").upsert(
           {
             user_id: userId,
-            data: { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings } as unknown as never,
+            data: {
+              version: EXPORT_VERSION,
+              goals,
+              tasks,
+              bucketList,
+              skills,
+              settings,
+            } as unknown as never,
           },
           { onConflict: "user_id" },
         );
@@ -1074,7 +1082,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }, 400);
     return () => clearTimeout(t);
   }, [goals, tasks, bucketList, skills, settings, userId, cloudReady]);
-
 
   useEffect(() => {
     // Auto-complete subGoals and goals when their linked tasks are all completed.
@@ -1730,11 +1737,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         window.location.href = "/home";
       };
       if (uid) {
-        void supabase
-          .from("user_app_data")
-          .delete()
-          .eq("user_id", uid)
-          .then(done, done);
+        void supabase.from("user_app_data").delete().eq("user_id", uid).then(done, done);
       } else {
         done();
       }
@@ -1754,7 +1757,6 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
       window.location.href = "/home";
     },
-
   };
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

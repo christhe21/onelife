@@ -41,7 +41,10 @@ export default function SkillsRadarChart({ data }: { data: RadarDatum[] }) {
       });
     read();
     const obs = new MutationObserver(read);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme", "style"] });
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme", "style"],
+    });
     return () => obs.disconnect();
   }, []);
 
