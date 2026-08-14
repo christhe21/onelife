@@ -10,7 +10,7 @@ import {
   Shuffle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAppData } from "@/lib/app-data";
+import { useAppData, type Task } from "@/lib/app-data";
 import { useTheme } from "@/hooks/use-theme";
 
 type Kind = "root" | "skill" | "goal" | "milestone" | "task" | "subtask";
@@ -27,7 +27,7 @@ interface Node {
   stroke: string;
 }
 
-// Bright, saturated palette
+// Fallback palette when a skill has no color set
 const PALETTE = [
   "#A5B4FC",
   "#7DD3FC",
@@ -39,6 +39,7 @@ const PALETTE = [
   "#F0ABFC",
 ];
 const ROOT_FILL = "#FCD34D";
+const UNLINKED_FILL = "#cbd5e1"; // gray only for genuinely unlinked nodes
 
 const STORAGE_KEY = "mindmap-positions-v1";
 // Layout constants for the radial non-overlap formula
@@ -159,6 +160,30 @@ export function MindMapCanvas() {
   };
   const collapseAll = () => setOpen(new Set<string>(["root"]));
 
+  // Resolve a skill id → color from the live skills palette (same path goals use).
+  // Lookup at render time so nodes stay in sync if a goal's skill ever changes.
+  const skillColor = (skillId?: string | null, fallbackIndex = 0): string => {
+    if (skillId) {
+      const found = skills.find((s) => s.id === skillId);
+      if (found?.color) return found.color;
+    }
+    return PALETTE[fallbackIndex % PALETTE.length];
+  };
+
+  // For a task: goalId first; else walk subGoalId → parent goal → skill.
+  // Returns undefined only when the task is genuinely unlinked.
+  const resolveTaskSkillId = (t: Task): string | undefined => {
+    if (t.goalId) {
+      const g = goals.find((gg) => gg.id === t.goalId);
+      if (g?.skill) return g.skill;
+    }
+    if (t.subGoalId) {
+      const g = goals.find((gg) => gg.subGoals?.some((sg) => sg.id === t.subGoalId));
+      if (g?.skill) return g.skill;
+    }
+    return undefined;
+  };
+
   // Seed positions via deterministic radial layout (no-overlap formula)
   const { nodes, links, seeds } = useMemo(() => {
     const nodes: Node[] = [];
@@ -212,7 +237,8 @@ export function MindMapCanvas() {
     const root = mk("root", "root", rootLabel, ROOT_FILL, rootExpanded, activeSkills.length);
     if (rootExpanded) {
       activeSkills.forEach((sk, i) => {
-        const skFill = PALETTE[i % PALETTE.length];
+        // Prefer the skill's own color from the palette; fall back to index
+        const skFill = skillColor(sk.id, i);
         const skillGoals = goals.filter((g) => g.skill === sk.id);
         const skillExpanded = open.has(`s_${sk.id}`);
         const skNode = mk(
@@ -226,8 +252,9 @@ export function MindMapCanvas() {
         );
         root.children.push(skNode);
         if (!skillExpanded) return;
-        skillGoals.forEach((g, gi) => {
-          const gFill = PALETTE[(i + 2) % PALETTE.length];
+        skillGoals.forEach((g) => {
+          // Goal color = its skill field looked up against the skills palette
+          const gFill = skillColor(g.skill, i);
           const gMilestones = g.subGoals ?? [];
           const goalExpanded = open.has(`g_${g.id}`);
           const gNode = mk(
@@ -242,7 +269,8 @@ export function MindMapCanvas() {
           skNode.children.push(gNode);
           if (!goalExpanded) return;
           gMilestones.forEach((m) => {
-            const mFill = PALETTE[(i + 1) % PALETTE.length];
+            // Milestone inherits the parent goal's skill color
+            const mFill = gFill;
             const mTasks = tasks.filter((t) => t.subGoalId === m.id);
             const mExpanded = open.has(`m_${m.id}`);
             const mNode = mk(
@@ -257,7 +285,8 @@ export function MindMapCanvas() {
             gNode.children.push(mNode);
             if (!mExpanded) return;
             mTasks.forEach((t) => {
-              const tFill = PALETTE[(i + 3) % PALETTE.length];
+              // Task under a milestone: same skill color as the goal (lookup at render time)
+              const tFill = skillColor(g.skill, i);
               const tExpanded = open.has(`t_${t.id}`);
               const tNode = mk(
                 `t_${t.id}`,
@@ -279,10 +308,13 @@ export function MindMapCanvas() {
           });
         });
       });
-      // Attach unlinked tasks (General/Daily) to the Root
+      // Attach tasks without a subGoalId (daily/standing or general) to the Root.
+      // Color them by resolving goalId → goal.skill (or subGoalId if present).
+      // Only genuinely unlinked tasks stay gray.
       const unlinkedTasks = tasks.filter((t) => !t.subGoalId);
-      unlinkedTasks.forEach((t, i) => {
-        const tFill = "#cbd5e1"; // General task fill
+      unlinkedTasks.forEach((t) => {
+        const skillId = resolveTaskSkillId(t);
+        const tFill = skillId ? skillColor(skillId) : UNLINKED_FILL;
         const taskExpanded = open.has(`t_${t.id}`);
         const tNode = mk(
           `t_${t.id}`,
@@ -389,6 +421,7 @@ export function MindMapCanvas() {
     place(root, 0, 0, 0, 0);
 
     return { nodes, links, seeds };
+    // skillColor / resolveTaskSkillId close over skills & goals; include them
   }, [skills, goals, tasks, open, settings.userName]);
 
   const parentMap = useMemo(() => {
@@ -397,6 +430,13 @@ export function MindMapCanvas() {
       map.set(n.id, n.parent ?? null);
     }
     return map;
+  }, [nodes]);
+
+  // id → fill so edges can match the target node's skill color
+  const fillById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const n of nodes) m.set(n.id, n.fill);
+    return m;
   }, [nodes]);
 
   const pos = (id: string) => {
@@ -666,7 +706,7 @@ export function MindMapCanvas() {
             </marker>
           </defs>
 
-          {/* arrows */}
+          {/* arrows — stroke matches the target node's skill color when available */}
           {links.map((l, i) => {
             const a = pos(l.from);
             const b = pos(l.to);
@@ -683,13 +723,14 @@ export function MindMapCanvas() {
             const mx = (sx + ex) / 2 + (-dy / len) * 30 * l.curl;
             const my = (sy + ey) / 2 + (dx / len) * 30 * l.curl;
             const w = Math.max(1.2, 2.4 - l.depth * 0.3);
+            const linkColor = fillById.get(l.to) ?? edge;
             return (
               <path
                 key={i}
                 d={`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`}
                 fill="none"
-                stroke={edge}
-                strokeOpacity={0.9}
+                stroke={linkColor}
+                strokeOpacity={0.85}
                 strokeWidth={w}
                 strokeLinecap="round"
                 markerEnd="url(#mm-arrow)"
