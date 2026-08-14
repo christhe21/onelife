@@ -27,6 +27,10 @@ function toYMD(d: Date): string {
   return format(d, "yyyy-MM-dd");
 }
 
+function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+
 export function DatePicker({
   value,
   onChange,
@@ -41,6 +45,12 @@ export function DatePicker({
   const selected = parseYMD(value);
   const minDate = parseYMD(min);
   const maxDate = parseYMD(max);
+
+  const currentYear = new Date().getFullYear();
+  const fromYear = minDate ? minDate.getFullYear() : currentYear - 20;
+  const toYear = maxDate ? maxDate.getFullYear() : currentYear + 20;
+  const fromMonth = minDate ? startOfMonth(minDate) : undefined;
+  const toMonth = maxDate ? startOfMonth(maxDate) : undefined;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -76,6 +86,11 @@ export function DatePicker({
             if (maxDate && date > maxDate) return true;
             return false;
           }}
+          captionLayout="dropdown"
+          fromYear={fromYear}
+          toYear={toYear}
+          fromMonth={fromMonth}
+          toMonth={toMonth}
           initialFocus
           className={cn("p-3 pointer-events-auto")}
         />
@@ -83,3 +98,4 @@ export function DatePicker({
     </Popover>
   );
 }
+
