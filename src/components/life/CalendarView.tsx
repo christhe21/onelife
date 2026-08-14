@@ -156,7 +156,6 @@ function useCalendarDrag(
   const checkRef = useRef(checkConflict);
   checkRef.current = checkConflict;
 
-
   const resolve = (x: number, y: number): DropTarget | null => {
     const el = document.elementFromPoint(x, y) as HTMLElement | null;
     const zone = el?.closest?.("[data-drop-date]") as HTMLElement | null;
@@ -176,7 +175,15 @@ function useCalendarDrag(
   const reset = () => {
     const s = ref.current;
     if (s.timer) window.clearTimeout(s.timer);
-    ref.current = { item: null, active: false, touch: false, x: 0, y: 0, timer: null, target: null };
+    ref.current = {
+      item: null,
+      active: false,
+      touch: false,
+      x: 0,
+      y: 0,
+      timer: null,
+      target: null,
+    };
     setItem(null);
     setTarget(null);
     setConflicts(0);
@@ -285,15 +292,11 @@ function useCalendarDrag(
   return { begin, dragging, dragId: item?.id ?? null, target, ghost, conflicts, conflicting };
 }
 
-
 type CalDrag = ReturnType<typeof useCalendarDrag>;
-
 
 /* ============== Long press to create ============== */
 
 const LONG_PRESS_MS = 1200;
-
-
 
 function longPressHandlers(fire: () => void, cls: string) {
   const stop = (el: HTMLElement) => {
@@ -326,8 +329,6 @@ function longPressHandlers(fire: () => void, cls: string) {
     },
   };
 }
-
-
 
 export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
   const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } =
@@ -468,10 +469,6 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     (item, target) => findConflicts(item.id, target.day, target.time).length,
   );
 
-
-
-
-
   const events = useMemo<Event[]>(() => {
     const out: Event[] = [];
     const skillColor = (subGoalId?: string) => {
@@ -599,8 +596,6 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     });
   }, [view, cursor]);
 
-
-
   const [taskWizardOpen, setTaskWizardOpen] = useState(false);
   const [taskWizardDate, setTaskWizardDate] = useState<Date | undefined>(undefined);
 
@@ -613,8 +608,6 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
     setTaskWizardDate(d);
     setTaskWizardOpen(true);
   };
-
-
 
   return (
     <div className="space-y-4 h-full flex flex-col">
@@ -691,7 +684,6 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
             <Button size="sm" variant="secondary" onClick={() => openAdd(cursor)} className="h-8">
               Schedule Existing
             </Button>
-
           </div>
         </CardHeader>
         <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
@@ -734,10 +726,8 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
             />
           )}
         </CardContent>
-
       </Card>
       {drag.ghost}
-
 
       <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
         <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-6 overflow-x-hidden overflow-y-auto border-2 border-primary/20 p-6">
@@ -898,9 +888,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
                 })}{" "}
                 · {pendingMove.suggestion.time}
                 {(() => {
-                  const src = events.find(
-                    (e) => baseIdOf(e.id) === baseIdOf(pendingMove.payload),
-                  );
+                  const src = events.find((e) => baseIdOf(e.id) === baseIdOf(pendingMove.payload));
                   if (!src) return null;
                   const dur = Math.max(15 * 60000, src.end.getTime() - src.start.getTime());
                   const [sh, sm] = pendingMove.suggestion!.time.split(":").map(Number);
@@ -939,8 +927,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
               variant="destructive"
               className="w-full sm:w-auto"
               onClick={() => {
-                if (pendingMove)
-                  applyMove(pendingMove.payload, pendingMove.day, pendingMove.time);
+                if (pendingMove) applyMove(pendingMove.payload, pendingMove.day, pendingMove.time);
                 setPendingMove(null);
               }}
             >
@@ -949,7 +936,6 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       <AddToScheduleDialog
         open={dialogOpen}
@@ -961,7 +947,6 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
         onOpenChange={setTaskWizardOpen}
         defaultDate={taskWizardDate}
       />
-
     </div>
   );
 }
@@ -1041,7 +1026,6 @@ function MonthGrid({
   const month = cursor.getMonth();
   const today = startOfDay(new Date());
 
-
   const weekdays = isMobile
     ? ["M", "T", "W", "T", "F", "S", "S"]
     : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -1102,7 +1086,6 @@ function MonthGrid({
               )}
               style={{ backgroundColor: heatBg(stats?.completed ?? 0) }}
             >
-
               <div className="flex items-start justify-between">
                 <button
                   type="button"
@@ -1181,7 +1164,6 @@ function MonthGrid({
               )}
             </div>
           );
-
         })}
       </div>
     </div>
@@ -1205,8 +1187,6 @@ function WeekGrid({
   onEventClick: (e: Event) => void;
   onLongPressDay: (d: Date) => void;
 }) {
-
-
   const start = startOfWeek(cursor);
   const days = Array.from({ length: 7 }, (_, i) => addDaysLocal(start, i));
   const baseHour = HOURS[0];
@@ -1237,20 +1217,15 @@ function WeekGrid({
           {days.map((d, i) => {
             const isToday = sameDay(d, today);
             return (
-
-
               <button
                 key={i}
                 {...longPressHandlers(() => onLongPressDay(d), "animate-long-press-block")}
-
-
                 onClick={() => onPickDay(d)}
                 className={cn(
                   "py-2 transition-all duration-300 hover:bg-muted/40 select-none",
                   isToday && "bg-primary/10 text-primary font-semibold",
                 )}
               >
-
                 <div className="uppercase tracking-wider text-muted-foreground">
                   {d.toLocaleDateString(undefined, { weekday: "short" })}
                 </div>
@@ -1302,7 +1277,6 @@ function WeekGrid({
                     drag.dragging && drag.target?.day === key && "bg-primary/10",
                   )}
                 >
-
                   {isCurrentDay && showNow && (
                     <div
                       className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
@@ -1343,7 +1317,6 @@ function WeekGrid({
                           e.done && "opacity-60 line-through",
                           drag.dragId === e.id && "opacity-40",
                         )}
-
                         style={{
                           top,
                           height,
@@ -1392,7 +1365,6 @@ function DayGrid({
   onEventClick: (e: Event) => void;
   onLongPressEmpty: (d: Date) => void;
 }) {
-
   const baseHour = HOURS[0];
 
   const isToday = sameDay(cursor, startOfDay(new Date()));
@@ -1458,7 +1430,6 @@ function DayGrid({
           />
         )}
         <div className="pointer-events-none absolute inset-0 pl-12 pr-2">
-
           <div className="relative h-full w-full">
             {events.length === 0 && (
               <div className="pointer-events-auto absolute inset-x-2 top-4 rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
@@ -1507,7 +1478,6 @@ function DayGrid({
                     e.done && "opacity-60 line-through",
                     drag.dragId === e.id && "opacity-40",
                   )}
-
                   style={{
                     top,
                     height,

@@ -34,9 +34,7 @@ export function AccountCard() {
       <CardContent>
         {userId ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              Signed in{email ? ` as ${email}` : ""}
-            </p>
+            <p className="text-sm text-muted-foreground">Signed in{email ? ` as ${email}` : ""}</p>
             <Button variant="outline" size="sm" onClick={() => void signOut()}>
               <LogOut className="mr-2 h-4 w-4" />
               Sign out

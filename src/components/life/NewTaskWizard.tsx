@@ -23,13 +23,11 @@ type Step = (typeof STEPS)[number];
 
 type SubDraft = SubtaskDraft;
 
-
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultDate?: Date;
 }
-
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
@@ -76,8 +74,6 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
 
   const selectedGoal = useMemo(() => goals.find((g) => g.id === goalId), [goals, goalId]);
 
-
-
   const reset = () => {
     setStep("basics");
     setTitle("");
@@ -94,7 +90,6 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
     setSubs([]);
     setEditIdx(null);
   };
-
 
   const handleOpenChange = (o: boolean) => {
     onOpenChange(o);
@@ -129,7 +124,6 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
     (step === "link" && !!goalId && (isDaily || goalId === "none" || !!subGoalId)) ||
     step === "subtasks" ||
     step === "done";
-
 
   // When entering the schedule step (or when the picked goal changes), clamp
   // the defaults to fit within the goal's [start, target] window so the user
@@ -172,7 +166,7 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
       startDate: isDaily ? startDate || undefined : undefined,
       endDate: isDaily ? endDate || undefined : undefined,
 
-      subGoalId: isDaily ? undefined : (goalId === "none" ? "none" : subGoalId || undefined),
+      subGoalId: isDaily ? undefined : goalId === "none" ? "none" : subGoalId || undefined,
       goalId: isDaily ? (goalId === "none" ? undefined : goalId || undefined) : undefined,
 
       subtasks: subs
@@ -307,12 +301,7 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
               {!isDaily ? (
                 <div>
                   <Label className="text-xs">Due date</Label>
-                  <DatePicker
-                    min={minDate}
-                    max={goalMax}
-                    value={dueDate}
-                    onChange={setDueDate}
-                  />
+                  <DatePicker min={minDate} max={goalMax} value={dueDate} onChange={setDueDate} />
                   {!dueInRange && (
                     <p className="mt-1 text-[11px] text-destructive">
                       Must be between {minDate} and {goalMax}.
@@ -369,7 +358,6 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
                 </p>
               ) : (
                 <div className="space-y-3">
-
                   <div>
                     <Label className="text-xs">Goal</Label>
                     <Select
@@ -400,7 +388,6 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
                     <div>
                       <Label className="text-xs">Milestone</Label>
                       <Select value={subGoalId} onValueChange={setSubGoalId}>
-
                         <SelectTrigger>
                           <SelectValue placeholder="Select a milestone" />
                         </SelectTrigger>

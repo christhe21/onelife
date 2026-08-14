@@ -72,7 +72,7 @@ export default {
     try {
       const url = new URL(request.url);
       if (url.pathname === "/api/send-reminders" && request.method === "POST") {
-         return await APIRoute.action({ request });
+        return await APIRoute.action({ request });
       }
 
       const handler = await getServerEntry();

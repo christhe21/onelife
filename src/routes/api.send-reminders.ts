@@ -50,9 +50,7 @@ export const APIRoute = {
         }
       }
     } else {
-      console.log(
-        `Simulated sending emails to ${email} for ${milestones.length} milestones.`,
-      );
+      console.log(`Simulated sending emails to ${email} for ${milestones.length} milestones.`);
       sentCount = milestones.length;
     }
 

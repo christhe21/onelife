@@ -12,7 +12,7 @@
 
 ### 1. Time-aware dragging everywhere
 
-- **Week view**: drop on a day column computes the hour/minute from the pointer's Y position inside the column, snapped to 15-minute steps, and moves the item to that day *and* time. A live guideline + ghost block follows the pointer while dragging.
+- **Week view**: drop on a day column computes the hour/minute from the pointer's Y position inside the column, snapped to 15-minute steps, and moves the item to that day _and_ time. A live guideline + ghost block follows the pointer while dragging.
 - **Day view**: make event blocks draggable and make the hour column a drop surface, so an item can be moved to another hour of the same day (15-min snap).
 - **Month view**: keep the current day-level move (a month cell has no time), but preserve the item's original time-of-day and duration.
 - In all cases the item's **duration is preserved** (end = new start + old duration).

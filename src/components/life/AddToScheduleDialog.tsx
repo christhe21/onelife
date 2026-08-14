@@ -276,7 +276,6 @@ export function AddToScheduleDialog({
             </p>
           )}
 
-
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <label className="min-w-0 space-y-1">
               <span className="text-[11px] font-medium text-muted-foreground">From</span>

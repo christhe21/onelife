@@ -101,10 +101,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
               <Label>
                 Due <span className="text-red-500">*</span>
               </Label>
-              <DatePicker
-                value={form.dueDate}
-                onChange={(v) => setForm({ ...form, dueDate: v })}
-              />
+              <DatePicker value={form.dueDate} onChange={(v) => setForm({ ...form, dueDate: v })} />
             </div>
             <div>
               <Label>Priority</Label>
@@ -131,10 +128,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
             </div>
             <div>
               <Label>Completed</Label>
-              <DatePicker
-                value={form.endDate}
-                onChange={(v) => setForm({ ...form, endDate: v })}
-              />
+              <DatePicker value={form.endDate} onChange={(v) => setForm({ ...form, endDate: v })} />
             </div>
           </div>
           <div>
@@ -514,7 +508,9 @@ export function Tasks() {
     const evidenceMatch = (t.evidence ?? "").toLowerCase().includes(q);
 
     // Check if the goal matches the search query
-    const g = goals.find((g) => g.subGoals?.some((sg) => sg.id === t.subGoalId) || g.id === t.goalId);
+    const g = goals.find(
+      (g) => g.subGoals?.some((sg) => sg.id === t.subGoalId) || g.id === t.goalId,
+    );
     const goalMatch = g && g.title.toLowerCase().includes(q);
 
     return titleMatch || subMatch || evidenceMatch || goalMatch;
@@ -550,7 +546,12 @@ export function Tasks() {
               className="pl-8 h-8 text-xs"
             />
           </div>
-          <Button size="sm" variant="ghost" className="h-8 px-2 text-xs shrink-0" onClick={exportSchedule}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 px-2 text-xs shrink-0"
+            onClick={exportSchedule}
+          >
             <Download className="mr-1 h-3.5 w-3.5" />
             .ics
           </Button>
