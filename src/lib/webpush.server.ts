@@ -31,10 +31,14 @@ function concat(...parts: Uint8Array[]): Uint8Array {
 }
 
 async function hmac(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-  const k = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, [
-    "sign",
-  ]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", k, data));
+  const k = await crypto.subtle.importKey(
+    "raw",
+    key as unknown as BufferSource,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  return new Uint8Array(await crypto.subtle.sign("HMAC", k, data as unknown as BufferSource));
 }
 
 /** Builds a P-256 JWK from a raw uncompressed public key plus optional `d`. */
@@ -118,12 +122,20 @@ async function encryptPayload(
     await hmac(prk, concat(enc.encode("Content-Encoding: nonce\0"), Uint8Array.of(1)))
   ).slice(0, 12);
 
-  const cek = await crypto.subtle.importKey("raw", cekBytes, { name: "AES-GCM" }, false, [
-    "encrypt",
-  ]);
+  const cek = await crypto.subtle.importKey(
+    "raw",
+    cekBytes as unknown as BufferSource,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt"],
+  );
   const plaintext = concat(enc.encode(payload), Uint8Array.of(2));
   const ciphertext = new Uint8Array(
-    await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, cek, plaintext),
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: nonce as unknown as BufferSource },
+      cek,
+      plaintext as unknown as BufferSource,
+    ),
   );
 
   const rs = new Uint8Array(4);
