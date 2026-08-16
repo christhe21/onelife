@@ -744,7 +744,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
       {drag.ghost}
 
       <Dialog open={eventDetailsOpen} onOpenChange={setEventDetailsOpen}>
-        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-6 overflow-x-hidden overflow-y-auto border-2 border-primary/20 p-6">
+        <DialogContent className="flex w-[calc(100vw-1rem)] max-w-md flex-col gap-6 border-2 border-primary/20 p-6">
           <DialogHeader className="gap-2">
             <div className="flex items-start gap-3">
               <span
@@ -814,7 +814,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
             </div>
           </div>
 
-          <DialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end">
+          <DialogFooter className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:justify-end">
             <Button
               variant="outline"
               className="w-full sm:w-auto order-last sm:order-first"
@@ -861,7 +861,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
       </Dialog>
 
       <Dialog open={pendingMove !== null} onOpenChange={(o) => !o && setPendingMove(null)}>
-        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] sm:max-w-md flex-col overflow-x-hidden overflow-y-auto">
+        <DialogContent className="flex w-[calc(100vw-2rem)] max-w-md flex-col gap-4">
           <DialogHeader>
             <DialogTitle className="text-destructive">Scheduling conflict</DialogTitle>
             <DialogDescription>
@@ -912,7 +912,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
               </span>
             </p>
           )}
-          <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button
               variant="outline"
               className="w-full sm:w-auto"
