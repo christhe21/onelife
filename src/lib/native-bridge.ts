@@ -161,7 +161,7 @@ export function getNativePushToken(): Promise<string | null> {
     };
     window.__onNativePushToken = settle;
     try {
-      b.requestPushToken();
+      b.requestPushToken?.();
     } catch {
       settle(null);
     }
