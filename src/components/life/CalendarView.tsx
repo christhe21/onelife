@@ -184,6 +184,7 @@ function useCalendarDrag(
       timer: null,
       target: null,
     };
+    document.body.classList.remove("calendar-dragging");
     setItem(null);
     setTarget(null);
     setConflicts(0);
@@ -194,6 +195,8 @@ function useCalendarDrag(
       const s = ref.current;
       if (!s.item || s.active) return;
       s.active = true;
+      window.getSelection()?.removeAllRanges();
+      document.body.classList.add("calendar-dragging");
       setItem(s.item);
       buzz(15);
     };
@@ -224,19 +227,28 @@ function useCalendarDrag(
       }
       reset();
     };
+    const onSelectStart = (e: Event) => {
+      if (ref.current.active) e.preventDefault();
+    };
+
     window.addEventListener("pointermove", move, { passive: false });
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
+    window.addEventListener("selectstart", onSelectStart);
     return () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
+      window.removeEventListener("selectstart", onSelectStart);
+      document.body.classList.remove("calendar-dragging");
     };
   }, []);
 
   const begin = (e: React.PointerEvent, dragItem: DragItem) => {
     if (e.button != null && e.button !== 0) return;
+    e.preventDefault();
     e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const touch = e.pointerType !== "mouse";
     const s = ref.current;
     if (s.timer) window.clearTimeout(s.timer);
@@ -251,6 +263,8 @@ function useCalendarDrag(
             const cur = ref.current;
             if (!cur.item || cur.active) return;
             cur.active = true;
+            window.getSelection()?.removeAllRanges();
+            document.body.classList.add("calendar-dragging");
             setPos({ x: cur.x, y: cur.y });
             setItem(cur.item);
             buzz(15);
@@ -1115,6 +1129,7 @@ function MonthGrid({
                     {dayEvents.slice(0, 4).map((e) => (
                       <span
                         key={e.id}
+                        draggable={false}
                         onPointerDown={(ev) =>
                           drag.begin(ev, { id: e.id, title: e.title, color: e.color })
                         }
@@ -1122,7 +1137,7 @@ function MonthGrid({
                           "h-2 w-2 cursor-grab touch-none rounded-full active:cursor-grabbing",
                           drag.dragId === e.id && "opacity-40",
                         )}
-                        style={{ backgroundColor: e.color }}
+                        style={{ backgroundColor: e.color, touchAction: "none" }}
                       />
                     ))}
                     {dayEvents.length > 4 && (
@@ -1137,6 +1152,7 @@ function MonthGrid({
                   {dayEvents.map((e) => (
                     <span
                       key={e.id}
+                      draggable={false}
                       onPointerDown={(ev) =>
                         drag.begin(ev, { id: e.id, title: e.title, color: e.color })
                       }
@@ -1154,6 +1170,7 @@ function MonthGrid({
                         color: `color-mix(in oklab, ${e.color} 80%, currentColor)`,
                         border: `1px solid color-mix(in oklab, ${e.color} 40%, transparent)`,
                         borderLeft: `3px solid ${e.color}`,
+                        touchAction: "none",
                       }}
                       title={`${hm(e.start)} ${e.title} — drag to reschedule`}
                     >
@@ -1304,6 +1321,7 @@ function WeekGrid({
                     return (
                       <div
                         key={e.id}
+                        draggable={false}
                         onPointerDown={(ev) =>
                           drag.begin(ev, { id: e.id, title: e.title, color: e.color })
                         }
@@ -1323,6 +1341,7 @@ function WeekGrid({
                           backgroundColor: `color-mix(in oklab, ${e.color} 15%, transparent)`,
                           border: `1px solid color-mix(in oklab, ${e.color} 40%, transparent)`,
                           borderLeft: `4px solid ${e.color}`,
+                          touchAction: "none",
                         }}
                       >
                         <div
@@ -1466,6 +1485,7 @@ function DayGrid({
               return (
                 <div
                   key={e.id}
+                  draggable={false}
                   onPointerDown={(ev) =>
                     drag.begin(ev, { id: e.id, title: e.title, color: e.color })
                   }
@@ -1487,6 +1507,7 @@ function DayGrid({
                     border: `1px solid color-mix(in oklab, ${e.color} 40%, transparent)`,
                     borderLeft: `4px solid ${e.color}`,
                     backdropFilter: "blur(4px)",
+                    touchAction: "none",
                   }}
                 >
                   <div className="flex items-start gap-1.5 mb-1 shrink-0">

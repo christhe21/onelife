@@ -8,7 +8,7 @@ blocks, day numbers and labels get highlighted, which visually breaks the drag a
 makes it hard to land the item on the intended slot.
 
 Cause: the drag in `useCalendarDrag` never suppresses the browser's default
-selection gesture — `preventDefault()` only runs on `pointermove` *after* the drag
+selection gesture — `preventDefault()` only runs on `pointermove` _after_ the drag
 is active, by which point selection has already begun, and nothing sets
 `user-select`/`touch-action` on the calendar surfaces.
 

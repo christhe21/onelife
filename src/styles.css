@@ -558,3 +558,9 @@
 .animate-long-press-block {
   animation: long-press-fill-block 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+body.calendar-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}

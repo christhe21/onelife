@@ -76,7 +76,10 @@ export const Route = createFileRoute("/api/public/hooks/send-reminders")({
             .in("id", deliveredIds);
         }
         if (expired.size > 0) {
-          await supabaseAdmin.from("push_subscriptions").delete().in("id", [...expired]);
+          await supabaseAdmin
+            .from("push_subscriptions")
+            .delete()
+            .in("id", [...expired]);
         }
 
         return Response.json({ processed: due.length, sent });
