@@ -41,7 +41,7 @@ function EditBucketDialog({ item }: { item: BucketItem }) {
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg flex-col overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Edit bucket item</DialogTitle>
         </DialogHeader>

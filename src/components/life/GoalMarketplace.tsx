@@ -216,7 +216,7 @@ function AutoScheduleDialog({
 }) {
   return (
     <Dialog open={!!template} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-md flex-col overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Auto-schedule this goal?</DialogTitle>
           <DialogDescription>

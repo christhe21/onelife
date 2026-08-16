@@ -81,7 +81,7 @@ function GoalDialog({ goal, trigger }: GoalDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg flex-col overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit goal" : "Create a goal"}</DialogTitle>
         </DialogHeader>
@@ -286,7 +286,7 @@ function MilestoneDot({
           aria-label={`${sub.title} – ${sub.targetDate}`}
         />
       </DialogTrigger>
-      <DialogContent className="max-w-sm w-[calc(100vw-2rem)]">
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="text-base">{sub.title}</DialogTitle>
         </DialogHeader>
@@ -346,7 +346,7 @@ function StatusModal({ goal }: { goal: Goal }) {
           {STATUS_LABEL[goal.status]}
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm w-[calc(100vw-2rem)]">
+      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Change status</DialogTitle>
         </DialogHeader>
