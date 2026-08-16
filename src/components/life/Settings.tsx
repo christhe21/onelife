@@ -16,6 +16,8 @@ import {
   type ThemeColor,
   CORE_SKILLS,
 } from "@/lib/app-data";
+import { usePushReminders } from "@/hooks/use-push";
+import { useAuth } from "@/hooks/use-auth";
 import { getSkillPoints, getSkillTitle, getOverallRank } from "@/lib/rank";
 import { celebrate } from "@/lib/celebrate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -127,6 +129,9 @@ export function SettingsView() {
   const [lead, setLead] = useState<number>(settings.reminderLeadMinutes ?? 10);
 
   useEffect(() => setName(settings.userName ?? ""), [settings.userName]);
+
+  const push = usePushReminders();
+  const { isAuthenticated } = useAuth();
 
   const enableNotifications = async () => {
     // Android shell: route through the native POST_NOTIFICATIONS permission.
@@ -578,9 +583,8 @@ export function SettingsView() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Get a browser notification before tasks you've scheduled for today. Reminders fire while
-            this tab is open — close-tab / background push isn't supported in this session-only
-            build.
+            Get notified before tasks you've scheduled. In-tab reminders work anywhere; enable
+            push below to receive them even when the app is closed.
           </p>
 
           <div className="flex items-center justify-between rounded-xl border p-3">
@@ -630,10 +634,53 @@ export function SettingsView() {
             </Button>
           )}
 
-          <div className="rounded-xl border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
-            <p className="mb-1 font-semibold text-foreground">Want real push reminders?</p>
-            For notifications that fire even when this tab is closed, we'd need to enable Lovable
-            Cloud and wire up scheduled server functions + Web Push. Ask and I'll set it up.
+          <div className="space-y-3 rounded-xl border p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <Label className="text-sm">Push reminders (works when the app is closed)</Label>
+                <p className="text-xs text-muted-foreground">
+                  {!isAuthenticated
+                    ? "Sign in to receive reminders on your devices."
+                    : !push.supported
+                      ? "This device can't receive push notifications."
+                      : push.registered
+                        ? "This device is registered."
+                        : "Register this device to get reminders sent from the server."}
+                </p>
+              </div>
+              <Switch
+                checked={push.registered}
+                disabled={!isAuthenticated || !push.supported || push.busy}
+                onCheckedChange={async (v) => {
+                  if (v) {
+                    const ok = await push.enable();
+                    if (ok) {
+                      updateSettings({ notificationsEnabled: true });
+                      toast.success("Push reminders enabled on this device");
+                    } else {
+                      toast.error("Couldn't enable push on this device");
+                    }
+                  } else {
+                    await push.disable();
+                    toast.success("Push reminders turned off for this device");
+                  }
+                }}
+              />
+            </div>
+            {push.registered && (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={push.busy}
+                onClick={async () => {
+                  const res = await push.test();
+                  if (res && res.sent > 0) toast.success(`Test sent to ${res.sent} device(s)`);
+                  else toast.error("Test notification could not be delivered");
+                }}
+              >
+                <Bell className="mr-2 h-4 w-4" /> Send test notification
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
