@@ -861,7 +861,7 @@ export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
       </Dialog>
 
       <Dialog open={pendingMove !== null} onOpenChange={(o) => !o && setPendingMove(null)}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] sm:max-w-md flex-col overflow-x-hidden overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-destructive">Scheduling conflict</DialogTitle>
             <DialogDescription>
@@ -1036,7 +1036,16 @@ function MonthGrid({
 
   const gridStart = startOfWeek(first);
   const cells: Date[] = [];
-  for (let i = 0; i < 42; i++) cells.push(addDays(gridStart, i));
+
+  const lastDayOfMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+
+  for (let i = 0; i < 42; i++) {
+    const cellDate = addDays(gridStart, i);
+    cells.push(cellDate);
+    if (i === 34 && cellDate >= lastDayOfMonth) {
+      break;
+    }
+  }
   const month = cursor.getMonth();
   const today = startOfDay(new Date());
 
