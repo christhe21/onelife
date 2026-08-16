@@ -27,6 +27,11 @@ export interface AndroidBridgeApi {
   scheduleNotifications(payloadJson: string): void;
   /** Cancels every alarm previously set via scheduleNotifications. */
   cancelScheduledNotifications(): void;
+  /**
+   * Requests the FCM device token. The shell answers by calling
+   * `window.__onNativePushToken(token)` (empty string on failure).
+   */
+  requestPushToken?(): void;
 }
 
 export interface ScheduledNotification {
@@ -40,6 +45,7 @@ declare global {
   interface Window {
     AndroidBridge?: AndroidBridgeApi;
     __onNativeNotificationPermission?: (result: string) => void;
+    __onNativePushToken?: (token: string) => void;
   }
 }
 
@@ -136,4 +142,29 @@ export function nativeCancelScheduledNotifications(): void {
   } catch {
     /* ignore */
   }
+}
+
+/**
+ * Resolves with the Android FCM device token, or null when the shell is older
+ * than the push build / Firebase is not configured.
+ */
+export function getNativePushToken(): Promise<string | null> {
+  const b = bridge();
+  if (!b || typeof b.requestPushToken !== "function") return Promise.resolve(null);
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (token: string | null) => {
+      if (settled) return;
+      settled = true;
+      delete window.__onNativePushToken;
+      resolve(token && token.length > 0 ? token : null);
+    };
+    window.__onNativePushToken = settle;
+    try {
+      b.requestPushToken?.();
+    } catch {
+      settle(null);
+    }
+    window.setTimeout(() => settle(null), 15_000);
+  });
 }
