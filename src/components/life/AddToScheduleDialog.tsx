@@ -173,7 +173,7 @@ export function AddToScheduleDialog({
         if (!v) reset();
       }}
     >
-      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1rem)] max-w-md flex-col gap-3 overflow-x-hidden overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="flex w-[calc(100vw-1rem)] max-w-md flex-col gap-3 p-4 sm:p-6">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-base sm:text-lg">Add to schedule</DialogTitle>
           <DialogDescription className="text-xs">
