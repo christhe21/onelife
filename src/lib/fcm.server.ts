@@ -103,27 +103,24 @@ export async function sendFcm(
   const accessToken = await getAccessToken(sa);
   if (!accessToken) return { ok: false, status: 0, expired: false };
 
-  const res = await fetch(
-    `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: {
-          token,
-          notification: { title: payload.title, body: payload.body },
-          data: {
-            url: payload.url ?? "/",
-            tag: payload.tag ?? "",
-          },
-          android: { priority: "HIGH" },
-        },
-      }),
+  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      message: {
+        token,
+        notification: { title: payload.title, body: payload.body },
+        data: {
+          url: payload.url ?? "/",
+          tag: payload.tag ?? "",
+        },
+        android: { priority: "HIGH" },
+      },
+    }),
+  });
 
   return {
     ok: res.ok,

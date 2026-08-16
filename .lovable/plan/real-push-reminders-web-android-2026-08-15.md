@@ -19,27 +19,33 @@ task scheduled  ->  reminder rows in the database
 ## Pieces to build
 
 ### 1. Database
+
 - `push_subscriptions` — one row per device: user, platform (`web` / `android`), endpoint or FCM token, keys, last seen. Owner-only access.
 - `reminder_queue` — user, task/subtask id, title, body, `fire_at`, `sent_at`, dedupe key. Owner-only read; the scheduler writes with elevated rights.
 
 ### 2. Device registration
+
 - A small `usePushRegistration` hook: asks for notification permission, registers the service worker, subscribes with the public VAPID key, and saves the subscription through a server function.
 - In the Android shell, the same hook instead asks the Kotlin bridge for the FCM token and saves that.
 - Settings gets a "Push reminders" row showing status (enabled / blocked / this device registered) with an enable button and a "send test notification" action.
 
 ### 3. Reminder queue sync
+
 - Whenever tasks/subtasks change, the client syncs upcoming reminders (start time minus lead minutes, future only, not done) to `reminder_queue` via a server function that replaces that user's pending rows.
 - Cancelling or completing a task removes its pending reminder.
 
 ### 4. Delivery
+
 - Public endpoint `/api/public/hooks/send-reminders` — pulls due, unsent reminders, sends each to that user's devices, marks them sent, and deletes dead subscriptions (410/404 responses).
 - Web Push signed with VAPID; Android via FCM HTTP v1.
 - A `pg_cron` job calls it every minute with the project's public API key.
 
 ### 5. Service worker
+
 - `public/sw-push.js` handling `push` (show notification) and `notificationclick` (focus/open the app on the relevant day). Registered only in production/standalone contexts, never in the editor preview iframe.
 
 ### 6. Android shell
+
 - Add Firebase Messaging to the Gradle build, a `FirebaseMessagingService` that posts the notification on the existing reminder channel, and bridge methods `getPushToken()` / `onPushTokenRefresh` exposed to the WebView.
 - Existing local AlarmManager reminders stay as an offline fallback, de-duplicated by reminder id so you don't get two notifications.
 

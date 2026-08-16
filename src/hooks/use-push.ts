@@ -61,9 +61,7 @@ export function usePushReminders(): PushState {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setSupported(
-      isNativeApp() || ("serviceWorker" in navigator && "PushManager" in window),
-    );
+    setSupported(isNativeApp() || ("serviceWorker" in navigator && "PushManager" in window));
     setRegistered(Boolean(window.localStorage.getItem(ENDPOINT_KEY)));
   }, []);
 

@@ -583,8 +583,8 @@ export function SettingsView() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Get notified before tasks you've scheduled. In-tab reminders work anywhere; enable
-            push below to receive them even when the app is closed.
+            Get notified before tasks you've scheduled. In-tab reminders work anywhere; enable push
+            below to receive them even when the app is closed.
           </p>
 
           <div className="flex items-center justify-between rounded-xl border p-3">
