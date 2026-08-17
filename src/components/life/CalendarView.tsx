@@ -168,7 +168,8 @@ function useCalendarDrag(
     const rect = zone.getBoundingClientRect();
     const base = Number(zone.getAttribute("data-drop-base") ?? 0) * 60;
     const raw = base + ((y - rect.top) / HOUR_PX) * 60;
-    const mins = Math.max(0, Math.min(23 * 60 + 45, Math.round(raw / 15) * 15));
+    const snap = snapRef.current;
+    const mins = Math.max(0, Math.min(24 * 60 - snap, Math.round(raw / snap) * snap));
     return {
       day,
       time: `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`,
