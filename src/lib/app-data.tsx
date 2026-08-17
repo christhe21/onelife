@@ -1737,6 +1737,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     importMarketplaceGoal,
     autoScheduleGoal: autoScheduleGoalFn,
     autoScheduleSkill: autoScheduleSkillFn,
+    previewAutoScheduleGoal: previewAutoScheduleGoalFn,
+    previewAutoScheduleSkill: previewAutoScheduleSkillFn,
 
     exportJSON: () => {
       const payload = {
