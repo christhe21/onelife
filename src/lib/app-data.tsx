@@ -1298,37 +1298,64 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const autoScheduleGoalFn = (goalId: string): number => {
+  /** Computes the proposed schedule for a goal without committing it. */
+  const planGoal = (
+    goalId: string,
+    baseTasks: Task[],
+  ): { tasks: Task[]; result: AutoScheduleResult } => {
     const goal = goals.find((g) => g.id === goalId);
-    if (!goal) return 0;
+    if (!goal) return { tasks: baseTasks, result: emptyAutoScheduleResult() };
     const subGoalIds = new Set(goal.subGoals.map((sg) => sg.id));
-    const goalTasks = tasks.filter((t) => t.subGoalId && subGoalIds.has(t.subGoalId));
+    const goalTasks = baseTasks.filter((t) => t.subGoalId && subGoalIds.has(t.subGoalId));
     const otherBlocks: Array<{ startDate?: string; endDate?: string }> = [];
-    for (const t of tasks) {
+    for (const t of baseTasks) {
       if (goalTasks.find((gt) => gt.id === t.id)) continue;
       otherBlocks.push({ startDate: t.startDate, endDate: t.endDate });
       for (const s of t.subtasks) otherBlocks.push({ startDate: s.startDate, endDate: s.endDate });
     }
-    const rescheduled = autoScheduleTasks(goalTasks, goal.startDate, goal.targetDate, otherBlocks);
-    const byId = new Map(rescheduled.map((t) => [t.id, t]));
-    let count = 0;
-    setTasks((cur) =>
-      cur.map((t) => {
-        const r = byId.get(t.id);
-        if (!r) return t;
-        count +=
-          r.subtasks.filter((s) => s.startDate && s.endDate).length +
-          (r.startDate && r.endDate ? 1 : 0);
-        return r;
-      }),
+    const prefs = workPrefs(settings);
+    const rescheduled = autoScheduleTasks(
+      goalTasks,
+      goal.startDate,
+      goal.targetDate,
+      otherBlocks,
+      new Date(),
+      { dayStartMin: prefs.dayStartMin, dayEndMin: prefs.dayEndMin, stepMin: prefs.snapMin },
     );
-    return count;
+    const byId = new Map(rescheduled.map((t) => [t.id, t]));
+    const nextTasks = baseTasks.map((t) => byId.get(t.id) ?? t);
+    return {
+      tasks: nextTasks,
+      result: diffScheduledBlocks(baseTasks, nextTasks, goal.title),
+    };
   };
 
-  const autoScheduleSkillFn = (skillId: string): number => {
-    let total = 0;
-    for (const g of goals) if (g.skill === skillId) total += autoScheduleGoalFn(g.id);
-    return total;
+  const previewAutoScheduleGoalFn = (goalId: string) => planGoal(goalId, tasks).result;
+
+  const autoScheduleGoalFn = (goalId: string): AutoScheduleResult => {
+    const { tasks: next, result } = planGoal(goalId, tasks);
+    if (result.blocks.length > 0) setTasks(next);
+    return result;
+  };
+
+  const planSkill = (skillId: string): { tasks: Task[]; result: AutoScheduleResult } => {
+    let cur = tasks;
+    const blocks: ProposedBlock[] = [];
+    for (const g of goals) {
+      if (g.skill !== skillId) continue;
+      const step = planGoal(g.id, cur);
+      cur = step.tasks;
+      blocks.push(...step.result.blocks);
+    }
+    return { tasks: cur, result: summarizeBlocks(blocks) };
+  };
+
+  const previewAutoScheduleSkillFn = (skillId: string) => planSkill(skillId).result;
+
+  const autoScheduleSkillFn = (skillId: string): AutoScheduleResult => {
+    const { tasks: next, result } = planSkill(skillId);
+    if (result.blocks.length > 0) setTasks(next);
+    return result;
   };
 
   const value: Ctx = {
