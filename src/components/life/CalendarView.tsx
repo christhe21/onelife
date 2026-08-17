@@ -348,12 +348,29 @@ function longPressHandlers(fire: () => void, cls: string) {
   };
 }
 
-export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
-  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } =
-    useAppData();
+export function CalendarView({
+  onGoTasks,
+  focusDate,
+}: {
+  onGoTasks?: () => void;
+  /** ISO datetime to jump to (e.g. right after auto-scheduling). */
+  focusDate?: string;
+}) {
+  const {
+    tasks,
+    goals,
+    skills,
+    settings,
+    updateSettings,
+    rescheduleTask,
+    rescheduleSubtask,
+    updateTask,
+    updateSubtask,
+  } = useAppData();
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
+  const prefs = workPrefs(settings);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string | undefined>(undefined);
   const [eventDetailsOpen, setEventDetailsOpen] = useState(false);
