@@ -1,44 +1,73 @@
-# Calendar drag: stop text/element selection while dragging
+# Auto-scheduling: expose it, make it configurable, make free slots visible
 
-## Problem
+## 1. Visible auto-schedule actions
 
-When you press a task block and drag downward, the browser starts a native text
-selection (and on touch, the long-press selection/callout). Neighbouring event
-blocks, day numbers and labels get highlighted, which visually breaks the drag and
-makes it hard to land the item on the intended slot.
+**Goals view / goal detail** — add an "Auto-schedule this goal" button in the goal
+details dialog header area (and a compact icon action on the goal card). It calls
+the existing `autoScheduleGoal(goalId)`.
 
-Cause: the drag in `useCalendarDrag` never suppresses the browser's default
-selection gesture — `preventDefault()` only runs on `pointermove` _after_ the drag
-is active, by which point selection has already begun, and nothing sets
-`user-select`/`touch-action` on the calendar surfaces.
+**Skills view** — the "Schedule next sessions" button already exists; relabel it to
+"Auto-schedule skill" and always show it when the skill has any unscheduled work
+(today it is hidden unless `unscheduled > 0`, which stays the gate but the label
+becomes explicit).
 
-## What to change (all in `src/components/life/CalendarView.tsx`, plus keyframe-free CSS in `src/styles.css`)
+**Feedback** — both actions currently return only a count. They will return a small
+result object `{ blocks, firstStart, lastEnd }` so the toast can say:
+_"Scheduled 7 blocks · Aug 17 – Aug 26"_, with a **"Go to first block"** action on
+the toast.
 
-1. **Suppress selection at drag start**
-   - In `begin()`, call `e.preventDefault()` on the pointerdown and
-     `setPointerCapture` on the originating element so all subsequent pointer
-     events route to it.
+**Preview (optional step in the same dialog)** — before committing, show a confirm
+dialog listing the proposed blocks (title · day · time), with Cancel / Schedule.
+Built on a new pure `planAutoSchedule(...)` that returns the proposed blocks without
+writing state; the commit path then applies them.
 
-2. **Global no-select while a drag is in flight**
-   - While `dragging` is true, add a `calendar-dragging` class to
-     `document.body` that applies `user-select: none`, `-webkit-user-select: none`
-     and `-webkit-touch-callout: none`. Remove it on drop/cancel.
-   - Also cancel any stray selection created before activation via
-     `window.getSelection()?.removeAllRanges()` when the drag activates.
+## 2. Configurable preferred work hours
 
-3. **Touch behaviour on draggable blocks**
-   - Give the event chips/blocks `touch-action: none` (they're drag handles) so
-     the browser doesn't hand the gesture to scrolling/selection mid-drag, and
-     keep vertical scrolling on the surrounding scroll containers.
-   - Keep the existing 220 ms hold-to-drag threshold, but stop resetting the drag
-     purely on movement once the hold has fired.
+- Add to `Settings`: `workDayStart` and `workDayEnd` (minutes from midnight,
+  defaults 540 / 1260), plus `autoScheduleSnapMinutes` (15 / 30 / 60, default 15).
+- New card in Settings → "Scheduling" with two time pickers (existing custom
+  `TimePicker`) and a snap selector. Validation: end must be after start by at least
+  one session.
+- `autoScheduleTasks` gains an options argument `{ dayStartMin, dayEndMin, stepMin }`
+  replacing the hard-coded `DAY_START_MIN` / `DAY_END_MIN` / 30-minute scan step;
+  defaults keep existing behaviour so current tests keep passing.
+- `autoScheduleGoal` / `autoScheduleSkill` pass the settings values through.
+- `CalendarView`'s `WORK_START` / `WORK_END` in `findNearestFreeSlot` read the same
+  settings instead of the local 9–21 constants.
 
-4. **Selection guards**
-   - Add a `selectstart` listener that calls `preventDefault()` while a drag is
-     active, and mark event blocks `draggable={false}` so the legacy HTML5 drag
-     image never kicks in alongside the pointer drag.
+## 3. Free-slot discoverability while dragging
+
+- While a drag is active in week/day view, render a subtle striped/tinted overlay on
+  the slots inside working hours where the dragged item's full duration fits without
+  a conflict. Computed once per drag start (memoised per visible day range) so
+  pointer moves stay cheap.
+- Outside working hours the column dims slightly, making the preferred band obvious.
+- The current drop target keeps its existing highlight; conflict styling (red ghost +
+  "⚠ n conflicts") is unchanged.
+- **Snap control**: a small 15 / 30 / 60 segmented control in the calendar toolbar,
+  defaulting to the settings value, used by the drag resolver's rounding
+  (`Math.round(raw / snap) * snap`) and by nearest-free-slot stepping.
+
+## 4. Jump to first created block
+
+After a successful auto-schedule, the toast's "Go to first block" action switches to
+the Calendar tab, sets the cursor to that block's day, and opens day view (mobile) /
+week view (desktop). Implemented via the existing tab-navigation callback plus a
+one-shot "focus date" value passed to `CalendarView`.
+
+## Technical notes
+
+- Files: `src/lib/app-data.tsx` (settings fields, options on `autoScheduleTasks`,
+  richer return from the two auto-schedule functions, new `planAutoSchedule`),
+  `src/components/life/Goals.tsx`, `Skills.tsx`, `Settings.tsx`,
+  `CalendarView.tsx`, `AppShell.tsx` (focus-date plumbing).
+- Existing unit tests in `src/lib/__tests__/app-data.test.tsx` must keep passing;
+  new tests cover custom work hours, snap steps, and that free-slot computation
+  never proposes an overlapping block.
+- No database or backend changes — settings ride along in the existing settings
+  snapshot that already syncs to the cloud.
 
 ## Out of scope
 
-- Any change to snapping, conflict detection, nearest-free-slot, or long-press-to-create behaviour.
-- Resizing blocks by their edges.
+- Rescheduling already-scheduled blocks (auto-schedule still only fills empty ones).
+- Per-goal or per-day-of-week work hours (single global window for now).
