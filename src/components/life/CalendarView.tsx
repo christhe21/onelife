@@ -227,7 +227,7 @@ function useCalendarDrag(
       }
       reset();
     };
-    const onSelectStart = (e: Event) => {
+    const onSelectStart = (e: globalThis.Event) => {
       if (ref.current.active) e.preventDefault();
     };
 
