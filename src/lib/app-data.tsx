@@ -229,13 +229,26 @@ const SESSION_HOURS = 2;
 const DAY_START_MIN = 9 * 60;
 const DAY_END_MIN = 21 * 60;
 
+export interface AutoScheduleOptions {
+  /** Start of the preferred work window, minutes from midnight. */
+  dayStartMin?: number;
+  /** End of the preferred work window, minutes from midnight. */
+  dayEndMin?: number;
+  /** Scan/snap granularity in minutes. */
+  stepMin?: number;
+}
+
 export function autoScheduleTasks(
   tasks: Task[],
   goalStart: string,
   goalEnd: string,
   existingBlocks: Array<{ startDate?: string; endDate?: string }>,
   now: Date = new Date(),
+  opts: AutoScheduleOptions = {},
 ): Task[] {
+  const winStart = opts.dayStartMin ?? DAY_START_MIN;
+  const winEnd = opts.dayEndMin ?? DAY_END_MIN;
+  const step = opts.stepMin && opts.stepMin > 0 ? opts.stepMin : 30;
   const busy: Array<[number, number]> = [];
   for (const b of existingBlocks) {
     if (b.startDate && b.endDate) {
