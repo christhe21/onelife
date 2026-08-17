@@ -338,6 +338,70 @@ export function autoScheduleTasks(
   });
 }
 
+/** A single block that auto-scheduling proposes (or has just created). */
+export interface ProposedBlock {
+  taskId: string;
+  subtaskId?: string;
+  title: string;
+  context?: string;
+  start: string;
+  end: string;
+}
+
+export interface AutoScheduleResult {
+  blocks: ProposedBlock[];
+  firstStart?: string;
+  lastEnd?: string;
+}
+
+export function emptyAutoScheduleResult(): AutoScheduleResult {
+  return { blocks: [] };
+}
+
+export function summarizeBlocks(blocks: ProposedBlock[]): AutoScheduleResult {
+  const sorted = [...blocks].sort((a, b) => a.start.localeCompare(b.start));
+  return {
+    blocks: sorted,
+    firstStart: sorted[0]?.start,
+    lastEnd: sorted.reduce<string | undefined>(
+      (acc, b) => (!acc || b.end > acc ? b.end : acc),
+      undefined,
+    ),
+  };
+}
+
+/** Diffs two task lists and reports the scheduled blocks that are new in `after`. */
+export function diffScheduledBlocks(
+  before: Task[],
+  after: Task[],
+  context?: string,
+): AutoScheduleResult {
+  const prev = new Map(before.map((t) => [t.id, t]));
+  const blocks: ProposedBlock[] = [];
+  for (const t of after) {
+    const old = prev.get(t.id);
+    if (t.startDate && t.endDate && !(old?.startDate && old?.endDate)) {
+      blocks.push({ taskId: t.id, title: t.title, context, start: t.startDate, end: t.endDate });
+    }
+    const oldSubs = new Map((old?.subtasks ?? []).map((s) => [s.id, s]));
+    for (const s of t.subtasks) {
+      const os = oldSubs.get(s.id);
+      if (s.startDate && s.endDate && !(os?.startDate && os?.endDate)) {
+        blocks.push({
+          taskId: t.id,
+          subtaskId: s.id,
+          title: s.title,
+          context: context ?? t.title,
+          start: s.startDate,
+          end: s.endDate,
+        });
+      }
+    }
+  }
+  return summarizeBlocks(blocks);
+}
+
+
 function normalizeSubTask(raw: any): SubTask {
   return {
     id: typeof raw?.id === "string" ? raw.id : uid(),
