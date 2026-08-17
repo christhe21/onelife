@@ -270,7 +270,7 @@ export function autoScheduleTasks(
     day.setHours(0, 0, 0, 0);
     for (let i = 0; i < 365; i++) {
       if (day.getTime() > endBound.getTime()) return null;
-      for (let mins = DAY_START_MIN; mins + durationH * 60 <= DAY_END_MIN; mins += 30) {
+      for (let mins = winStart; mins + durationH * 60 <= winEnd; mins += step) {
         const s = new Date(day);
         s.setHours(0, mins, 0, 0);
         if (s.getTime() < now.getTime() && day.toDateString() === now.toDateString()) continue;
