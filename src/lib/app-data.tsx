@@ -976,8 +976,10 @@ interface Ctx extends AppData {
     template: MarketplaceGoalTemplate,
     opts?: { autoSchedule?: boolean },
   ) => void;
-  autoScheduleGoal: (goalId: string) => number;
-  autoScheduleSkill: (skillId: string) => number;
+  autoScheduleGoal: (goalId: string) => AutoScheduleResult;
+  autoScheduleSkill: (skillId: string) => AutoScheduleResult;
+  previewAutoScheduleGoal: (goalId: string) => AutoScheduleResult;
+  previewAutoScheduleSkill: (skillId: string) => AutoScheduleResult;
 }
 
 const AppDataContext = createContext<Ctx | null>(null);
