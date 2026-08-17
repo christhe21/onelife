@@ -137,7 +137,10 @@ type DropTarget = { day: string; time: string | null };
 function useCalendarDrag(
   onDrop: (item: DragItem, target: DropTarget) => void,
   checkConflict?: (item: DragItem, target: DropTarget) => number,
+  snapMinutes: number = 15,
 ) {
+  const snapRef = useRef(snapMinutes);
+  snapRef.current = snapMinutes > 0 ? snapMinutes : 15;
   const [item, setItem] = useState<DragItem | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [target, setTarget] = useState<DropTarget | null>(null);
