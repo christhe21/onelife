@@ -137,7 +137,10 @@ type DropTarget = { day: string; time: string | null };
 function useCalendarDrag(
   onDrop: (item: DragItem, target: DropTarget) => void,
   checkConflict?: (item: DragItem, target: DropTarget) => number,
+  snapMinutes: number = 15,
 ) {
+  const snapRef = useRef(snapMinutes);
+  snapRef.current = snapMinutes > 0 ? snapMinutes : 15;
   const [item, setItem] = useState<DragItem | null>(null);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [target, setTarget] = useState<DropTarget | null>(null);
@@ -165,7 +168,8 @@ function useCalendarDrag(
     const rect = zone.getBoundingClientRect();
     const base = Number(zone.getAttribute("data-drop-base") ?? 0) * 60;
     const raw = base + ((y - rect.top) / HOUR_PX) * 60;
-    const mins = Math.max(0, Math.min(23 * 60 + 45, Math.round(raw / 15) * 15));
+    const snap = snapRef.current;
+    const mins = Math.max(0, Math.min(24 * 60 - snap, Math.round(raw / snap) * snap));
     return {
       day,
       time: `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`,
@@ -227,7 +231,7 @@ function useCalendarDrag(
       }
       reset();
     };
-    const onSelectStart = (e: Event) => {
+    const onSelectStart = (e: globalThis.Event) => {
       if (ref.current.active) e.preventDefault();
     };
 
@@ -344,12 +348,29 @@ function longPressHandlers(fire: () => void, cls: string) {
   };
 }
 
-export function CalendarView({ onGoTasks }: { onGoTasks?: () => void }) {
-  const { tasks, goals, skills, rescheduleTask, rescheduleSubtask, updateTask, updateSubtask } =
-    useAppData();
+export function CalendarView({
+  onGoTasks,
+  focusDate,
+}: {
+  onGoTasks?: () => void;
+  /** ISO datetime to jump to (e.g. right after auto-scheduling). */
+  focusDate?: string;
+}) {
+  const {
+    tasks,
+    goals,
+    skills,
+    settings,
+    updateSettings,
+    rescheduleTask,
+    rescheduleSubtask,
+    updateTask,
+    updateSubtask,
+  } = useAppData();
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
+  const prefs = workPrefs(settings);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string | undefined>(undefined);
   const [eventDetailsOpen, setEventDetailsOpen] = useState(false);

@@ -117,6 +117,25 @@ export interface Settings {
   frierenSfx?: boolean;
   email?: string;
   emailRemindersEnabled?: boolean;
+  /** Preferred work window, minutes from midnight (defaults 540 = 09:00 / 1260 = 21:00). */
+  workDayStart?: number;
+  workDayEnd?: number;
+  /** Snap granularity for auto-schedule + calendar drag, in minutes (15 | 30 | 60). */
+  autoScheduleSnapMinutes?: number;
+}
+
+export const DEFAULT_WORK_START_MIN = 9 * 60;
+export const DEFAULT_WORK_END_MIN = 21 * 60;
+export const DEFAULT_SNAP_MIN = 15;
+
+/** Resolves the effective work window + snap from settings, guarding bad values. */
+export function workPrefs(s?: Settings) {
+  const start = Number.isFinite(s?.workDayStart) ? Math.max(0, Math.min(23 * 60, s!.workDayStart!)) : DEFAULT_WORK_START_MIN;
+  const endRaw = Number.isFinite(s?.workDayEnd) ? Math.max(0, Math.min(24 * 60, s!.workDayEnd!)) : DEFAULT_WORK_END_MIN;
+  const end = endRaw > start + 30 ? endRaw : start + 30;
+  const snapRaw = s?.autoScheduleSnapMinutes ?? DEFAULT_SNAP_MIN;
+  const snap = [15, 30, 60].includes(snapRaw) ? snapRaw : DEFAULT_SNAP_MIN;
+  return { dayStartMin: start, dayEndMin: end, snapMin: snap };
 }
 
 export interface AppData {
@@ -210,13 +229,26 @@ const SESSION_HOURS = 2;
 const DAY_START_MIN = 9 * 60;
 const DAY_END_MIN = 21 * 60;
 
+export interface AutoScheduleOptions {
+  /** Start of the preferred work window, minutes from midnight. */
+  dayStartMin?: number;
+  /** End of the preferred work window, minutes from midnight. */
+  dayEndMin?: number;
+  /** Scan/snap granularity in minutes. */
+  stepMin?: number;
+}
+
 export function autoScheduleTasks(
   tasks: Task[],
   goalStart: string,
   goalEnd: string,
   existingBlocks: Array<{ startDate?: string; endDate?: string }>,
   now: Date = new Date(),
+  opts: AutoScheduleOptions = {},
 ): Task[] {
+  const winStart = opts.dayStartMin ?? DAY_START_MIN;
+  const winEnd = opts.dayEndMin ?? DAY_END_MIN;
+  const step = opts.stepMin && opts.stepMin > 0 ? opts.stepMin : 30;
   const busy: Array<[number, number]> = [];
   for (const b of existingBlocks) {
     if (b.startDate && b.endDate) {
@@ -238,7 +270,7 @@ export function autoScheduleTasks(
     day.setHours(0, 0, 0, 0);
     for (let i = 0; i < 365; i++) {
       if (day.getTime() > endBound.getTime()) return null;
-      for (let mins = DAY_START_MIN; mins + durationH * 60 <= DAY_END_MIN; mins += 30) {
+      for (let mins = winStart; mins + durationH * 60 <= winEnd; mins += step) {
         const s = new Date(day);
         s.setHours(0, mins, 0, 0);
         if (s.getTime() < now.getTime() && day.toDateString() === now.toDateString()) continue;
@@ -305,6 +337,70 @@ export function autoScheduleTasks(
     return { ...t, subtasks: subs };
   });
 }
+
+/** A single block that auto-scheduling proposes (or has just created). */
+export interface ProposedBlock {
+  taskId: string;
+  subtaskId?: string;
+  title: string;
+  context?: string;
+  start: string;
+  end: string;
+}
+
+export interface AutoScheduleResult {
+  blocks: ProposedBlock[];
+  firstStart?: string;
+  lastEnd?: string;
+}
+
+export function emptyAutoScheduleResult(): AutoScheduleResult {
+  return { blocks: [] };
+}
+
+export function summarizeBlocks(blocks: ProposedBlock[]): AutoScheduleResult {
+  const sorted = [...blocks].sort((a, b) => a.start.localeCompare(b.start));
+  return {
+    blocks: sorted,
+    firstStart: sorted[0]?.start,
+    lastEnd: sorted.reduce<string | undefined>(
+      (acc, b) => (!acc || b.end > acc ? b.end : acc),
+      undefined,
+    ),
+  };
+}
+
+/** Diffs two task lists and reports the scheduled blocks that are new in `after`. */
+export function diffScheduledBlocks(
+  before: Task[],
+  after: Task[],
+  context?: string,
+): AutoScheduleResult {
+  const prev = new Map(before.map((t) => [t.id, t]));
+  const blocks: ProposedBlock[] = [];
+  for (const t of after) {
+    const old = prev.get(t.id);
+    if (t.startDate && t.endDate && !(old?.startDate && old?.endDate)) {
+      blocks.push({ taskId: t.id, title: t.title, context, start: t.startDate, end: t.endDate });
+    }
+    const oldSubs = new Map((old?.subtasks ?? []).map((s) => [s.id, s]));
+    for (const s of t.subtasks) {
+      const os = oldSubs.get(s.id);
+      if (s.startDate && s.endDate && !(os?.startDate && os?.endDate)) {
+        blocks.push({
+          taskId: t.id,
+          subtaskId: s.id,
+          title: s.title,
+          context: context ?? t.title,
+          start: s.startDate,
+          end: s.endDate,
+        });
+      }
+    }
+  }
+  return summarizeBlocks(blocks);
+}
+
 
 function normalizeSubTask(raw: any): SubTask {
   return {
@@ -880,8 +976,10 @@ interface Ctx extends AppData {
     template: MarketplaceGoalTemplate,
     opts?: { autoSchedule?: boolean },
   ) => void;
-  autoScheduleGoal: (goalId: string) => number;
-  autoScheduleSkill: (skillId: string) => number;
+  autoScheduleGoal: (goalId: string) => AutoScheduleResult;
+  autoScheduleSkill: (skillId: string) => AutoScheduleResult;
+  previewAutoScheduleGoal: (goalId: string) => AutoScheduleResult;
+  previewAutoScheduleSkill: (skillId: string) => AutoScheduleResult;
 }
 
 const AppDataContext = createContext<Ctx | null>(null);
@@ -1266,37 +1364,64 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const autoScheduleGoalFn = (goalId: string): number => {
+  /** Computes the proposed schedule for a goal without committing it. */
+  const planGoal = (
+    goalId: string,
+    baseTasks: Task[],
+  ): { tasks: Task[]; result: AutoScheduleResult } => {
     const goal = goals.find((g) => g.id === goalId);
-    if (!goal) return 0;
+    if (!goal) return { tasks: baseTasks, result: emptyAutoScheduleResult() };
     const subGoalIds = new Set(goal.subGoals.map((sg) => sg.id));
-    const goalTasks = tasks.filter((t) => t.subGoalId && subGoalIds.has(t.subGoalId));
+    const goalTasks = baseTasks.filter((t) => t.subGoalId && subGoalIds.has(t.subGoalId));
     const otherBlocks: Array<{ startDate?: string; endDate?: string }> = [];
-    for (const t of tasks) {
+    for (const t of baseTasks) {
       if (goalTasks.find((gt) => gt.id === t.id)) continue;
       otherBlocks.push({ startDate: t.startDate, endDate: t.endDate });
       for (const s of t.subtasks) otherBlocks.push({ startDate: s.startDate, endDate: s.endDate });
     }
-    const rescheduled = autoScheduleTasks(goalTasks, goal.startDate, goal.targetDate, otherBlocks);
-    const byId = new Map(rescheduled.map((t) => [t.id, t]));
-    let count = 0;
-    setTasks((cur) =>
-      cur.map((t) => {
-        const r = byId.get(t.id);
-        if (!r) return t;
-        count +=
-          r.subtasks.filter((s) => s.startDate && s.endDate).length +
-          (r.startDate && r.endDate ? 1 : 0);
-        return r;
-      }),
+    const prefs = workPrefs(settings);
+    const rescheduled = autoScheduleTasks(
+      goalTasks,
+      goal.startDate,
+      goal.targetDate,
+      otherBlocks,
+      new Date(),
+      { dayStartMin: prefs.dayStartMin, dayEndMin: prefs.dayEndMin, stepMin: prefs.snapMin },
     );
-    return count;
+    const byId = new Map(rescheduled.map((t) => [t.id, t]));
+    const nextTasks = baseTasks.map((t) => byId.get(t.id) ?? t);
+    return {
+      tasks: nextTasks,
+      result: diffScheduledBlocks(baseTasks, nextTasks, goal.title),
+    };
   };
 
-  const autoScheduleSkillFn = (skillId: string): number => {
-    let total = 0;
-    for (const g of goals) if (g.skill === skillId) total += autoScheduleGoalFn(g.id);
-    return total;
+  const previewAutoScheduleGoalFn = (goalId: string) => planGoal(goalId, tasks).result;
+
+  const autoScheduleGoalFn = (goalId: string): AutoScheduleResult => {
+    const { tasks: next, result } = planGoal(goalId, tasks);
+    if (result.blocks.length > 0) setTasks(next);
+    return result;
+  };
+
+  const planSkill = (skillId: string): { tasks: Task[]; result: AutoScheduleResult } => {
+    let cur = tasks;
+    const blocks: ProposedBlock[] = [];
+    for (const g of goals) {
+      if (g.skill !== skillId) continue;
+      const step = planGoal(g.id, cur);
+      cur = step.tasks;
+      blocks.push(...step.result.blocks);
+    }
+    return { tasks: cur, result: summarizeBlocks(blocks) };
+  };
+
+  const previewAutoScheduleSkillFn = (skillId: string) => planSkill(skillId).result;
+
+  const autoScheduleSkillFn = (skillId: string): AutoScheduleResult => {
+    const { tasks: next, result } = planSkill(skillId);
+    if (result.blocks.length > 0) setTasks(next);
+    return result;
   };
 
   const value: Ctx = {
@@ -1612,6 +1737,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     importMarketplaceGoal,
     autoScheduleGoal: autoScheduleGoalFn,
     autoScheduleSkill: autoScheduleSkillFn,
+    previewAutoScheduleGoal: previewAutoScheduleGoalFn,
+    previewAutoScheduleSkill: previewAutoScheduleSkillFn,
 
     exportJSON: () => {
       const payload = {
