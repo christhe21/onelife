@@ -117,6 +117,25 @@ export interface Settings {
   frierenSfx?: boolean;
   email?: string;
   emailRemindersEnabled?: boolean;
+  /** Preferred work window, minutes from midnight (defaults 540 = 09:00 / 1260 = 21:00). */
+  workDayStart?: number;
+  workDayEnd?: number;
+  /** Snap granularity for auto-schedule + calendar drag, in minutes (15 | 30 | 60). */
+  autoScheduleSnapMinutes?: number;
+}
+
+export const DEFAULT_WORK_START_MIN = 9 * 60;
+export const DEFAULT_WORK_END_MIN = 21 * 60;
+export const DEFAULT_SNAP_MIN = 15;
+
+/** Resolves the effective work window + snap from settings, guarding bad values. */
+export function workPrefs(s?: Settings) {
+  const start = Number.isFinite(s?.workDayStart) ? Math.max(0, Math.min(23 * 60, s!.workDayStart!)) : DEFAULT_WORK_START_MIN;
+  const endRaw = Number.isFinite(s?.workDayEnd) ? Math.max(0, Math.min(24 * 60, s!.workDayEnd!)) : DEFAULT_WORK_END_MIN;
+  const end = endRaw > start + 30 ? endRaw : start + 30;
+  const snapRaw = s?.autoScheduleSnapMinutes ?? DEFAULT_SNAP_MIN;
+  const snap = [15, 30, 60].includes(snapRaw) ? snapRaw : DEFAULT_SNAP_MIN;
+  return { dayStartMin: start, dayEndMin: end, snapMin: snap };
 }
 
 export interface AppData {
