@@ -153,23 +153,9 @@ app matches the web app, warts and all:
    added.
 7. **`autoScheduleGoal()` has no UI** — exposed in the data context, but only
    `autoScheduleSkill` is reachable (Skills tab).
-8. **Branding inconsistency** — "Life Manager" (README, AppShell header,
-   export filenames) vs "OneLife" (manifest, page title). The Android app uses
-   "OneLife", matching the installable PWA identity.
+8. **Branding** — resolved: app UI, docs, export filenames, manifest and the
+   Android shell all use "OneLife".
 9. **`/create-goal` lacks the AppShell sidebar**, contrary to the original
    Lovable plan doc.
-10. **Stale repo artifacts** — `dom.html`, `dom2.html`, `replace_css.patch`,
-    `bun_output.txt`, `verification/verify_dashboard.py` (references UI that
-    no longer exists).
-
-Android-specific limitations:
-
-- **System-bar backdrop follows the system theme**, not the in-app theme
-  toggle: if you force dark mode in-app while the device is in light mode, the
-  strip behind the status bar stays light (the web content itself is dark).
-- **Reminder notifications are "exact" only if the user grants the
-  Alarms & reminders special access** (Android 14+ defaults it off); otherwise
-  they may arrive a few minutes late (inexact alarms).
-- **Web notifications inside the WebView don't exist** — the `Notification`
-  API paths in the web code no-op inside the shell (by design; native
-  notifications replace them).
+10. **Stale repo artifacts** — removed (`dom.html`, `dom2.html`,
+    `replace_css.patch`, `bun_output.txt`, `verification/`, `test-music.ts`).
