@@ -375,7 +375,7 @@ export function SettingsView() {
           </CardHeader>
           <CardContent className="space-y-5">
             <p className="text-sm text-muted-foreground">
-              Soft fantasy ambience and gentle chimes to mark each step of your journey. Audio
+              Gentle chimes and confetti to mark each step of your journey. Audio
               starts after your first click or keypress on the page.
             </p>
 
