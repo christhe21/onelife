@@ -406,6 +406,26 @@ export function CalendarView({
     setSelectedEvent({ ...selectedEvent, done: isDone });
   };
 
+  /** Quick actions shared with the agenda list. */
+  const setEventDone = (e: Event, done: boolean) => {
+    const baseId = e.id.replace(/_\d+$/, "");
+    if (baseId.startsWith("task:")) updateTask(baseId.slice(5), { done });
+    else if (baseId.startsWith("sub:")) {
+      const [tid, sid] = baseId.slice(4).split("|");
+      if (tid && sid) updateSubtask(tid, sid, { done });
+    }
+  };
+
+  const unscheduleEvent = (e: Event) => {
+    const baseId = e.id.replace(/_\d+$/, "");
+    if (baseId.startsWith("task:"))
+      updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
+    else if (baseId.startsWith("sub:")) {
+      const [tid, sid] = baseId.slice(4).split("|");
+      if (tid && sid) updateSubtask(tid, sid, { startDate: undefined, endDate: undefined });
+    }
+  };
+
   const applyMove = (payload: string, day: string, time: string | null) => {
     const base = payload.replace(/_\d+$/, "");
     if (base.startsWith("task:")) {
