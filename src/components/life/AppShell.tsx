@@ -76,7 +76,7 @@ function RankChip({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       title={`${p.rank} — ${(totalPoints ?? 0).toLocaleString("en-US")} points`}
-      className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent sm:flex"
+      className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-[color,background-color,transform] duration-100 ease-out active:scale-[0.97] hover:bg-accent sm:flex motion-reduce:active:scale-100"
     >
       <Shield className="h-3.5 w-3.5 text-primary" />
       <span className="max-w-[7rem] truncate">{p.rank}</span>
@@ -112,8 +112,8 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
 
         {/* Main column */}
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Top bar */}
-          <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
+          {/* Top bar — translucent material, content scrolls under (Apple materials) */}
+          <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
               <Button
                 size="icon"
@@ -157,14 +157,14 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
         </div>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer — simple portal; future: swap to vaul for full spring interruptibility */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-foreground/30 backdrop-blur-sm transition-opacity duration-200"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-sidebar text-sidebar-foreground shadow-xl">
+          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-sidebar text-sidebar-foreground shadow-xl animate-in slide-in-from-left duration-200 ease-out">
             <div className="flex items-center justify-between">
               <Brand />
               <Button
@@ -247,7 +247,7 @@ function NavButton({
     <button
       onClick={onClick}
       className={cn(
-        "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+        "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-[color,background-color,transform] duration-100 ease-out active:scale-[0.98] motion-reduce:active:scale-100",
         active
           ? "bg-primary text-primary-foreground shadow-sm"
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
