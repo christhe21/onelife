@@ -379,6 +379,7 @@ export function CalendarView({
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
+  const [filters, setFilters] = useCalendarFilters();
   const prefs = workPrefs(settings);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string | undefined>(undefined);
