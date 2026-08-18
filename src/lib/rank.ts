@@ -65,16 +65,72 @@ export function getSkillTitle(points: number): string {
   return "Beginner";
 }
 
+/** Ordered rank tiers — single source of truth for rank name + thresholds. */
+export const RANK_TIERS: { name: string; min: number }[] = [
+  { name: "Recruit", min: 0 },
+  { name: "Private", min: 500 },
+  { name: "Corporal", min: 2000 },
+  { name: "Sergeant", min: 5000 },
+  { name: "Lieutenant", min: 10000 },
+  { name: "Captain", min: 20000 },
+  { name: "Major", min: 35000 },
+  { name: "Colonel", min: 60000 },
+  { name: "General", min: 100000 },
+];
+
+export function getRankIndex(totalPoints: number): number {
+  const pts = Math.max(0, totalPoints ?? 0);
+  let idx = 0;
+  for (let i = 0; i < RANK_TIERS.length; i++) {
+    if (pts >= RANK_TIERS[i].min) idx = i;
+  }
+  return idx;
+}
+
 export function getOverallRank(totalPoints: number): string {
-  if (totalPoints >= 100000) return "General";
-  if (totalPoints >= 60000) return "Colonel";
-  if (totalPoints >= 35000) return "Major";
-  if (totalPoints >= 20000) return "Captain";
-  if (totalPoints >= 10000) return "Lieutenant";
-  if (totalPoints >= 5000) return "Sergeant";
-  if (totalPoints >= 2000) return "Corporal";
-  if (totalPoints >= 500) return "Private";
-  return "Recruit";
+  return RANK_TIERS[getRankIndex(totalPoints)].name;
+}
+
+export interface RankProgress {
+  rank: string;
+  index: number;
+  nextRank: string | null;
+  currentMin: number;
+  nextMin: number | null;
+  pointsIntoRank: number;
+  pointsToNext: number;
+  percent: number;
+}
+
+export function getRankProgress(totalPoints: number): RankProgress {
+  const pts = Math.max(0, totalPoints ?? 0);
+  const index = getRankIndex(pts);
+  const tier = RANK_TIERS[index];
+  const next = RANK_TIERS[index + 1] ?? null;
+  if (!next) {
+    return {
+      rank: tier.name,
+      index,
+      nextRank: null,
+      currentMin: tier.min,
+      nextMin: null,
+      pointsIntoRank: pts - tier.min,
+      pointsToNext: 0,
+      percent: 100,
+    };
+  }
+  const span = next.min - tier.min;
+  const into = pts - tier.min;
+  return {
+    rank: tier.name,
+    index,
+    nextRank: next.name,
+    currentMin: tier.min,
+    nextMin: next.min,
+    pointsIntoRank: into,
+    pointsToNext: next.min - pts,
+    percent: Math.max(0, Math.min(100, Math.round((into / span) * 100))),
+  };
 }
 
 // ---------------------------------------------------------------------------
