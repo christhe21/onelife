@@ -6,6 +6,13 @@ import { getFrierenVocabulary } from "./frieren";
 import { celebrate } from "./celebrate";
 import { nativeSaveFile } from "./native-bridge";
 import { reconcilePoints, getOverallRank, type PointsState } from "./rank";
+import {
+  normalizeRule,
+  nextOccurrence,
+  resolveRule,
+  type RecurrenceRule,
+} from "./recurrence";
+export type { RecurrenceRule } from "./recurrence";
 
 
 export interface Skill {
@@ -70,6 +77,8 @@ export interface SubTask {
   plannedHours?: number;
   spentHours?: number;
   recurrence?: Recurrence;
+  /** Advanced repeat rule; refines `recurrence` when present. */
+  recurrenceRule?: RecurrenceRule;
   priority?: "low" | "medium" | "high";
   description?: string;
 }
@@ -90,6 +99,8 @@ export interface Task {
   plannedHours?: number;
   spentHours?: number;
   recurrence?: Recurrence;
+  /** Advanced repeat rule; refines `recurrence` when present. */
+  recurrenceRule?: RecurrenceRule;
 }
 
 export interface BucketItem {
@@ -202,14 +213,25 @@ function nonNegNum(v: any): number | undefined {
   return typeof v === "number" && isFinite(v) && v >= 0 ? v : undefined;
 }
 
-function bumpDateString(iso?: string, rec?: Recurrence): string | undefined {
-  if (!iso || !rec || rec === "none") return iso;
+function bumpDateString(
+  iso?: string,
+  rec?: Recurrence,
+  rule?: RecurrenceRule,
+): string | undefined {
+  if (!iso) return iso;
+  const effective = resolveRule({ recurrence: rec as any, recurrenceRule: rule });
+  if (!effective) return iso;
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
-  if (rec === "daily") d.setDate(d.getDate() + 1);
-  else if (rec === "weekly") d.setDate(d.getDate() + 7);
-  else if (rec === "monthly") d.setMonth(d.getMonth() + 1);
-  else if (rec === "yearly") d.setFullYear(d.getFullYear() + 1);
+  if (rule) {
+    const next = nextOccurrence(effective, d, d);
+    return next ? next.toISOString().slice(0, 10) : iso;
+  }
+  const rec2 = effective.freq;
+  if (rec2 === "daily") d.setDate(d.getDate() + 1);
+  else if (rec2 === "weekly") d.setDate(d.getDate() + 7);
+  else if (rec2 === "monthly") d.setMonth(d.getMonth() + 1);
+  else d.setFullYear(d.getFullYear() + 1);
   return d.toISOString().slice(0, 10);
 }
 function hoursBetween(startISO?: string, endISO?: string): number {
@@ -422,6 +444,7 @@ function normalizeSubTask(raw: any): SubTask {
     recurrence: ["none", "daily", "weekly", "monthly", "yearly"].includes(raw?.recurrence)
       ? raw.recurrence
       : "none",
+    recurrenceRule: normalizeRule(raw?.recurrenceRule),
     priority: PRIORITIES.includes(raw?.priority) ? raw.priority : undefined,
     description: typeof raw?.description === "string" ? raw.description : undefined,
   };
@@ -481,6 +504,7 @@ function normalizeTask(raw: any): Task {
     recurrence: ["none", "daily", "weekly", "monthly", "yearly"].includes(raw?.recurrence)
       ? raw.recurrence
       : "none",
+    recurrenceRule: normalizeRule(raw?.recurrenceRule),
   };
 }
 
@@ -1617,12 +1641,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setTasks((cur) =>
         cur.map((t) => {
           if (t.id !== id) return t;
-          const isRecurring = t.recurrence && t.recurrence !== "none";
+          const isRecurring = !!resolveRule(t);
           // If moving to done and it's recurring, bump instead
           if (!t.done && isRecurring) {
-            const bumpedDueDate = bumpDateString(t.dueDate, t.recurrence);
-            const bumpedStartDate = bumpDateString(t.startDate, t.recurrence);
-            const bumpedEndDate = bumpDateString(t.endDate, t.recurrence);
+            const bumpedDueDate = bumpDateString(t.dueDate, t.recurrence, t.recurrenceRule);
+            const bumpedStartDate = bumpDateString(t.startDate, t.recurrence, t.recurrenceRule);
+            const bumpedEndDate = bumpDateString(t.endDate, t.recurrence, t.recurrenceRule);
             const vocab = getFrierenVocabulary(settings.themeColor === "frieren");
             toast.success(
               vocab.isFrieren
@@ -1701,10 +1725,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           let toggledSubtaskNowDone = false;
           const subtasks = t.subtasks.map((s) => {
             if (s.id !== subId) return s;
-            const isRecurring = s.recurrence && s.recurrence !== "none";
+            const isRecurring = !!resolveRule(s);
             if (!s.done && isRecurring) {
-              const bumpedStartDate = bumpDateString(s.startDate, s.recurrence);
-              const bumpedEndDate = bumpDateString(s.endDate, s.recurrence);
+              const bumpedStartDate = bumpDateString(s.startDate, s.recurrence, s.recurrenceRule);
+              const bumpedEndDate = bumpDateString(s.endDate, s.recurrence, s.recurrenceRule);
               const vocab = getFrierenVocabulary(settings.themeColor === "frieren");
               toast.success(
                 vocab.isFrieren
@@ -1740,7 +1764,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           let nextTaskDone = t.done;
           const allSubsDone = subtasks.length > 0 && subtasks.every((s) => s.done);
 
-          const isTaskRecurring = t.recurrence && t.recurrence !== "none";
+          const isTaskRecurring = !!resolveRule(t);
           if (!toggledSubtaskNowDone) {
             nextTaskDone = false;
           } else if (allSubsDone && !isTaskRecurring) {

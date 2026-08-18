@@ -1,5 +1,6 @@
 import type { Task } from "@/lib/app-data";
 import { nativeSaveFile } from "@/lib/native-bridge";
+import { resolveRule, ruleToRRule, type RecurrenceRule } from "@/lib/recurrence";
 
 const BLOCK_MINUTES = 20;
 const DAY_START_HOUR = 9; // 09:00
@@ -26,6 +27,7 @@ interface Block {
   end: Date;
   description?: string;
   recurrence?: "none" | "daily" | "weekly" | "monthly" | "yearly";
+  recurrenceRule?: RecurrenceRule;
 }
 
 function nextSlot(cursor: Date): Date {
@@ -86,8 +88,11 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
     if (t.subtasks.length === 0) {
       const reps = t.priority === "high" ? 2 : 1;
       const r = addBlocks(cursor, reps, `Focus: ${t.title}`, desc, due);
-      if (t.recurrence && t.recurrence !== "none") {
-        r.blocks.forEach((b) => (b.recurrence = t.recurrence));
+      if (resolveRule(t)) {
+        r.blocks.forEach((b) => {
+          b.recurrence = t.recurrence;
+          b.recurrenceRule = t.recurrenceRule;
+        });
       }
       all.push(...r.blocks);
       cursor = r.cursor;
@@ -114,6 +119,7 @@ export function buildSchedule(tasks: Task[], goalsTitleById: Record<string, stri
               end: stop,
               description: `${desc}${desc ? "\\n" : ""}Subtask: ${st.title} (${hpw}h/wk)`,
               recurrence: st.recurrence || t.recurrence,
+              recurrenceRule: st.recurrenceRule ?? t.recurrenceRule,
             });
             placed++;
             cursor = nextSlot(new Date(stop));
@@ -147,18 +153,8 @@ export function blocksToICS(blocks: Block[]): string {
       `SUMMARY:${escapeICS(b.title)}`,
       b.description ? `DESCRIPTION:${escapeICS(b.description)}` : "",
     );
-    if (b.recurrence && b.recurrence !== "none") {
-      const freqMap: Record<string, string> = {
-        daily: "DAILY",
-        weekly: "WEEKLY",
-        monthly: "MONTHLY",
-        yearly: "YEARLY",
-      };
-      const freq = freqMap[b.recurrence];
-      if (freq) {
-        lines.push(`RRULE:FREQ=${freq}`);
-      }
-    }
+    const rrule = ruleToRRule(resolveRule(b));
+    if (rrule) lines.push(`RRULE:${rrule}`);
     // Add alarm for notifications on client apps
     lines.push(
       "BEGIN:VALARM",

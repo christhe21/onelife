@@ -18,6 +18,8 @@ import { AddToScheduleDialog } from "./AddToScheduleDialog";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
 import { useFrierenVocabulary } from "@/lib/frieren";
 import type { Recurrence } from "@/lib/app-data";
+import { RecurrenceEditor } from "./RecurrenceEditor";
+import { resolveRule, ruleToLegacy, type RecurrenceRule } from "@/lib/recurrence";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,6 +65,7 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
     evidence: task.evidence ?? "",
     recurrence: task.recurrence ?? "none",
   });
+  const [rule, setRule] = useState<RecurrenceRule | null>(() => resolveRule(task));
 
   const save = () => {
     if (!form.title.trim()) return;
@@ -76,7 +79,8 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
       subGoalId: form.subGoalId === "none" ? undefined : form.subGoalId,
       progress: form.progress || undefined,
       evidence: form.evidence || undefined,
-      recurrence: form.recurrence as Recurrence,
+      recurrence: ruleToLegacy(rule) as Recurrence,
+      recurrenceRule: rule ?? undefined,
     });
     setOpen(false);
   };
@@ -153,6 +157,10 @@ function EditTaskDialog({ task, children }: { task: Task; children: React.ReactN
             </Select>
           </div>
           <div>
+            <Label>Repeats</Label>
+            <RecurrenceEditor value={rule} onChange={setRule} referenceDate={form.dueDate} />
+          </div>
+          <div>
             <Label>Progress ({form.progress}%)</Label>
             <Input
               type="range"
@@ -187,7 +195,7 @@ function SubtasksPanel({ task }: { task: Task }) {
   const [addOpen, setAddOpen] = useState(false);
   const [schedFor, setSchedFor] = useState<{ taskId: string; subId: string } | null>(null);
 
-  const isDaily = task.recurrence === "daily";
+  const isDaily = !!resolveRule(task);
   const parentGoal =
     goals.find((g) => g.subGoals.some((sg) => sg.id === task.subGoalId)) ??
     goals.find((g) => g.id === task.goalId);
@@ -275,6 +283,8 @@ function SubtasksPanel({ task }: { task: Task }) {
             startDate: scheduled ? d.scheduledStart! : undefined,
             priority: d.priority,
             description: d.description,
+            recurrence: ruleToLegacy(d.recurrenceRule ?? null) as Recurrence,
+            recurrenceRule: d.recurrenceRule,
           });
         }}
       />

@@ -26,43 +26,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { addDays, addWeeks, addMonths, addYears } from "date-fns";
+import { addDays } from "date-fns";
+import {
+  expandRule,
+  resolveRule,
+  type LegacyRecurrence,
+  type RecurrenceRule,
+} from "@/lib/recurrence";
 
 function getProjectedEvents(
   baseEvent: Event,
-  recurrence: "none" | "daily" | "weekly" | "monthly" | "yearly" | undefined,
+  item: { recurrence?: LegacyRecurrence; recurrenceRule?: RecurrenceRule },
   horizonDays: number = 365,
 ): Event[] {
-  if (!recurrence || recurrence === "none") return [baseEvent];
-  const events: Event[] = [];
-  let currentStart = new Date(baseEvent.start);
-  let currentEnd = new Date(baseEvent.end);
-  const endLimit = addDays(new Date(), horizonDays); // Don't project infinitely
-
-  let i = 0;
-  while (currentStart <= endLimit && i < 365) {
-    events.push({
-      ...baseEvent,
-      id: `${baseEvent.id}_${i}`,
-      start: new Date(currentStart),
-      end: new Date(currentEnd),
-    });
-    if (recurrence === "daily") {
-      currentStart = addDays(currentStart, 1);
-      currentEnd = addDays(currentEnd, 1);
-    } else if (recurrence === "weekly") {
-      currentStart = addWeeks(currentStart, 1);
-      currentEnd = addWeeks(currentEnd, 1);
-    } else if (recurrence === "monthly") {
-      currentStart = addMonths(currentStart, 1);
-      currentEnd = addMonths(currentEnd, 1);
-    } else if (recurrence === "yearly") {
-      currentStart = addYears(currentStart, 1);
-      currentEnd = addYears(currentEnd, 1);
-    }
-    i++;
-  }
-  return events;
+  const rule = resolveRule(item);
+  if (!rule) return [baseEvent];
+  const horizonStart = addDays(new Date(), -horizonDays);
+  const horizonEnd = addDays(new Date(), horizonDays);
+  const occurrences = expandRule(rule, baseEvent.start, baseEvent.end, horizonStart, horizonEnd);
+  if (!occurrences.length) return [baseEvent];
+  return occurrences.map((o) => ({
+    ...baseEvent,
+    id: `${baseEvent.id}#${o.start.toISOString()}`,
+    start: o.start,
+    end: o.end,
+  }));
 }
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -396,7 +384,7 @@ export function CalendarView({
     if (!selectedEvent) return;
 
     const isDone = !selectedEvent.done;
-    const baseId = selectedEvent.id.replace(/_\d+$/, "");
+    const baseId = selectedEvent.id.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (baseId.startsWith("task:")) {
       updateTask(baseId.slice(5), { done: isDone });
     } else if (baseId.startsWith("sub:")) {
@@ -409,7 +397,7 @@ export function CalendarView({
 
   /** Quick actions shared with the agenda list. */
   const setEventDone = (e: Event, done: boolean) => {
-    const baseId = e.id.replace(/_\d+$/, "");
+    const baseId = e.id.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (baseId.startsWith("task:")) updateTask(baseId.slice(5), { done });
     else if (baseId.startsWith("sub:")) {
       const [tid, sid] = baseId.slice(4).split("|");
@@ -418,7 +406,7 @@ export function CalendarView({
   };
 
   const unscheduleEvent = (e: Event) => {
-    const baseId = e.id.replace(/_\d+$/, "");
+    const baseId = e.id.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (baseId.startsWith("task:"))
       updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
     else if (baseId.startsWith("sub:")) {
@@ -428,7 +416,7 @@ export function CalendarView({
   };
 
   const applyMove = (payload: string, day: string, time: string | null) => {
-    const base = payload.replace(/_\d+$/, "");
+    const base = payload.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (base.startsWith("task:")) {
       rescheduleTask(base.slice(5), day, time ?? undefined);
     } else if (base.startsWith("sub:")) {
@@ -437,7 +425,7 @@ export function CalendarView({
     }
   };
 
-  const baseIdOf = (id: string) => id.replace(/_\d+$/, "");
+  const baseIdOf = (id: string) => id.replace(/#.*$/, "").replace(/_\d+$/, "");
 
   const findConflicts = (payload: string, day: string, time: string | null): Event[] => {
     const base = baseIdOf(payload);
@@ -570,7 +558,7 @@ export function CalendarView({
             subGoalId: sk.subGoalId,
             priority: t.priority,
           };
-          out.push(...getProjectedEvents(baseEvent, t.recurrence, 365));
+          out.push(...getProjectedEvents(baseEvent, t, 365));
         }
       }
       for (const s of t.subtasks) {
@@ -593,7 +581,7 @@ export function CalendarView({
           subGoalId: sk.subGoalId,
           priority: s.priority ?? t.priority,
         };
-        out.push(...getProjectedEvents(baseEvent, s.recurrence, 365));
+        out.push(...getProjectedEvents(baseEvent, s, 365));
       }
     }
     return out.sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -947,7 +935,7 @@ export function CalendarView({
               className="w-full sm:w-auto"
               onClick={() => {
                 if (selectedEvent) {
-                  const baseId = selectedEvent.id.replace(/_\d+$/, "");
+                  const baseId = selectedEvent.id.replace(/#.*$/, "").replace(/_\d+$/, "");
                   if (baseId.startsWith("task:")) {
                     updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
                   } else if (baseId.startsWith("sub:")) {
