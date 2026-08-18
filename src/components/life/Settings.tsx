@@ -19,6 +19,8 @@ import {
 import { usePushReminders } from "@/hooks/use-push";
 import { useAuth } from "@/hooks/use-auth";
 import { getSkillPoints, getSkillTitle, getOverallRank } from "@/lib/rank";
+import { RankLadder } from "@/components/life/RankLadder";
+
 import { celebrate } from "@/lib/celebrate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
