@@ -15,7 +15,7 @@ import {
   CheckCircle2,
   Circle,
 } from "lucide-react";
-import { useAppData, type Task, type SubTask } from "@/lib/app-data";
+import { useAppData, workPrefs, type Task, type SubTask } from "@/lib/app-data";
 import { downloadICS } from "@/lib/calendar-export";
 import {
   Dialog,

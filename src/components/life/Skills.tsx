@@ -134,7 +134,7 @@ export function Skills() {
                         variant="outline"
                         className="gap-1.5"
                         onClick={() => {
-                          const n = autoScheduleSkill(s.id);
+                          const n = autoScheduleSkill(s.id).blocks.length;
                           toast.success(
                             n > 0
                               ? `Scheduled ${n} block${n === 1 ? "" : "s"}`
