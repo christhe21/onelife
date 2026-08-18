@@ -5,7 +5,7 @@ export const Route = createFileRoute("/home")({
   component: Home,
   head: () => ({
     meta: [
-      { title: "Welcome — Life Manager" },
+      { title: "Welcome — OneLife" },
       {
         name: "description",
         content:

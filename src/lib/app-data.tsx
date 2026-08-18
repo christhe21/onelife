@@ -915,7 +915,7 @@ export const TEMPLATE_PAYLOAD = {
 };
 
 export function downloadTemplate() {
-  downloadJSON(TEMPLATE_PAYLOAD, "life-manager-template.json");
+  downloadJSON(TEMPLATE_PAYLOAD, "onelife-template.json");
 }
 
 export function downloadSkillsReference() {
@@ -925,7 +925,7 @@ export function downloadSkillsReference() {
       statuses: STATUSES,
       taskPriorities: PRIORITIES,
     },
-    "life-manager-skills-reference.json",
+    "onelife-skills-reference.json",
   );
 }
 
@@ -1750,7 +1750,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         skills,
         settings,
       };
-      downloadJSON(payload, `life-manager-${new Date().toISOString().slice(0, 10)}.json`);
+      downloadJSON(payload, `onelife-${new Date().toISOString().slice(0, 10)}.json`);
     },
     importJSON: async (file) => {
       const text = await file.text();

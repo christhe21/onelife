@@ -6,7 +6,7 @@ export const Route = createFileRoute("/create-goal")({
   component: CreateGoalPage,
   head: () => ({
     meta: [
-      { title: "Create a Goal — Life Manager" },
+      { title: "Create a Goal — OneLife" },
       {
         name: "description",
         content:

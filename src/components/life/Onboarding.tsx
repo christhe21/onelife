@@ -181,7 +181,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <span className="font-display text-sm font-semibold">Life Manager</span>
+          <span className="font-display text-sm font-semibold">OneLife</span>
         </div>
         <div className="flex items-center gap-1.5">
           {STEPS.map((s, i) => (
@@ -225,7 +225,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                 <h1 className="font-display text-4xl font-semibold tracking-tight">
                   Welcome to{" "}
                   <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
-                    Life Manager
+                    OneLife
                   </span>
                 </h1>
                 <p className="mx-auto mt-4 max-w-sm text-base text-muted-foreground">

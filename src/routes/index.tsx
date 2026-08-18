@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Life Manager — Goals, Tasks & Bucket List" },
+      { title: "OneLife — Goals, Tasks & Bucket List" },
       {
         name: "description",
         content:

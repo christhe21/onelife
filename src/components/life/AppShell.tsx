@@ -187,7 +187,7 @@ function Brand() {
         <Sparkles className="h-4 w-4" />
       </div>
       <div>
-        <div className="font-display text-sm font-semibold leading-tight">Life Manager</div>
+        <div className="font-display text-sm font-semibold leading-tight">OneLife</div>
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Session workspace
         </div>
