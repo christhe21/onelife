@@ -144,7 +144,12 @@ export interface AppData {
   bucketList: BucketItem[];
   skills?: Skill[];
   settings?: Settings;
+  /** Lifetime points earned (see src/lib/rank.ts). */
+  totalPoints?: number;
+  /** Ledger of already-awarded item ids -> points, so nothing is counted twice. */
+  awardedPoints?: Record<string, number>;
 }
+
 
 export const EXPORT_VERSION = 1;
 const STORAGE_KEY = "life-manager:v1";
