@@ -82,7 +82,7 @@ is byte-identical code on both platforms.
 5. **`OnboardingWizard.tsx` is dead code** — never imported.
 6. **Advanced recurrence unimplemented** — only `none/daily/weekly/monthly/yearly`.
 7. **`autoScheduleGoal()` has no UI** — only `autoScheduleSkill` is reachable.
-8. **Branding inconsistency** — "Life Manager" vs "OneLife"; the Android app uses "OneLife" (matches PWA manifest).
+8. **Branding** — resolved: the app, docs, exports and Android all use "OneLife".
 9. **`/create-goal` lacks the AppShell sidebar** (contrary to the original Lovable plan doc).
 10. **Stale repo artifacts** — `dom.html`, `dom2.html`, `replace_css.patch`, `bun_output.txt`, `verification/verify_dashboard.py`.
 
