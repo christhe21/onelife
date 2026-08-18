@@ -131,22 +131,16 @@ a `v*` tag.
 These exist in the web app today and were **not** silently fixed — the Android
 app matches the web app, warts and all:
 
-1. **Welcome video is a placeholder** — `src/components/life/Welcome.tsx`
-   renders a stub card, no actual video.
-2. **Frieren "ambience" music is not implemented** — the Settings copy implies
-   background ambience, but only completion chimes + confetti exist.
-   `test-music.ts` at the repo root imports a non-existent `src/lib/music.ts`.
-3. **Frieren milestone chime is broken upstream** — its Mixkit URL
-   (`sfx/1435`) now returns HTTP 403, so completing a milestone plays no sound
-   (the code fails silently). Discovered while self-hosting the SFX; the task
-   and goal chimes were self-hosted successfully, the milestone chime keeps
-   the original (broken) remote URL for parity.
-4. **Duplicate notification systems** — `use-notifications.ts` (fires at task
-   start, ignores lead time) and `use-app-settings.ts` (honors
-   `reminderLeadMinutes`) both run in browsers, which can double-notify. The
-   Android bridge mirrors only the lead-time variant.
-5. **`OnboardingWizard.tsx` is dead code** — never imported (superseded by
-   `Onboarding.tsx`).
+1. **Welcome video** — resolved: the placeholder card was removed.
+2. **Frieren "ambience" music** — resolved by scoping: no background music
+   exists, and the Settings card now says "chimes & confetti".
+3. **Frieren chimes** — resolved: all three chimes are self-hosted in
+   `public/sfx`; the milestone chime reuses the goal asset at a higher
+   playback rate.
+4. **Notifications** — resolved: `use-app-settings.ts` is the single reminder
+   owner (lead-time aware, tasks + subtasks). The old `use-notifications.ts`
+   hook was deleted, so browsers no longer double-notify.
+5. **`OnboardingWizard.tsx`** — removed (superseded by `Onboarding.tsx`).
 6. **Advanced recurrence unimplemented** — only
    `none/daily/weekly/monthly/yearly`; the `recurrenceRule`
    (weekday/biweekly/BYDAY) field planned in `.lovable/plan.md` was never

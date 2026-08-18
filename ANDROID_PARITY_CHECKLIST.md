@@ -28,7 +28,7 @@ is byte-identical code on both platforms.
 | Light / Dark / System mode                                      | Match                         | `same-code`; `smoke` verified `.dark` class toggles; WebView reports system `prefers-color-scheme` (targetSdk 35)                  |
 | Sora + Manrope fonts offline                                    | Match                         | Self-hosted in `public/fonts/`; `smoke` verified `document.fonts.check()` passes with **zero external requests**                   |
 | Text scaling (sm/base/lg/xl)                                    | Match                         | `same-code` (`use-app-settings.ts` unchanged)                                                                                      |
-| Frieren confetti + chimes                                       | Match with 1 pre-existing gap | Task & goal chimes self-hosted (offline-capable); **milestone chime broken upstream — see Known gaps #3**                          |
+| Frieren confetti + chimes                                       | Match | All chimes self-hosted in `public/sfx`, offline-capable |
 | Splash screen & system-bar colors                               | Match                         | Kotlin theme uses `#7d9b76` primary / `#f5f0e8` cream / dark `#23261f` sampled from the same CSS tokens; `gradle` builds resources |
 | Launcher icon                                                   | Match                         | Generated from the existing `public/icon-512.png` (legacy + adaptive, all densities)                                               |
 
@@ -75,11 +75,11 @@ is byte-identical code on both platforms.
 
 ## 5. Known gaps (pre-existing in the web app — reported, not silently fixed)
 
-1. **Welcome video is a placeholder** (`Welcome.tsx`) — stub UI, no video. Identical on Android.
-2. **Frieren "ambience" music not implemented** — only chimes + confetti exist; `test-music.ts` imports a missing `src/lib/music.ts`.
-3. **Frieren milestone chime broken upstream** — its Mixkit URL now returns HTTP 403 (discovered while self-hosting SFX). Completing a milestone plays no sound on web **or** Android; the code fails silently by design.
-4. **Duplicate notification systems on web** — `use-notifications.ts` (at-start, ignores lead time) and `use-app-settings.ts` (lead-time) both poll in browsers. Android mirrors only the lead-time variant; the web duplication is untouched.
-5. **`OnboardingWizard.tsx` is dead code** — never imported.
+1. **Welcome video placeholder** — removed.
+2. **Frieren "ambience" music** — never existed; Settings copy now promises only chimes & confetti.
+3. **Frieren chimes** — all self-hosted (`public/sfx`); milestone reuses the goal chime at a higher playback rate, so it works offline on web and Android.
+4. **Duplicate notification systems** — resolved: `use-app-settings.ts` is the single lead-time-aware reminder owner for tasks and subtasks.
+5. **`OnboardingWizard.tsx`** — removed.
 6. **Advanced recurrence unimplemented** — only `none/daily/weekly/monthly/yearly`.
 7. **`autoScheduleGoal()` has no UI** — only `autoScheduleSkill` is reachable.
 8. **Branding** — resolved: the app, docs, exports and Android all use "OneLife".
