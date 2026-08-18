@@ -51,7 +51,6 @@ function Shell() {
   const [tab, setTab] = useState<TabId>("dashboard");
   const { goals, tasks, bucketList, settings, importMarketplaceGoal } = useAppData();
   useAppSettingsEffects();
-  useNotifications();
   const stats = {
     goals: goals.filter((g) => g.status !== "completed").length,
     tasks: tasks.filter((t) => !t.done).length,
