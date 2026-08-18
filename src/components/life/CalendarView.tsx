@@ -756,6 +756,9 @@ export function CalendarView({
                 <TabsTrigger value="day" className="text-xs">
                   Day
                 </TabsTrigger>
+                <TabsTrigger value="agenda" className="text-xs">
+                  Agenda
+                </TabsTrigger>
               </TabsList>
             </Tabs>
             <Button
