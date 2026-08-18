@@ -788,6 +788,26 @@ export function CalendarView({
             </Button>
           </div>
         </CardHeader>
+        <div className="shrink-0 pb-3">
+          <CalendarFilterBar
+            filters={filters}
+            onChange={setFilters}
+            skills={skills}
+            goals={goals}
+            resultCount={events.length}
+          />
+        </div>
+        {filtersActiveCount(filters) > 0 && events.length === 0 && (
+          <div className="mb-3 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center">
+            <p className="text-sm font-medium">Nothing matches these filters</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Try removing a filter to see your scheduled items again.
+            </p>
+            <Button size="sm" variant="outline" className="mt-3" onClick={() => setFilters(EMPTY_FILTERS)}>
+              Clear filters
+            </Button>
+          </div>
+        )}
         <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
           {view === "month" && (
             <MonthGrid
