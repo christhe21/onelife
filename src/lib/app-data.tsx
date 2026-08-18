@@ -1145,6 +1145,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setBucketList(norm.bucketList);
         setSkills(remote.skills?.length ? remote.skills : DEFAULT_SKILLS);
         setSettings(remote.settings ?? {});
+        setPoints({
+          totalPoints: norm.totalPoints ?? 0,
+          awardedPoints: norm.awardedPoints ?? {},
+        });
       } else {
         // First sign-in: keep whatever is on this device and push it up.
         await supabase.from("user_app_data").upsert(
@@ -1157,6 +1161,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               bucketList,
               skills,
               settings,
+              totalPoints: points.totalPoints,
+              awardedPoints: points.awardedPoints,
             } as unknown as never,
           },
           { onConflict: "user_id" },
@@ -1170,10 +1176,29 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // Award points for anything newly completed (covers every toggle + cascade path).
+  useEffect(() => {
+    setPoints((cur) => {
+      const next = reconcilePoints(goals, tasks, cur);
+      return next.changed
+        ? { totalPoints: next.totalPoints, awardedPoints: next.awardedPoints }
+        : cur;
+    });
+  }, [goals, tasks]);
+
   // Persist: cloud for signed-in users, local storage for guests.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const snapshot = { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings };
+    const snapshot = {
+      version: EXPORT_VERSION,
+      goals,
+      tasks,
+      bucketList,
+      skills,
+      settings,
+      totalPoints: points.totalPoints,
+      awardedPoints: points.awardedPoints,
+    };
     const t = setTimeout(() => {
       if (userId) {
         if (!cloudReady) return;
@@ -1192,7 +1217,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList, skills, settings, userId, cloudReady]);
+  }, [goals, tasks, bucketList, skills, settings, points, userId, cloudReady]);
+
 
   useEffect(() => {
     // Auto-complete subGoals and goals when their linked tasks are all completed.
