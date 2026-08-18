@@ -384,7 +384,7 @@ export function CalendarView({
     if (!selectedEvent) return;
 
     const isDone = !selectedEvent.done;
-    const baseId = selectedEvent.id.replace(/_\d+$/, "");
+    const baseId = selectedEvent.id.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (baseId.startsWith("task:")) {
       updateTask(baseId.slice(5), { done: isDone });
     } else if (baseId.startsWith("sub:")) {
@@ -397,7 +397,7 @@ export function CalendarView({
 
   /** Quick actions shared with the agenda list. */
   const setEventDone = (e: Event, done: boolean) => {
-    const baseId = e.id.replace(/_\d+$/, "");
+    const baseId = e.id.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (baseId.startsWith("task:")) updateTask(baseId.slice(5), { done });
     else if (baseId.startsWith("sub:")) {
       const [tid, sid] = baseId.slice(4).split("|");
@@ -406,7 +406,7 @@ export function CalendarView({
   };
 
   const unscheduleEvent = (e: Event) => {
-    const baseId = e.id.replace(/_\d+$/, "");
+    const baseId = e.id.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (baseId.startsWith("task:"))
       updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
     else if (baseId.startsWith("sub:")) {
@@ -416,7 +416,7 @@ export function CalendarView({
   };
 
   const applyMove = (payload: string, day: string, time: string | null) => {
-    const base = payload.replace(/_\d+$/, "");
+    const base = payload.replace(/#.*$/, "").replace(/_\d+$/, "");
     if (base.startsWith("task:")) {
       rescheduleTask(base.slice(5), day, time ?? undefined);
     } else if (base.startsWith("sub:")) {
@@ -425,7 +425,7 @@ export function CalendarView({
     }
   };
 
-  const baseIdOf = (id: string) => id.replace(/_\d+$/, "");
+  const baseIdOf = (id: string) => id.replace(/#.*$/, "").replace(/_\d+$/, "");
 
   const findConflicts = (payload: string, day: string, time: string | null): Event[] => {
     const base = baseIdOf(payload);
@@ -935,7 +935,7 @@ export function CalendarView({
               className="w-full sm:w-auto"
               onClick={() => {
                 if (selectedEvent) {
-                  const baseId = selectedEvent.id.replace(/_\d+$/, "");
+                  const baseId = selectedEvent.id.replace(/#.*$/, "").replace(/_\d+$/, "");
                   if (baseId.startsWith("task:")) {
                     updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
                   } else if (baseId.startsWith("sub:")) {
