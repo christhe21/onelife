@@ -1,4 +1,4 @@
-import { calculateItemPoints, getSkillPoints, getSkillTitle, getOverallRank } from "../rank";
+import { calculateItemPoints, getSkillPoints, getSkillTitle, getOverallRank, reconcilePoints } from "../rank";
 import { Goal, Task, SubTask } from "../app-data";
 
 describe("rank utility functions", () => {
@@ -64,5 +64,54 @@ describe("rank utility functions", () => {
     expect(getOverallRank(45000)).toBe("Major");
     expect(getOverallRank(75000)).toBe("Colonel");
     expect(getOverallRank(120000)).toBe("General");
+  });
+});
+
+describe("reconcilePoints", () => {
+  const goal = (id: string, status: string, subs: { id: string; done: boolean }[]) =>
+    ({ id, title: id, skill: "career", status, subGoals: subs }) as never;
+  const task = (id: string, done: boolean, subs: { id: string; done: boolean }[] = []) =>
+    ({ id, title: id, done, spentHours: 0, subtasks: subs }) as never;
+
+  const empty = { totalPoints: 0, awardedPoints: {} };
+
+  it("awards points for completed items", () => {
+    const r = reconcilePoints(
+      [goal("g1", "completed", [{ id: "s1", done: true }])],
+      [task("t1", true, [{ id: "st1", done: true }])],
+      empty,
+    );
+    // 100 goal + 50 subgoal + 10 task + 10 subtask
+    expect(r.totalPoints).toBe(170);
+    expect(r.changed).toBe(true);
+  });
+
+  it("does not award twice when toggled off and on", () => {
+    const first = reconcilePoints([], [task("t1", true)], empty);
+    const off = reconcilePoints([], [task("t1", false)], first);
+    expect(off.totalPoints).toBe(first.totalPoints);
+    expect(off.changed).toBe(false);
+    const on = reconcilePoints([], [task("t1", true)], off);
+    expect(on.totalPoints).toBe(first.totalPoints);
+    expect(on.changed).toBe(false);
+  });
+
+  it("awards each cascaded task once", () => {
+    const goals = [goal("g1", "in_progress", [{ id: "s1", done: true }])];
+    const tasks = [task("t1", true), task("t2", true)];
+    const once = reconcilePoints(goals, tasks, empty);
+    const again = reconcilePoints(goals, tasks, once);
+    expect(once.totalPoints).toBe(50 + 10 + 10);
+    expect(again.totalPoints).toBe(once.totalPoints);
+  });
+
+  it("round-trips through JSON export/import", () => {
+    const state = reconcilePoints([], [task("t1", true)], empty);
+    const restored = JSON.parse(
+      JSON.stringify({ totalPoints: state.totalPoints, awardedPoints: state.awardedPoints }),
+    );
+    const after = reconcilePoints([], [task("t1", true)], restored);
+    expect(after.totalPoints).toBe(state.totalPoints);
+    expect(after.changed).toBe(false);
   });
 });

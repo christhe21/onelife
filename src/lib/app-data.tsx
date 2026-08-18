@@ -5,6 +5,8 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { getFrierenVocabulary } from "./frieren";
 import { celebrate } from "./celebrate";
 import { nativeSaveFile } from "./native-bridge";
+import { reconcilePoints, getOverallRank, type PointsState } from "./rank";
+
 
 export interface Skill {
   id: string;
@@ -144,7 +146,12 @@ export interface AppData {
   bucketList: BucketItem[];
   skills?: Skill[];
   settings?: Settings;
+  /** Lifetime points earned (see src/lib/rank.ts). */
+  totalPoints?: number;
+  /** Ledger of already-awarded item ids -> points, so nothing is counted twice. */
+  awardedPoints?: Record<string, number>;
 }
+
 
 export const EXPORT_VERSION = 1;
 const STORAGE_KEY = "life-manager:v1";
@@ -546,7 +553,15 @@ function normalizeAppData(raw: any): AppData {
     bucketList: Array.isArray(raw.bucketList) ? raw.bucketList.map(normalizeBucket) : [],
     skills,
     settings,
+    totalPoints: typeof raw.totalPoints === "number" && raw.totalPoints >= 0 ? raw.totalPoints : 0,
+    awardedPoints:
+      raw.awardedPoints && typeof raw.awardedPoints === "object" && !Array.isArray(raw.awardedPoints)
+        ? (Object.fromEntries(
+            Object.entries(raw.awardedPoints).filter(([, v]) => typeof v === "number"),
+          ) as Record<string, number>)
+        : {},
   };
+
 }
 
 const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user about who they are, what they care about, the seasons of life they are in, and what they want the next 1–12 months to look like. Then output a single JSON document (no markdown, no commentary) that matches the schema below EXACTLY. Every field listed is supported by the app; unknown fields are ignored.
@@ -978,6 +993,11 @@ interface Ctx extends AppData {
   ) => void;
   autoScheduleGoal: (goalId: string) => AutoScheduleResult;
   autoScheduleSkill: (skillId: string) => AutoScheduleResult;
+  /** Lifetime points earned. */
+  totalPoints: number;
+  /** Military-style rank derived from totalPoints. */
+  rank: string;
+
   previewAutoScheduleGoal: (goalId: string) => AutoScheduleResult;
   previewAutoScheduleSkill: (skillId: string) => AutoScheduleResult;
 }
@@ -1085,6 +1105,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [bucketList, setBucketList] = useState<BucketItem[]>(initial.current.bucketList);
   const [skills, setSkills] = useState<Skill[]>(initial.current.skills ?? DEFAULT_SKILLS);
   const [settings, setSettings] = useState<Settings>(initial.current.settings ?? {});
+  const [points, setPoints] = useState<PointsState>({
+    totalPoints: initial.current.totalPoints ?? 0,
+    awardedPoints: initial.current.awardedPoints ?? {},
+  });
+
   const [userId, setUserId] = useState<string | null>(null);
   const [cloudReady, setCloudReady] = useState(false);
 
@@ -1132,6 +1157,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setBucketList(norm.bucketList);
         setSkills(remote.skills?.length ? remote.skills : DEFAULT_SKILLS);
         setSettings(remote.settings ?? {});
+        setPoints({
+          totalPoints: norm.totalPoints ?? 0,
+          awardedPoints: norm.awardedPoints ?? {},
+        });
       } else {
         // First sign-in: keep whatever is on this device and push it up.
         await supabase.from("user_app_data").upsert(
@@ -1144,6 +1173,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               bucketList,
               skills,
               settings,
+              totalPoints: points.totalPoints,
+              awardedPoints: points.awardedPoints,
             } as unknown as never,
           },
           { onConflict: "user_id" },
@@ -1157,10 +1188,29 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
+  // Award points for anything newly completed (covers every toggle + cascade path).
+  useEffect(() => {
+    setPoints((cur) => {
+      const next = reconcilePoints(goals, tasks, cur);
+      return next.changed
+        ? { totalPoints: next.totalPoints, awardedPoints: next.awardedPoints }
+        : cur;
+    });
+  }, [goals, tasks]);
+
   // Persist: cloud for signed-in users, local storage for guests.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const snapshot = { version: EXPORT_VERSION, goals, tasks, bucketList, skills, settings };
+    const snapshot = {
+      version: EXPORT_VERSION,
+      goals,
+      tasks,
+      bucketList,
+      skills,
+      settings,
+      totalPoints: points.totalPoints,
+      awardedPoints: points.awardedPoints,
+    };
     const t = setTimeout(() => {
       if (userId) {
         if (!cloudReady) return;
@@ -1179,7 +1229,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList, skills, settings, userId, cloudReady]);
+  }, [goals, tasks, bucketList, skills, settings, points, userId, cloudReady]);
+
 
   useEffect(() => {
     // Auto-complete subGoals and goals when their linked tasks are all completed.
@@ -1426,6 +1477,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const value: Ctx = {
     goals,
+    totalPoints: points.totalPoints,
+    awardedPoints: points.awardedPoints,
+    rank: getOverallRank(points.totalPoints),
+
     tasks,
     bucketList,
     skills,
@@ -1749,7 +1804,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         bucketList,
         skills,
         settings,
+        totalPoints: points.totalPoints,
+        awardedPoints: points.awardedPoints,
       };
+
       downloadJSON(payload, `onelife-${new Date().toISOString().slice(0, 10)}.json`);
     },
     importJSON: async (file) => {
@@ -1778,6 +1836,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList(data.bucketList);
       if (data.skills) setSkills(data.skills);
       if (data.settings) setSettings(data.settings);
+      setPoints({
+        totalPoints: data.totalPoints ?? 0,
+        awardedPoints: data.awardedPoints ?? {},
+      });
+
     },
     appendJSON: async (file) => {
       const text = await file.text();
@@ -1847,6 +1910,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList(norm.bucketList);
       if (norm.skills) setSkills(norm.skills);
       if (norm.settings) setSettings(norm.settings);
+      setPoints({
+        totalPoints: norm.totalPoints ?? 0,
+        awardedPoints: norm.awardedPoints ?? {},
+      });
     },
     clearAll: () => {
       setGoals([]);
@@ -1854,11 +1921,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList([]);
       setSkills(DEFAULT_SKILLS);
       setSettings({});
+      setPoints({ totalPoints: 0, awardedPoints: {} });
       try {
         window.localStorage.removeItem(STORAGE_KEY);
       } catch {
         /* ignore */
       }
+
       const uid = userId;
       const done = () => {
         window.location.href = "/home";

@@ -76,3 +76,64 @@ export function getOverallRank(totalPoints: number): string {
   if (totalPoints >= 500) return "Private";
   return "Recruit";
 }
+
+// ---------------------------------------------------------------------------
+// Points ledger (Phase 1): lifetime points, awarded once per item id.
+// ---------------------------------------------------------------------------
+
+export const GOAL_POINTS = 100;
+export const SUBGOAL_POINTS = 50;
+
+export type PointsLedger = Record<string, number>;
+
+export interface PointsState {
+  totalPoints: number;
+  awardedPoints: PointsLedger;
+}
+
+/**
+ * Scans the current goals/tasks tree and awards points for every completed item
+ * that has not been awarded yet. Never removes or subtracts: points are lifetime.
+ * Returns the same object identity semantics as a reducer — callers should compare
+ * `changed` before writing state.
+ */
+export function reconcilePoints(
+  goals: Goal[],
+  tasks: Task[],
+  state: PointsState,
+): PointsState & { changed: boolean } {
+  const ledger: PointsLedger = { ...state.awardedPoints };
+  let total = state.totalPoints ?? 0;
+  let changed = false;
+
+  const award = (id: string, points: number) => {
+    if (!id || ledger[id] != null || points <= 0) return;
+    ledger[id] = points;
+    total += points;
+    changed = true;
+  };
+
+  for (const g of goals) {
+    if (g.status === "completed") award(`goal:${g.id}`, GOAL_POINTS);
+    for (const sg of g.subGoals) {
+      if (sg.done) award(`subgoal:${sg.id}`, SUBGOAL_POINTS);
+    }
+  }
+
+  for (const t of tasks) {
+    if (t.done) award(`task:${t.id}`, calculateItemPoints(t.spentHours));
+    for (const st of t.subtasks) {
+      if (st.done) award(`subtask:${st.id}`, calculateItemPoints(st.spentHours));
+    }
+  }
+
+  return { totalPoints: total, awardedPoints: ledger, changed };
+}
+
+/** Merges two ledgers/totals (used when appending an imported file). */
+export function mergePoints(a: PointsState, b: PointsState): PointsState {
+  return {
+    totalPoints: (a.totalPoints ?? 0) + (b.totalPoints ?? 0),
+    awardedPoints: { ...a.awardedPoints, ...b.awardedPoints },
+  };
+}
