@@ -55,16 +55,17 @@ describe("rank utility functions", () => {
   });
 
   it("calculates overall rank", () => {
-    expect(getOverallRank(100)).toBe("Recruit");
-    expect(getOverallRank(500)).toBe("Private");
-    expect(getOverallRank(2500)).toBe("Corporal");
-    expect(getOverallRank(6500)).toBe("Sergeant");
-    expect(getOverallRank(15000)).toBe("Lieutenant");
-    expect(getOverallRank(25000)).toBe("Captain");
-    expect(getOverallRank(45000)).toBe("Major");
-    expect(getOverallRank(75000)).toBe("Colonel");
-    expect(getOverallRank(120000)).toBe("General");
+    expect(getOverallRank(100)).toBe("Beginner");
+    expect(getOverallRank(500)).toBe("Intermediate");
+    expect(getOverallRank(2500)).toBe("Advanced");
+    expect(getOverallRank(6500)).toBe("Professional");
+    expect(getOverallRank(15000)).toBe("Master");
+    expect(getOverallRank(25000)).toBe("Grandmaster");
+    expect(getOverallRank(45000)).toBe("Epic");
+    expect(getOverallRank(75000)).toBe("Legendary");
+    expect(getOverallRank(120000)).toBe("One");
   });
+
 });
 
 describe("reconcilePoints", () => {
