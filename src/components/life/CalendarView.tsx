@@ -69,8 +69,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { NewTaskWizard } from "./NewTaskWizard";
 import { AddToScheduleDialog } from "@/components/life/AddToScheduleDialog";
+import {
+  CalendarFilterBar,
+  useCalendarFilters,
+  filtersActiveCount,
+  EMPTY_FILTERS,
+} from "@/components/life/CalendarFilters";
 
-type ViewMode = "month" | "week" | "day";
+type ViewMode = "month" | "week" | "day" | "agenda";
 
 interface Event {
   id: string;
@@ -82,6 +88,10 @@ interface Event {
   isSub: boolean;
   parentTitle?: string;
   done: boolean;
+  skillId?: string;
+  goalId?: string;
+  subGoalId?: string;
+  priority?: "low" | "medium" | "high";
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0..23
@@ -370,6 +380,7 @@ export function CalendarView({
   const isMobile = useIsMobile();
   const [view, setView] = useState<ViewMode>(isMobile ? "day" : "month");
   const [cursor, setCursor] = useState<Date>(startOfDay(new Date()));
+  const [filters, setFilters] = useCalendarFilters();
   const prefs = workPrefs(settings);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState<string | undefined>(undefined);
@@ -394,6 +405,26 @@ export function CalendarView({
     }
 
     setSelectedEvent({ ...selectedEvent, done: isDone });
+  };
+
+  /** Quick actions shared with the agenda list. */
+  const setEventDone = (e: Event, done: boolean) => {
+    const baseId = e.id.replace(/_\d+$/, "");
+    if (baseId.startsWith("task:")) updateTask(baseId.slice(5), { done });
+    else if (baseId.startsWith("sub:")) {
+      const [tid, sid] = baseId.slice(4).split("|");
+      if (tid && sid) updateSubtask(tid, sid, { done });
+    }
+  };
+
+  const unscheduleEvent = (e: Event) => {
+    const baseId = e.id.replace(/_\d+$/, "");
+    if (baseId.startsWith("task:"))
+      updateTask(baseId.slice(5), { startDate: undefined, endDate: undefined });
+    else if (baseId.startsWith("sub:")) {
+      const [tid, sid] = baseId.slice(4).split("|");
+      if (tid && sid) updateSubtask(tid, sid, { startDate: undefined, endDate: undefined });
+    }
   };
 
   const applyMove = (payload: string, day: string, time: string | null) => {
@@ -504,19 +535,27 @@ export function CalendarView({
     (item, target) => findConflicts(item.id, target.day, target.time).length,
   );
 
-  const events = useMemo<Event[]>(() => {
+  const allEvents = useMemo<Event[]>(() => {
     const out: Event[] = [];
-    const skillColor = (subGoalId?: string) => {
-      const g = goals.find((x) => x.subGoals.some((sg) => sg.id === subGoalId));
+    const context = (subGoalId?: string, goalId?: string) => {
+      const g = subGoalId
+        ? goals.find((x) => x.subGoals.some((sg) => sg.id === subGoalId))
+        : goals.find((x) => x.id === goalId);
       const sk = skills.find((s) => s.id === g?.skill);
-      return { color: sk?.color ?? "hsl(var(--muted-foreground))", goalTitle: g?.title };
+      return {
+        color: sk?.color ?? "hsl(var(--muted-foreground))",
+        goalTitle: g?.title,
+        goalId: g?.id,
+        skillId: g?.skill,
+        subGoalId,
+      };
     };
     for (const t of tasks) {
+      const sk = context(t.subGoalId, t.goalId);
       if (t.startDate && t.subtasks.length === 0) {
         const start = new Date(t.startDate);
         const end = t.endDate ? new Date(t.endDate) : new Date(start.getTime() + 60 * 60 * 1000);
         if (!Number.isNaN(start.getTime())) {
-          const sk = skillColor(t.subGoalId);
           const baseEvent: Event = {
             id: `task:${t.id}`,
             title: t.title,
@@ -526,6 +565,10 @@ export function CalendarView({
             goalTitle: sk.goalTitle,
             isSub: false,
             done: t.done,
+            skillId: sk.skillId,
+            goalId: sk.goalId,
+            subGoalId: sk.subGoalId,
+            priority: t.priority,
           };
           out.push(...getProjectedEvents(baseEvent, t.recurrence, 365));
         }
@@ -535,7 +578,6 @@ export function CalendarView({
         const start = new Date(s.startDate);
         const end = s.endDate ? new Date(s.endDate) : new Date(start.getTime() + 60 * 60 * 1000);
         if (Number.isNaN(start.getTime())) continue;
-        const sk = skillColor(t.subGoalId);
         const baseEvent: Event = {
           id: `sub:${t.id}|${s.id}`,
           title: s.title,
@@ -546,12 +588,35 @@ export function CalendarView({
           isSub: true,
           parentTitle: t.title,
           done: s.done,
+          skillId: sk.skillId,
+          goalId: sk.goalId,
+          subGoalId: sk.subGoalId,
+          priority: s.priority ?? t.priority,
         };
         out.push(...getProjectedEvents(baseEvent, s.recurrence, 365));
       }
     }
     return out.sort((a, b) => a.start.getTime() - b.start.getTime());
   }, [tasks, goals, skills]);
+
+  const events = useMemo(() => {
+    if (filtersActiveCount(filters) === 0) return allEvents;
+    return allEvents.filter((e) => {
+      if (filters.onlyIncomplete && e.done) return false;
+      if (filters.priorities.length && !filters.priorities.includes(e.priority ?? "medium"))
+        return false;
+      if (filters.skillIds.length && !(e.skillId && filters.skillIds.includes(e.skillId)))
+        return false;
+      const goalPicked = filters.goalIds.length > 0 || filters.subGoalIds.length > 0;
+      if (goalPicked) {
+        const byGoal = e.goalId ? filters.goalIds.includes(e.goalId) : false;
+        const bySub = e.subGoalId ? filters.subGoalIds.includes(e.subGoalId) : false;
+        if (!byGoal && !bySub) return false;
+      }
+      return true;
+    });
+  }, [allEvents, filters]);
+
 
   const eventsByDay = useMemo(() => {
     const m = new Map<string, Event[]>();
@@ -692,6 +757,9 @@ export function CalendarView({
                 <TabsTrigger value="day" className="text-xs">
                   Day
                 </TabsTrigger>
+                <TabsTrigger value="agenda" className="text-xs">
+                  Agenda
+                </TabsTrigger>
               </TabsList>
             </Tabs>
             <Button
@@ -721,6 +789,26 @@ export function CalendarView({
             </Button>
           </div>
         </CardHeader>
+        <div className="shrink-0 pb-3">
+          <CalendarFilterBar
+            filters={filters}
+            onChange={setFilters}
+            skills={skills}
+            goals={goals}
+            resultCount={events.length}
+          />
+        </div>
+        {filtersActiveCount(filters) > 0 && events.length === 0 && (
+          <div className="mb-3 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center">
+            <p className="text-sm font-medium">Nothing matches these filters</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Try removing a filter to see your scheduled items again.
+            </p>
+            <Button size="sm" variant="outline" className="mt-3" onClick={() => setFilters(EMPTY_FILTERS)}>
+              Clear filters
+            </Button>
+          </div>
+        )}
         <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
           {view === "month" && (
             <MonthGrid
@@ -758,6 +846,17 @@ export function CalendarView({
               drag={drag}
               onEventClick={onEventClick}
               onLongPressEmpty={openCreateTask}
+            />
+          )}
+          {view === "agenda" && (
+            <AgendaList
+              events={events}
+              from={startOfDay(cursor)}
+              onEventClick={onEventClick}
+              onToggleDone={(e) => setEventDone(e, !e.done)}
+              onUnschedule={unscheduleEvent}
+              onReschedule={(e) => openAdd(e.start)}
+              onCreate={() => openCreateTask(cursor)}
             />
           )}
         </CardContent>
