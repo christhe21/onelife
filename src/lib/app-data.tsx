@@ -1098,6 +1098,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [bucketList, setBucketList] = useState<BucketItem[]>(initial.current.bucketList);
   const [skills, setSkills] = useState<Skill[]>(initial.current.skills ?? DEFAULT_SKILLS);
   const [settings, setSettings] = useState<Settings>(initial.current.settings ?? {});
+  const [points, setPoints] = useState<PointsState>({
+    totalPoints: initial.current.totalPoints ?? 0,
+    awardedPoints: initial.current.awardedPoints ?? {},
+  });
+
   const [userId, setUserId] = useState<string | null>(null);
   const [cloudReady, setCloudReady] = useState(false);
 
