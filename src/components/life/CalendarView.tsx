@@ -70,7 +70,7 @@ import { cn } from "@/lib/utils";
 import { NewTaskWizard } from "./NewTaskWizard";
 import { AddToScheduleDialog } from "@/components/life/AddToScheduleDialog";
 
-type ViewMode = "month" | "week" | "day";
+type ViewMode = "month" | "week" | "day" | "agenda";
 
 interface Event {
   id: string;
@@ -82,6 +82,10 @@ interface Event {
   isSub: boolean;
   parentTitle?: string;
   done: boolean;
+  skillId?: string;
+  goalId?: string;
+  subGoalId?: string;
+  priority?: "low" | "medium" | "high";
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0..23
