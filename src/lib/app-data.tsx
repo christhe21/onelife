@@ -5,6 +5,8 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { getFrierenVocabulary } from "./frieren";
 import { celebrate } from "./celebrate";
 import { nativeSaveFile } from "./native-bridge";
+import { reconcilePoints, mergePoints, getOverallRank, type PointsState } from "./rank";
+
 
 export interface Skill {
   id: string;
