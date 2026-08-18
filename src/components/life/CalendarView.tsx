@@ -73,6 +73,7 @@ import {
   CalendarFilterBar,
   useCalendarFilters,
   filtersActiveCount,
+  EMPTY_FILTERS,
 } from "@/components/life/CalendarFilters";
 
 type ViewMode = "month" | "week" | "day" | "agenda";
