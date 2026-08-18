@@ -531,20 +531,23 @@
   opacity: 0.1;
 }
 
+/* Long-press progress — slightly more physical ease (ease-out feels like resistance building) */
 @keyframes long-press-fill {
   0% {
     box-shadow:
       inset 0 0 0 0px hsl(var(--primary) / 0.1),
       0 0 0 0px hsl(var(--primary) / 0.5);
+    transform: scale(1);
   }
   100% {
     box-shadow:
-      inset 0 0 0 20px hsl(var(--primary) / 0.2),
+      inset 0 0 0 20px hsl(var(--primary) / 0.25),
       0 0 0 4px hsl(var(--primary) / 0.8);
+    transform: scale(0.985);
   }
 }
 .animate-long-press {
-  animation: long-press-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: long-press-fill 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 @keyframes long-press-fill-block {
@@ -552,15 +555,58 @@
     box-shadow: inset 0 0 0 0px hsl(var(--primary) / 0.1);
   }
   100% {
-    box-shadow: inset 0 0 0 100px hsl(var(--primary) / 0.2);
+    box-shadow: inset 0 0 0 100px hsl(var(--primary) / 0.22);
   }
 }
 .animate-long-press-block {
-  animation: long-press-fill-block 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: long-press-fill-block 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
 body.calendar-dragging {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+
+/* --------------------------------------------------------------------------
+ * Apple Design accessibility (prefers-reduced-motion / transparency / contrast)
+ * From Designing Fluid Interfaces + Principles of Great Design.
+ * Reduced motion ≠ no feedback: prefer short opacity cross-fades over springs/slides.
+ * -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .animate-long-press,
+  .animate-long-press-block {
+    animation: none !important;
+  }
+
+  /* Kill the Frieren ambient particle loops */
+  :root[data-theme="frieren"] body::before,
+  :root[data-theme="frieren"] body::after {
+    animation: none !important;
+    opacity: 0.08;
+  }
+
+  /* Prefer cross-fade style for any remaining motion utilities */
+  [class*="animate-in"],
+  [class*="animate-out"],
+  [class*="slide-in"],
+  [class*="slide-out"] {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  header.sticky {
+    background-color: var(--color-background) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  header.sticky {
+    border-bottom-width: 2px;
+    background-color: var(--color-background);
+  }
 }
