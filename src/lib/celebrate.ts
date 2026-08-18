@@ -34,7 +34,7 @@ function isFrierenWithSfx(): boolean {
 
 function playChime(kind: Kind) {
   if (typeof window === "undefined") return;
-  const url = SFX_URLS[kind];
+  const { url, rate, volume } = SFX[kind];
   let base = audioCache.get(url);
   if (!base) {
     base = new Audio(url);
@@ -43,7 +43,8 @@ function playChime(kind: Kind) {
   }
   try {
     const clip = base.cloneNode(true) as HTMLAudioElement;
-    clip.volume = 0.4;
+    clip.playbackRate = rate;
+    clip.volume = volume;
     void clip.play().catch(() => {
       /* autoplay blocked or load failed — stay silent */
     });
