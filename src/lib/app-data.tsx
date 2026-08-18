@@ -1477,6 +1477,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const value: Ctx = {
     goals,
+    totalPoints: points.totalPoints,
+    awardedPoints: points.awardedPoints,
+    rank: getOverallRank(points.totalPoints),
+
     tasks,
     bucketList,
     skills,
