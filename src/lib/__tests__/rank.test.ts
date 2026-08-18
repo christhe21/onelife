@@ -120,27 +120,28 @@ describe("reconcilePoints", () => {
 describe("getRankProgress", () => {
   it("reports progress inside a tier", () => {
     const p = getRankProgress(1250);
-    expect(p.rank).toBe("Private");
-    expect(p.nextRank).toBe("Corporal");
+    expect(p.rank).toBe("Intermediate");
+    expect(p.nextRank).toBe("Advanced");
     expect(p.pointsToNext).toBe(750);
     expect(p.percent).toBe(50);
   });
 
   it("handles tier boundaries", () => {
-    expect(getRankProgress(500).rank).toBe("Private");
+    expect(getRankProgress(500).rank).toBe("Intermediate");
     expect(getRankProgress(500).percent).toBe(0);
-    expect(getRankProgress(499).rank).toBe("Recruit");
+    expect(getRankProgress(499).rank).toBe("Beginner");
   });
 
   it("caps at the max rank", () => {
     const p = getRankProgress(250000);
-    expect(p.rank).toBe("General");
+    expect(p.rank).toBe("One");
     expect(p.nextRank).toBeNull();
     expect(p.percent).toBe(100);
     expect(p.pointsToNext).toBe(0);
   });
 
   it("clamps negative input", () => {
-    expect(getRankProgress(-10).rank).toBe("Recruit");
+    expect(getRankProgress(-10).rank).toBe("Beginner");
   });
 });
+
