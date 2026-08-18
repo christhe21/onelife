@@ -993,6 +993,11 @@ interface Ctx extends AppData {
   ) => void;
   autoScheduleGoal: (goalId: string) => AutoScheduleResult;
   autoScheduleSkill: (skillId: string) => AutoScheduleResult;
+  /** Lifetime points earned. */
+  totalPoints: number;
+  /** Military-style rank derived from totalPoints. */
+  rank: string;
+
   previewAutoScheduleGoal: (goalId: string) => AutoScheduleResult;
   previewAutoScheduleSkill: (skillId: string) => AutoScheduleResult;
 }
