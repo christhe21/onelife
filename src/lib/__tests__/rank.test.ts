@@ -1,4 +1,4 @@
-import { calculateItemPoints, getSkillPoints, getSkillTitle, getOverallRank, reconcilePoints } from "../rank";
+import { calculateItemPoints, getSkillPoints, getSkillTitle, getOverallRank, reconcilePoints, getRankProgress } from "../rank";
 import { Goal, Task, SubTask } from "../app-data";
 
 describe("rank utility functions", () => {
@@ -113,5 +113,33 @@ describe("reconcilePoints", () => {
     const after = reconcilePoints([], [task("t1", true)], restored);
     expect(after.totalPoints).toBe(state.totalPoints);
     expect(after.changed).toBe(false);
+  });
+});
+
+describe("getRankProgress", () => {
+  it("reports progress inside a tier", () => {
+    const p = getRankProgress(1250);
+    expect(p.rank).toBe("Private");
+    expect(p.nextRank).toBe("Corporal");
+    expect(p.pointsToNext).toBe(750);
+    expect(p.percent).toBe(50);
+  });
+
+  it("handles tier boundaries", () => {
+    expect(getRankProgress(500).rank).toBe("Private");
+    expect(getRankProgress(500).percent).toBe(0);
+    expect(getRankProgress(499).rank).toBe("Recruit");
+  });
+
+  it("caps at the max rank", () => {
+    const p = getRankProgress(250000);
+    expect(p.rank).toBe("General");
+    expect(p.nextRank).toBeNull();
+    expect(p.percent).toBe(100);
+    expect(p.pointsToNext).toBe(0);
+  });
+
+  it("clamps negative input", () => {
+    expect(getRankProgress(-10).rank).toBe("Recruit");
   });
 });

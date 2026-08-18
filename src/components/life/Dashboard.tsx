@@ -5,6 +5,7 @@ import { SkillProgress } from "@/components/life/SkillProgress";
 import { SkillsRadar } from "@/components/life/SkillsRadar";
 import { LifeTimeline } from "@/components/life/LifeTimeline";
 import { EmptyStateHero } from "@/components/life/EmptyStateHero";
+import { RankCard } from "@/components/life/RankCard";
 import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
@@ -33,6 +34,7 @@ export function Dashboard() {
     <div className="space-y-6">
       {isEmpty && <EmptyStateHero />}
 
+      <RankCard />
       <LifeTimeline />
       {/* Hero stats */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

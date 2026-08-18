@@ -101,3 +101,32 @@ export function celebrate(kind: Kind) {
   burst(kind);
   playChime(kind);
 }
+
+/**
+ * Rank-up celebration: always fires confetti (any theme); the chime still
+ * respects the Frieren-SFX condition used by `celebrate()`.
+ */
+export function celebrateRankUp() {
+  if (typeof window === "undefined") return;
+  const opts: confetti.Options = {
+    ticks: 220,
+    scalar: 1,
+    disableForReducedMotion: true,
+  };
+  const fire = (x: number, delay: number) =>
+    window.setTimeout(
+      () =>
+        confetti({
+          ...opts,
+          particleCount: 100,
+          spread: 110,
+          startVelocity: 48,
+          origin: { x, y: 0.7 },
+        }),
+      delay,
+    );
+  fire(0.25, 0);
+  fire(0.75, 130);
+  fire(0.5, 260);
+  if (isFrierenWithSfx()) playChime("goal");
+}
