@@ -16,6 +16,8 @@ import {
 import { useAppData, type Task } from "@/lib/app-data";
 import { cn } from "@/lib/utils";
 import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
+import { RecurrenceEditor } from "@/components/life/RecurrenceEditor";
+import { presetToRule, ruleToLegacy, type RecurrenceRule } from "@/lib/recurrence";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
 
 const STEPS = ["basics", "priority", "link", "schedule", "subtasks", "done"] as const;
@@ -46,7 +48,9 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("medium");
-  const [isDaily, setIsDaily] = useState(false);
+  const [rule, setRule] = useState<RecurrenceRule | null>(null);
+  const isDaily = rule !== null;
+  const setIsDaily = (v: boolean) => setRule(v ? presetToRule("daily") : null);
 
   const initialDateStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : addDaysIso(1);
   const initialStartDateStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : todayIso();
@@ -79,7 +83,7 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
     setTitle("");
     setDescription("");
     setPriority("medium");
-    setIsDaily(false);
+    setRule(null);
     const dStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : addDaysIso(1);
     const sdStr = defaultDate ? defaultDate.toISOString().slice(0, 10) : todayIso();
     setDueDate(dStr);
@@ -161,7 +165,8 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
       title: title.trim(),
       priority,
       evidence: description.trim() || undefined,
-      recurrence: isDaily ? "daily" : "none",
+      recurrence: ruleToLegacy(rule),
+      recurrenceRule: rule ?? undefined,
       dueDate: isDaily ? undefined : dueDate || undefined,
       startDate: isDaily ? startDate || undefined : undefined,
       endDate: isDaily ? endDate || undefined : undefined,
@@ -284,9 +289,9 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
               </div>
               <div className="flex items-center justify-between rounded-xl border bg-card/50 p-3">
                 <div>
-                  <div className="text-sm font-medium">Daily task</div>
+                  <div className="text-sm font-medium">Repeating task</div>
                   <div className="text-[11px] text-muted-foreground">
-                    Recurs every day between start and end. No subtasks allowed.
+                    Repeats on a schedule between start and end. No subtasks allowed.
                   </div>
                 </div>
                 <Switch
@@ -297,6 +302,15 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
                   }}
                 />
               </div>
+
+              {isDaily && (
+                <RecurrenceEditor
+                  value={rule}
+                  onChange={(r) => setRule(r ?? presetToRule("daily"))}
+                  referenceDate={startDate}
+                  maxDate={goalMax}
+                />
+              )}
 
               {!isDaily ? (
                 <div>
