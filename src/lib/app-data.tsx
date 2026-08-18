@@ -1836,6 +1836,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList(data.bucketList);
       if (data.skills) setSkills(data.skills);
       if (data.settings) setSettings(data.settings);
+      setPoints({
+        totalPoints: data.totalPoints ?? 0,
+        awardedPoints: data.awardedPoints ?? {},
+      });
+
     },
     appendJSON: async (file) => {
       const text = await file.text();
