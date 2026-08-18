@@ -546,7 +546,15 @@ function normalizeAppData(raw: any): AppData {
     bucketList: Array.isArray(raw.bucketList) ? raw.bucketList.map(normalizeBucket) : [],
     skills,
     settings,
+    totalPoints: typeof raw.totalPoints === "number" && raw.totalPoints >= 0 ? raw.totalPoints : 0,
+    awardedPoints:
+      raw.awardedPoints && typeof raw.awardedPoints === "object" && !Array.isArray(raw.awardedPoints)
+        ? (Object.fromEntries(
+            Object.entries(raw.awardedPoints).filter(([, v]) => typeof v === "number"),
+          ) as Record<string, number>)
+        : {},
   };
+
 }
 
 const AI_SYSTEM_PROMPT = `You are a thoughtful life-planning coach. Interview the user about who they are, what they care about, the seasons of life they are in, and what they want the next 1–12 months to look like. Then output a single JSON document (no markdown, no commentary) that matches the schema below EXACTLY. Every field listed is supported by the app; unknown fields are ignored.
