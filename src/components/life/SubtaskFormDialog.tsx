@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CalendarClock } from "lucide-react";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
+import { RecurrenceEditor } from "@/components/life/RecurrenceEditor";
+import { type RecurrenceRule } from "@/lib/recurrence";
 import { TimePicker } from "@/components/ui/pickers/TimePicker";
 import {
   Select,
@@ -31,6 +33,8 @@ export interface SubtaskDraft {
   scheduledStart?: string;
   /** Optional calendar block end (ISO local, YYYY-MM-DDTHH:mm:ss). */
   scheduledEnd?: string;
+  /** Optional advanced repeat rule. */
+  recurrenceRule?: RecurrenceRule;
 }
 
 interface Props {
@@ -74,6 +78,7 @@ export function SubtaskFormDialog({
     priority: "medium",
     endDate: addDaysIso(1),
   });
+  const [rule, setRule] = useState<RecurrenceRule | null>(null);
   const [scheduleOn, setScheduleOn] = useState(false);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
@@ -88,6 +93,7 @@ export function SubtaskFormDialog({
         scheduledStart: initial?.scheduledStart,
         scheduledEnd: initial?.scheduledEnd,
       });
+      setRule(initial?.recurrenceRule ?? null);
       const hasSched = !!(initial?.scheduledStart && initial?.scheduledEnd);
       setScheduleOn(hasSched);
       setStartTime(timeFromIso(initial?.scheduledStart) || "09:00");
@@ -119,6 +125,7 @@ export function SubtaskFormDialog({
       endDate: form.endDate,
       scheduledStart: scheduleOn ? combine(form.endDate, startTime) : undefined,
       scheduledEnd: scheduleOn ? combine(form.endDate, endTime) : undefined,
+      recurrenceRule: rule ?? undefined,
     });
     onOpenChange(false);
   };
