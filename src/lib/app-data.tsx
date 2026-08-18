@@ -1804,7 +1804,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         bucketList,
         skills,
         settings,
+        totalPoints: points.totalPoints,
+        awardedPoints: points.awardedPoints,
       };
+
       downloadJSON(payload, `onelife-${new Date().toISOString().slice(0, 10)}.json`);
     },
     importJSON: async (file) => {
