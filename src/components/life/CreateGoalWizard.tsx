@@ -17,6 +17,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useAppData, autoScheduleTasks, type Recurrence, type Task } from "@/lib/app-data";
+import { RecurrenceEditor } from "./RecurrenceEditor";
+import { resolveRule, ruleToLegacy, type RecurrenceRule } from "@/lib/recurrence";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
 import { TimePicker } from "@/components/ui/pickers/TimePicker";
 
@@ -29,6 +31,7 @@ interface DraftSubtask {
   plannedHours?: number;
   priority?: Priority;
   recurrence: Recurrence;
+  recurrenceRule?: RecurrenceRule;
   startDate?: string; // yyyy-mm-dd
   startTime?: string; // HH:MM
   durationHours?: number;
@@ -43,6 +46,7 @@ interface DraftTask {
   subGoalKey?: string;
   plannedHours?: number;
   recurrence: Recurrence;
+  recurrenceRule?: RecurrenceRule;
   startDate?: string;
   startTime?: string;
   durationHours?: number;
@@ -226,6 +230,7 @@ export function CreateGoalWizard() {
             done: false,
             plannedHours: s.plannedHours,
             recurrence: s.recurrence,
+            recurrenceRule: s.recurrenceRule,
             priority: s.priority,
             startDate: sStart,
             endDate: sEnd,
@@ -252,6 +257,7 @@ export function CreateGoalWizard() {
         subtasks,
         plannedHours: dt.plannedHours,
         recurrence: dt.recurrence,
+        recurrenceRule: dt.recurrenceRule,
         startDate: tStart,
         endDate: tEnd,
         dueDate: dt.dueDate,
@@ -295,6 +301,7 @@ export function CreateGoalWizard() {
         goalId: finalTask.goalId,
         plannedHours: finalTask.plannedHours,
         recurrence: finalTask.recurrence,
+        recurrenceRule: finalTask.recurrenceRule,
         startDate: finalTask.startDate,
         endDate: finalTask.endDate,
         dueDate: finalTask.dueDate,
@@ -535,6 +542,7 @@ export function CreateGoalWizard() {
                     <SchedulePresetPicker
                       label="Schedule"
                       recurrence={t.recurrence}
+                      recurrenceRule={t.recurrenceRule}
                       startDate={t.startDate}
                       startTime={t.startTime}
                       durationHours={t.durationHours ?? t.plannedHours}
@@ -598,6 +606,7 @@ export function CreateGoalWizard() {
                         <SchedulePresetPicker
                           label="Schedule subtask"
                           recurrence={s.recurrence}
+                          recurrenceRule={s.recurrenceRule}
                           startDate={s.startDate}
                           startTime={s.startTime}
                           durationHours={s.durationHours ?? s.plannedHours}
@@ -633,6 +642,7 @@ export function CreateGoalWizard() {
 function SchedulePresetPicker({
   label,
   recurrence,
+  recurrenceRule,
   startDate,
   startTime,
   durationHours,
@@ -642,6 +652,7 @@ function SchedulePresetPicker({
 }: {
   label: string;
   recurrence: Recurrence;
+  recurrenceRule?: RecurrenceRule;
   startDate?: string;
   startTime?: string;
   durationHours?: number;
@@ -649,6 +660,7 @@ function SchedulePresetPicker({
   autoPlace: boolean;
   onChange: (patch: {
     recurrence?: Recurrence;
+    recurrenceRule?: RecurrenceRule;
     startDate?: string;
     startTime?: string;
     durationHours?: number;
@@ -663,23 +675,17 @@ function SchedulePresetPicker({
         {label}
       </div>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
+        <div className="sm:col-span-2 lg:col-span-4">
           <Label className="text-xs">Repeats</Label>
-          <Select
-            value={recurrence}
-            onValueChange={(v) => onChange({ recurrence: v as Recurrence })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RECURRENCE_PRESETS.map((p) => (
-                <SelectItem key={p.value} value={p.value}>
-                  {p.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <RecurrenceEditor
+            className="mt-1.5"
+            value={recurrenceRule ?? resolveRule({ recurrence })}
+            onChange={(r) =>
+              onChange({ recurrence: ruleToLegacy(r) as Recurrence, recurrenceRule: r ?? undefined })
+            }
+            referenceDate={startDate}
+            maxDate={dueDate}
+          />
         </div>
         <div>
           <Label className="text-xs">Start date</Label>
