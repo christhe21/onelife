@@ -1,4 +1,4 @@
-import { calculateItemPoints, getSkillPoints, getSkillTitle, getOverallRank } from "../rank";
+import { calculateItemPoints, getSkillPoints, getSkillTitle, getOverallRank, reconcilePoints } from "../rank";
 import { Goal, Task, SubTask } from "../app-data";
 
 describe("rank utility functions", () => {
