@@ -848,6 +848,17 @@ export function CalendarView({
               onLongPressEmpty={openCreateTask}
             />
           )}
+          {view === "agenda" && (
+            <AgendaList
+              events={events}
+              from={startOfDay(cursor)}
+              onEventClick={onEventClick}
+              onToggleDone={(e) => setEventDone(e, !e.done)}
+              onUnschedule={unscheduleEvent}
+              onReschedule={(e) => openAdd(e.start)}
+              onCreate={() => openCreateTask(cursor)}
+            />
+          )}
         </CardContent>
       </Card>
       {drag.ghost}
