@@ -370,7 +370,7 @@ export function SettingsView() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Music className="h-4 w-4 text-primary" /> Frieren ambience
+              <Music className="h-4 w-4 text-primary" /> Frieren chimes & confetti
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">

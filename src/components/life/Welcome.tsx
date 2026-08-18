@@ -7,7 +7,6 @@ import {
   Palette,
   ArrowRight,
   LayoutDashboard,
-  PlayCircle,
   Stars,
   Compass,
 } from "lucide-react";
