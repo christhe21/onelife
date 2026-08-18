@@ -1,11 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, ListChecks, Sparkles, TrendingUp } from "lucide-react";
+import { Target, ListChecks, Sparkles, TrendingUp, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SkillProgress } from "@/components/life/SkillProgress";
 import { SkillsRadar } from "@/components/life/SkillsRadar";
 import { LifeTimeline } from "@/components/life/LifeTimeline";
 import { EmptyStateHero } from "@/components/life/EmptyStateHero";
 import { RankCard } from "@/components/life/RankCard";
+import { RankLadder } from "@/components/life/RankLadder";
+
 import { progressFor, useAppData } from "@/lib/app-data";
 
 export function Dashboard() {
@@ -35,7 +38,17 @@ export function Dashboard() {
       {isEmpty && <EmptyStateHero />}
 
       <RankCard />
+      <Collapsible>
+        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border bg-card px-4 py-2.5 text-sm font-medium">
+          <span className="font-display">Rank ladder</span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pt-3">
+          <RankLadder />
+        </CollapsibleContent>
+      </Collapsible>
       <LifeTimeline />
+
       {/* Hero stats */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

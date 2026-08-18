@@ -19,6 +19,8 @@ import {
 import { usePushReminders } from "@/hooks/use-push";
 import { useAuth } from "@/hooks/use-auth";
 import { getSkillPoints, getSkillTitle, getOverallRank } from "@/lib/rank";
+import { RankLadder } from "@/components/life/RankLadder";
+
 import { celebrate } from "@/lib/celebrate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
@@ -217,6 +219,14 @@ export function SettingsView() {
               </p>
             </div>
           </div>
+
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Rank ladder
+            </h4>
+            <RankLadder />
+          </div>
+
 
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">

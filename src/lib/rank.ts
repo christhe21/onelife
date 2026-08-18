@@ -67,16 +67,17 @@ export function getSkillTitle(points: number): string {
 
 /** Ordered rank tiers — single source of truth for rank name + thresholds. */
 export const RANK_TIERS: { name: string; min: number }[] = [
-  { name: "Recruit", min: 0 },
-  { name: "Private", min: 500 },
-  { name: "Corporal", min: 2000 },
-  { name: "Sergeant", min: 5000 },
-  { name: "Lieutenant", min: 10000 },
-  { name: "Captain", min: 20000 },
-  { name: "Major", min: 35000 },
-  { name: "Colonel", min: 60000 },
-  { name: "General", min: 100000 },
+  { name: "Beginner", min: 0 },
+  { name: "Intermediate", min: 500 },
+  { name: "Advanced", min: 2000 },
+  { name: "Professional", min: 5000 },
+  { name: "Master", min: 10000 },
+  { name: "Grandmaster", min: 20000 },
+  { name: "Epic", min: 35000 },
+  { name: "Legendary", min: 60000 },
+  { name: "One", min: 100000 },
 ];
+
 
 export function getRankIndex(totalPoints: number): number {
   const pts = Math.max(0, totalPoints ?? 0);

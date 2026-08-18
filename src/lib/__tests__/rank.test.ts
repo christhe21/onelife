@@ -55,16 +55,17 @@ describe("rank utility functions", () => {
   });
 
   it("calculates overall rank", () => {
-    expect(getOverallRank(100)).toBe("Recruit");
-    expect(getOverallRank(500)).toBe("Private");
-    expect(getOverallRank(2500)).toBe("Corporal");
-    expect(getOverallRank(6500)).toBe("Sergeant");
-    expect(getOverallRank(15000)).toBe("Lieutenant");
-    expect(getOverallRank(25000)).toBe("Captain");
-    expect(getOverallRank(45000)).toBe("Major");
-    expect(getOverallRank(75000)).toBe("Colonel");
-    expect(getOverallRank(120000)).toBe("General");
+    expect(getOverallRank(100)).toBe("Beginner");
+    expect(getOverallRank(500)).toBe("Intermediate");
+    expect(getOverallRank(2500)).toBe("Advanced");
+    expect(getOverallRank(6500)).toBe("Professional");
+    expect(getOverallRank(15000)).toBe("Master");
+    expect(getOverallRank(25000)).toBe("Grandmaster");
+    expect(getOverallRank(45000)).toBe("Epic");
+    expect(getOverallRank(75000)).toBe("Legendary");
+    expect(getOverallRank(120000)).toBe("One");
   });
+
 });
 
 describe("reconcilePoints", () => {
@@ -119,27 +120,28 @@ describe("reconcilePoints", () => {
 describe("getRankProgress", () => {
   it("reports progress inside a tier", () => {
     const p = getRankProgress(1250);
-    expect(p.rank).toBe("Private");
-    expect(p.nextRank).toBe("Corporal");
+    expect(p.rank).toBe("Intermediate");
+    expect(p.nextRank).toBe("Advanced");
     expect(p.pointsToNext).toBe(750);
     expect(p.percent).toBe(50);
   });
 
   it("handles tier boundaries", () => {
-    expect(getRankProgress(500).rank).toBe("Private");
+    expect(getRankProgress(500).rank).toBe("Intermediate");
     expect(getRankProgress(500).percent).toBe(0);
-    expect(getRankProgress(499).rank).toBe("Recruit");
+    expect(getRankProgress(499).rank).toBe("Beginner");
   });
 
   it("caps at the max rank", () => {
     const p = getRankProgress(250000);
-    expect(p.rank).toBe("General");
+    expect(p.rank).toBe("One");
     expect(p.nextRank).toBeNull();
     expect(p.percent).toBe(100);
     expect(p.pointsToNext).toBe(0);
   });
 
   it("clamps negative input", () => {
-    expect(getRankProgress(-10).rank).toBe("Recruit");
+    expect(getRankProgress(-10).rank).toBe("Beginner");
   });
 });
+
