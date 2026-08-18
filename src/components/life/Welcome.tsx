@@ -7,7 +7,6 @@ import {
   Palette,
   ArrowRight,
   LayoutDashboard,
-  PlayCircle,
   Stars,
   Compass,
 } from "lucide-react";
@@ -77,17 +76,6 @@ export function Welcome() {
           ))}
         </div>
 
-        {/* Video Placeholder */}
-        <div className="mt-8 overflow-hidden rounded-2xl border bg-card shadow-sm">
-          <div className="flex aspect-video w-full flex-col items-center justify-center bg-muted/30 p-6 text-center">
-            <PlayCircle className="mb-3 h-10 w-10 text-primary/40" />
-            <h3 className="font-medium text-foreground">See how it works</h3>
-            <p className="mt-1 text-xs text-muted-foreground max-w-[250px]">
-              Watch a quick 2-minute walkthrough on how to set your first goals and start tracking
-              progress.
-            </p>
-          </div>
-        </div>
 
         {/* CTAs */}
         <div className="mt-10 flex flex-col items-center gap-4">

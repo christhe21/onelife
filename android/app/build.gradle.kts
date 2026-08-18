@@ -15,6 +15,30 @@ android {
         versionName = "1.0.0"
     }
 
+    // Release signing is opt-in: it activates only when the keystore env vars
+    // are present (locally or via GitHub secrets). See RELEASE.md.
+    val keystorePath = System.getenv("KEYSTORE_PATH") ?: "onelife-release.keystore"
+    val keystoreFile = file(keystorePath)
+    val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+    val keyAliasEnv = System.getenv("KEY_ALIAS")
+    val keyPasswordEnv = System.getenv("KEY_PASSWORD")
+    val hasReleaseSigning =
+        keystoreFile.exists() &&
+            !keystorePassword.isNullOrBlank() &&
+            !keyAliasEnv.isNullOrBlank() &&
+            !keyPasswordEnv.isNullOrBlank()
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = keystorePassword
+                keyAlias = keyAliasEnv
+                keyPassword = keyPasswordEnv
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -26,8 +50,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            // Release signing is intentionally not configured yet — see ANDROID.md.
-            // CI builds assembleDebug only until keystore secrets are provided.
+            // Falls back to debug signing when no keystore is configured, so
+            // local `assembleRelease` and CI debug builds keep working.
+            signingConfig =
+                if (hasReleaseSigning) {
+                    signingConfigs.getByName("release")
+                } else {
+                    signingConfigs.getByName("debug")
+                }
         }
     }
 

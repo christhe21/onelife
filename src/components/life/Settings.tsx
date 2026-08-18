@@ -370,12 +370,12 @@ export function SettingsView() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Music className="h-4 w-4 text-primary" /> Frieren ambience
+              <Music className="h-4 w-4 text-primary" /> Frieren chimes & confetti
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <p className="text-sm text-muted-foreground">
-              Soft fantasy ambience and gentle chimes to mark each step of your journey. Audio
+              Gentle chimes and confetti to mark each step of your journey. Audio
               starts after your first click or keypress on the page.
             </p>
 

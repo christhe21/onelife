@@ -7,15 +7,13 @@ type Kind = "task" | "milestone" | "goal";
 
 const STORAGE_KEY = "life-manager:v1";
 
-// Royalty-free chimes from Mixkit, self-hosted (public/sfx) so they play offline
-// (e.g. inside the Android APK).
-// KNOWN ISSUE: the milestone chime's upstream URL (mixkit sfx/1435) now returns 403,
-// so the asset could not be self-hosted. It keeps the original remote URL and fails
-// silently — exactly the current production behavior. See ANDROID.md "Known issues".
-const SFX_URLS: Record<Kind, string> = {
-  task: "/sfx/task-chime.mp3",
-  milestone: "https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3",
-  goal: "/sfx/goal-chime.mp3",
+// Royalty-free chimes, fully self-hosted (public/sfx) so they play offline
+// (e.g. inside the Android APK). The milestone chime reuses the goal asset at a
+// slightly higher playback rate so all three events still sound distinct.
+const SFX: Record<Kind, { url: string; rate: number; volume: number }> = {
+  task: { url: "/sfx/task-chime.mp3", rate: 1, volume: 0.35 },
+  milestone: { url: "/sfx/goal-chime.mp3", rate: 1.18, volume: 0.4 },
+  goal: { url: "/sfx/goal-chime.mp3", rate: 1, volume: 0.45 },
 };
 
 const audioCache = new Map<string, HTMLAudioElement>();
@@ -36,7 +34,7 @@ function isFrierenWithSfx(): boolean {
 
 function playChime(kind: Kind) {
   if (typeof window === "undefined") return;
-  const url = SFX_URLS[kind];
+  const { url, rate, volume } = SFX[kind];
   let base = audioCache.get(url);
   if (!base) {
     base = new Audio(url);
@@ -45,7 +43,8 @@ function playChime(kind: Kind) {
   }
   try {
     const clip = base.cloneNode(true) as HTMLAudioElement;
-    clip.volume = 0.4;
+    clip.playbackRate = rate;
+    clip.volume = volume;
     void clip.play().catch(() => {
       /* autoplay blocked or load failed — stay silent */
     });
