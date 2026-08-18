@@ -18,7 +18,6 @@ import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { GoalMarketplace } from "@/components/life/GoalMarketplace";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
-import { useNotifications } from "@/hooks/use-notifications";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
