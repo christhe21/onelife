@@ -69,6 +69,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { NewTaskWizard } from "./NewTaskWizard";
 import { AddToScheduleDialog } from "@/components/life/AddToScheduleDialog";
+import {
+  CalendarFilterBar,
+  useCalendarFilters,
+  filtersActiveCount,
+} from "@/components/life/CalendarFilters";
 
 type ViewMode = "month" | "week" | "day" | "agenda";
 
