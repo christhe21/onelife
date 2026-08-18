@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
   Target,
@@ -13,11 +13,15 @@ import {
   Home,
   Settings as SettingsIcon,
   Store,
+  Shield,
 } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useThemedIcon, type FrierenIconKey } from "@/lib/frieren-icons";
+import { useAppData } from "@/lib/app-data";
+import { getRankProgress } from "@/lib/rank";
+import { useRankUp } from "@/hooks/use-rank-up";
 
 const TAB_TO_ICON_KEY: Partial<Record<TabId, FrierenIconKey>> = {
   goals: "goal",
@@ -61,8 +65,29 @@ interface Props {
   onHome?: () => void;
 }
 
+function RankChip({ onClick }: { onClick: () => void }) {
+  const { totalPoints } = useAppData();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  const p = getRankProgress(totalPoints ?? 0);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={`${p.rank} — ${(totalPoints ?? 0).toLocaleString("en-US")} points`}
+      className="hidden shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent sm:flex"
+    >
+      <Shield className="h-3.5 w-3.5 text-primary" />
+      <span className="max-w-[7rem] truncate">{p.rank}</span>
+      <span className="text-muted-foreground">{(totalPoints ?? 0).toLocaleString("en-US")}</span>
+    </button>
+  );
+}
+
 export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  useRankUp();
   const active = NAV.find((n) => n.id === tab)!;
 
   return (
@@ -117,6 +142,7 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
                   <Home className="h-5 w-5" />
                 </Button>
               )}
+              <RankChip onClick={() => onTab("dashboard")} />
               <ExportImport />
             </div>
           </header>
