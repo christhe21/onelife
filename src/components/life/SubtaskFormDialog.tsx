@@ -194,6 +194,17 @@ export function SubtaskFormDialog({
             </div>
           </div>
 
+          <div>
+            <Label className="text-xs">Repeats</Label>
+            <RecurrenceEditor
+              value={rule}
+              onChange={setRule}
+              referenceDate={form.endDate}
+              maxDate={maxDate}
+              className="mt-1.5"
+            />
+          </div>
+
           <div className="rounded-xl border bg-card/50 p-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
