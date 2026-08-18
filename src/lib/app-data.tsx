@@ -1910,6 +1910,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList(norm.bucketList);
       if (norm.skills) setSkills(norm.skills);
       if (norm.settings) setSettings(norm.settings);
+      setPoints({
+        totalPoints: norm.totalPoints ?? 0,
+        awardedPoints: norm.awardedPoints ?? {},
+      });
     },
     clearAll: () => {
       setGoals([]);
@@ -1917,11 +1921,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList([]);
       setSkills(DEFAULT_SKILLS);
       setSettings({});
+      setPoints({ totalPoints: 0, awardedPoints: {} });
       try {
         window.localStorage.removeItem(STORAGE_KEY);
       } catch {
         /* ignore */
       }
+
       const uid = userId;
       const done = () => {
         window.location.href = "/home";
