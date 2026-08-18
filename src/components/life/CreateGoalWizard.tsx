@@ -63,13 +63,6 @@ interface DraftSubGoal {
   description?: string;
 }
 
-const RECURRENCE_PRESETS: { value: Recurrence; label: string }[] = [
-  { value: "none", label: "Once" },
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-];
 
 const newKey = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
