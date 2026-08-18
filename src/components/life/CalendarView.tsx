@@ -1685,3 +1685,198 @@ function DayGrid({
     </div>
   );
 }
+
+/* ============== Agenda / list view ============== */
+
+function AgendaList({
+  events,
+  from,
+  onEventClick,
+  onToggleDone,
+  onUnschedule,
+  onReschedule,
+  onCreate,
+}: {
+  events: Event[];
+  from: Date;
+  onEventClick: (e: Event) => void;
+  onToggleDone: (e: Event) => void;
+  onUnschedule: (e: Event) => void;
+  onReschedule: (e: Event) => void;
+  onCreate: () => void;
+}) {
+  const [showPast, setShowPast] = useState(false);
+
+  const groups = useMemo(() => {
+    const limit = addDaysLocal(from, 90).getTime();
+    const min = from.getTime();
+    const list = events.filter((e) => {
+      const t = e.start.getTime();
+      return showPast ? t <= limit : t >= min && t <= limit;
+    });
+    const map = new Map<string, Event[]>();
+    for (const e of list) {
+      const k = ymd(e.start);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(e);
+    }
+    return [...map.entries()]
+      .sort((a, b) => (showPast ? a[0].localeCompare(b[0]) : a[0].localeCompare(b[0])))
+      .map(([day, evs]) => ({
+        day,
+        events: evs.sort((a, b) => a.start.getTime() - b.start.getTime()),
+      }));
+  }, [events, from, showPast]);
+
+  const todayKey = ymd(new Date());
+
+  if (groups.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-12 text-center">
+        <CalendarDays className="h-8 w-8 text-muted-foreground" />
+        <div>
+          <p className="text-sm font-medium">Nothing scheduled</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Schedule a task to see it listed here.
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button size="sm" onClick={onCreate}>
+            <Plus className="mr-1 h-3.5 w-3.5" /> Create task
+          </Button>
+          {!showPast && (
+            <Button size="sm" variant="outline" onClick={() => setShowPast(true)}>
+              Show past items
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 space-y-4 overflow-y-auto pb-8">
+      <div className="flex justify-end">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-7 px-2 text-xs"
+          onClick={() => setShowPast((v) => !v)}
+        >
+          {showPast ? "Hide past" : "Show past"}
+        </Button>
+      </div>
+      {groups.map((g) => {
+        const d = new Date(`${g.day}T00:00:00`);
+        const done = g.events.filter((e) => e.done).length;
+        return (
+          <section key={g.day} className="space-y-2">
+            <div className="sticky top-0 z-10 flex items-baseline gap-2 bg-background/90 py-1 backdrop-blur">
+              <h3
+                className={cn(
+                  "text-sm font-semibold",
+                  g.day === todayKey ? "text-primary" : "text-foreground",
+                )}
+              >
+                {g.day === todayKey
+                  ? "Today"
+                  : d.toLocaleDateString(undefined, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                    })}
+              </h3>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {done}/{g.events.length} done
+              </span>
+            </div>
+            <ul className="space-y-2">
+              {g.events.map((e) => (
+                <li
+                  key={e.id}
+                  className={cn(
+                    "rounded-lg border border-border bg-card p-3",
+                    e.done && "opacity-60",
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      aria-label={e.done ? "Mark pending" : "Mark done"}
+                      onClick={() => onToggleDone(e)}
+                      className="mt-0.5 shrink-0"
+                    >
+                      {e.done ? (
+                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onEventClick(e)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ background: e.color }}
+                        />
+                        <span
+                          className={cn(
+                            "min-w-0 flex-1 truncate text-sm font-medium",
+                            e.done && "line-through",
+                          )}
+                        >
+                          {e.title}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 pl-[1.125rem] text-xs text-muted-foreground">
+                        <span className="tabular-nums">
+                          {hm(e.start)} – {hm(e.end)}
+                        </span>
+                        {e.goalTitle && <span className="truncate">· {e.goalTitle}</span>}
+                        {e.parentTitle && <span className="truncate">· {e.parentTitle}</span>}
+                        {e.priority && (
+                          <Badge variant="outline" className="h-4 px-1 text-[10px] capitalize">
+                            {e.priority}
+                          </Badge>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2 pl-8">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => onReschedule(e)}
+                    >
+                      Reschedule
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => onUnschedule(e)}
+                    >
+                      Unschedule
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => onEventClick(e)}
+                    >
+                      Details
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
