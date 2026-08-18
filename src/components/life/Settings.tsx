@@ -218,6 +218,14 @@ export function SettingsView() {
             </div>
           </div>
 
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Rank ladder
+            </h4>
+            <RankLadder />
+          </div>
+
+
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Your Skills
