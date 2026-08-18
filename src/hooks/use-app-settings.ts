@@ -189,24 +189,37 @@ export function useAppSettingsEffects() {
 
     const check = () => {
       const now = Date.now();
-      for (const t of tasks) {
-        if (t.done || !t.startDate) continue;
-        const start = new Date(t.startDate).getTime();
-        if (Number.isNaN(start)) continue;
+
+      // Single reminder owner for browsers: fires once per scheduled item, at
+      // the user's configured lead time.
+      const fire = (key: string, startDate: string, title: string, context?: string) => {
+        const start = new Date(startDate).getTime();
+        if (Number.isNaN(start)) return;
         const fireAt = start - lead * 60_000;
-        if (now >= fireAt && now < start + 60_000 && !firedRef.current.has(t.id)) {
-          firedRef.current.add(t.id);
-          const goal = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId));
-          try {
-            new Notification(`Upcoming: ${t.title}`, {
-              body: goal
-                ? `In ${Math.max(0, Math.round((start - now) / 60_000))} min · ${goal.title}`
-                : `Starts soon`,
-              tag: t.id,
-            });
-          } catch {
-            /* ignore */
-          }
+        if (now < fireAt || now >= start + 60_000) return;
+        if (firedRef.current.has(key)) return;
+        firedRef.current.add(key);
+        try {
+          new Notification(`Upcoming: ${title}`, {
+            body: context
+              ? `In ${Math.max(0, Math.round((start - now) / 60_000))} min · ${context}`
+              : `Starts soon`,
+            tag: key,
+          });
+        } catch {
+          /* ignore */
+        }
+      };
+
+      for (const t of tasks) {
+        const goal = goals.find((g) => g.subGoals.some((sg) => sg.id === t.subGoalId));
+        // Parents with subtasks are never scheduled themselves — the subtasks are.
+        if (!t.done && t.startDate && t.subtasks.length === 0) {
+          fire(`task:${t.id}`, t.startDate, t.title, goal?.title);
+        }
+        for (const s of t.subtasks) {
+          if (s.done || !s.startDate) continue;
+          fire(`subtask:${s.id}`, s.startDate, s.title, t.title);
         }
       }
     };
