@@ -30,7 +30,11 @@ export function RankCard({ interactive = false }: { interactive?: boolean }) {
           <div className="min-w-0 flex-1">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Current rank</p>
             <h2 className="truncate font-display text-lg font-semibold leading-tight">{p.rank}</h2>
+            {interactive && (
+              <p className="text-[11px] text-primary">Tap to view all ranks</p>
+            )}
           </div>
+
           <div className="text-right">
             <p className="font-display text-lg font-semibold leading-tight">{fmt(totalPoints ?? 0)}</p>
             <p className="text-xs text-muted-foreground">points</p>
