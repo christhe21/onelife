@@ -7,12 +7,18 @@ import { getRankProgress } from "@/lib/rank";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
-export function RankCard() {
+export function RankCard({ interactive = false }: { interactive?: boolean }) {
   const { totalPoints } = useAppData();
   const p = useMemo(() => getRankProgress(totalPoints ?? 0), [totalPoints]);
 
   return (
-    <Card className="overflow-hidden">
+    <Card
+      className={
+        interactive
+          ? "overflow-hidden transition-colors hover:border-primary/50 hover:bg-accent/40 active:bg-accent/60"
+          : "overflow-hidden"
+      }
+    >
       <CardContent className="space-y-3 p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
