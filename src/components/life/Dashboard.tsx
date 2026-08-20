@@ -1,13 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, ListChecks, Sparkles, TrendingUp, ChevronDown } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Target, ListChecks, Sparkles, TrendingUp } from "lucide-react";
 import { SkillProgress } from "@/components/life/SkillProgress";
 import { SkillsRadar } from "@/components/life/SkillsRadar";
 import { LifeTimeline } from "@/components/life/LifeTimeline";
 import { EmptyStateHero } from "@/components/life/EmptyStateHero";
 import { RankCard } from "@/components/life/RankCard";
-import { RankLadder } from "@/components/life/RankLadder";
+import { RankLadderDialog } from "@/components/life/RankLadderDialog";
+
 
 import { progressFor, useAppData } from "@/lib/app-data";
 
