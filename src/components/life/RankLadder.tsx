@@ -21,8 +21,9 @@ export function RankLadder({ className }: { className?: string }) {
         return (
           <li
             key={tier.name}
+            data-current-rank={isCurrent ? "true" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-lg border px-3 py-2 text-sm",
+              "flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-sm sm:gap-3 sm:px-3",
               isCurrent ? "border-primary bg-primary/5" : "border-border",
               achieved && "opacity-70",
             )}
