@@ -37,16 +37,12 @@ export function Dashboard() {
     <div className="space-y-6">
       {isEmpty && <EmptyStateHero />}
 
-      <RankCard />
-      <Collapsible>
-        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border bg-card px-4 py-2.5 text-sm font-medium">
-          <span className="font-display">Rank ladder</span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-3">
-          <RankLadder />
-        </CollapsibleContent>
-      </Collapsible>
+      <RankLadderDialog>
+        <button type="button" className="block w-full text-left">
+          <RankCard interactive />
+        </button>
+      </RankLadderDialog>
+
       <LifeTimeline />
 
       {/* Hero stats */}
