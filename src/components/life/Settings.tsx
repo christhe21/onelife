@@ -19,7 +19,7 @@ import {
 import { usePushReminders } from "@/hooks/use-push";
 import { useAuth } from "@/hooks/use-auth";
 import { getSkillPoints, getSkillTitle, getOverallRank } from "@/lib/rank";
-import { RankLadder } from "@/components/life/RankLadder";
+import { RankLadderDialog } from "@/components/life/RankLadderDialog";
 
 import { celebrate } from "@/lib/celebrate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -213,19 +213,20 @@ export function SettingsView() {
             </div>
             <div className="flex-1 text-center md:text-left">
               <h3 className="text-2xl font-bold">{settings.userName || "Adventurer"}</h3>
-              <p className="text-muted-foreground text-lg">
-                Rank: <span className="font-semibold text-primary">{overallRank}</span> (
-                {overallPoints} pts)
-              </p>
+              <RankLadderDialog>
+                <button
+                  type="button"
+                  className="text-muted-foreground text-lg underline-offset-4 hover:underline"
+                >
+                  Rank: <span className="font-semibold text-primary">{overallRank}</span> (
+                  {overallPoints} pts)
+                </button>
+              </RankLadderDialog>
+              <p className="text-xs text-muted-foreground">Tap your rank to see the full ladder</p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Rank ladder
-            </h4>
-            <RankLadder />
-          </div>
+
 
 
           <div className="space-y-4">
