@@ -78,6 +78,21 @@ export const RANK_TIERS: { name: string; min: number }[] = [
   { name: "One", min: 100000 },
 ];
 
+/** Display-only one-line meaning for each rank tier. */
+export const RANK_DESCRIPTIONS: Record<string, string> = {
+  Beginner: "You've just started — every point counts from here.",
+  Intermediate: "You're building steady habits and finishing what you start.",
+  Advanced: "Your progress is consistent and compounding across skills.",
+  Professional: "You work at a reliable, high standard without needing motivation.",
+  Master: "Deep skill and disciplined execution are now your default.",
+  Grandmaster: "You operate far above average and set your own bar.",
+  Epic: "Rare territory — your output speaks for itself.",
+  Legendary: "Sustained excellence across years of effort.",
+  One: "The top rank. There is nothing above this.",
+};
+
+
+
 
 export function getRankIndex(totalPoints: number): number {
   const pts = Math.max(0, totalPoints ?? 0);
