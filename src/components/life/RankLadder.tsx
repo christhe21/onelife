@@ -1,10 +1,15 @@
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useMemo, type UIEventHandler } from "react";
 import { Check, Crown, MapPin } from "lucide-react";
 import { useAppData } from "@/lib/app-data";
 import { RANK_TIERS, RANK_DESCRIPTIONS, getRankIndex } from "@/lib/rank";
 import { cn } from "@/lib/utils";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
+
+export interface RankLadderProps {
+  className?: string;
+  onScroll?: UIEventHandler<HTMLUListElement>;
+}
 
 /**
  * Display-only horizontal strip of every rank tier and where the user sits.
@@ -13,8 +18,8 @@ const fmt = (n: number) => n.toLocaleString("en-US");
  */
 export const RankLadder = forwardRef<
   HTMLUListElement,
-  { className?: string }
->(function RankLadder({ className }, ref) {
+  RankLadderProps
+>(function RankLadder({ className, onScroll }, ref) {
   const { totalPoints } = useAppData();
   const points = totalPoints ?? 0;
   const currentIndex = useMemo(() => getRankIndex(points), [points]);
@@ -25,6 +30,7 @@ export const RankLadder = forwardRef<
       role="list"
       aria-label="Rank ladder — swipe or use arrows to browse every tier"
       tabIndex={0}
+      onScroll={onScroll}
       className={cn(
         // Horizontal strip that actually scrolls on touch + mouse
         "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain",

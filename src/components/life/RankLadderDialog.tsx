@@ -44,8 +44,11 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
       const el = listRef.current?.querySelector<HTMLElement>(
         "[data-current-rank='true']",
       );
-      el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
-      // Allow layout to settle then sync
+      el?.scrollIntoView({
+        inline: "center",
+        block: "nearest",
+        behavior: "instant",
+      });
       requestAnimationFrame(() => syncActive());
     }, 50);
     return () => window.clearTimeout(t);
@@ -92,10 +95,8 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
         </DialogHeader>
 
         <div className="px-3 pb-4 pt-3 sm:px-4">
-          {/* The actual scroll container is the <ul> inside RankLadder */}
           <div className="-mx-1">
-            <RankLadder ref={listRef} onScroll={undefined as never} />
-            {/* Attach scroll listener via effect below because RankLadder forwards ref to ul */}
+            <RankLadder ref={listRef} onScroll={syncActive} />
           </div>
 
           <div className="mt-2 flex items-center justify-between gap-2">
@@ -130,8 +131,14 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
                       : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
                   )}
                   onClick={() => {
-                    const el = listRef.current?.children[i] as HTMLElement | undefined;
-                    el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+                    const el = listRef.current?.children[i] as
+                      | HTMLElement
+                      | undefined;
+                    el?.scrollIntoView({
+                      inline: "center",
+                      block: "nearest",
+                      behavior: "smooth",
+                    });
                   }}
                 />
               ))}
@@ -154,8 +161,3 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
     </Dialog>
   );
 }
-
-// Attach the scroll listener once the list is mounted / dialog is open.
-// We do it via a small effect inside the component above would be cleaner,
-// but to keep the file simple we rely on the ref + the effect already present.
-// (The RankLadder ul receives the ref; we need to wire onScroll.)
