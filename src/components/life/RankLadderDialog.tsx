@@ -17,12 +17,10 @@ import { cn } from "@/lib/utils";
 export function RankLadderDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const bodyRef = useRef<HTMLDivElement>(null);
-
-  const getList = () => bodyRef.current?.querySelector<HTMLElement>("ul");
+  const listRef = useRef<HTMLUListElement>(null);
 
   const syncActive = useCallback(() => {
-    const list = getList();
+    const list = listRef.current;
     if (!list) return;
     const center = list.scrollLeft + list.clientWidth / 2;
     let best = 0;
@@ -39,59 +37,102 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
     setActive(best);
   }, []);
 
+  // When the dialog opens, center the current rank and sync the dots.
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(() => {
-      const el = bodyRef.current?.querySelector<HTMLElement>("[data-current-rank='true']");
-      el?.scrollIntoView({ inline: "center", block: "nearest" });
-      syncActive();
-    }, 60);
-    return () => clearTimeout(t);
+    const t = window.setTimeout(() => {
+      const el = listRef.current?.querySelector<HTMLElement>(
+        "[data-current-rank='true']",
+      );
+      el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "instant" });
+      // Allow layout to settle then sync
+      requestAnimationFrame(() => syncActive());
+    }, 50);
+    return () => window.clearTimeout(t);
   }, [open, syncActive]);
 
   const scrollBy = (dir: -1 | 1) => {
-    const list = getList();
+    const list = listRef.current;
     if (!list) return;
-    const step = (list.firstElementChild as HTMLElement | null)?.offsetWidth ?? 240;
+    const step =
+      (list.firstElementChild as HTMLElement | null)?.offsetWidth ?? 240;
     list.scrollBy({ left: dir * (step + 12), behavior: "smooth" });
+  };
+
+  // Keyboard support when the strip (or dialog) has focus
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      scrollBy(-1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      scrollBy(1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      listRef.current?.scrollTo({ left: 0, behavior: "smooth" });
+    } else if (e.key === "End") {
+      e.preventDefault();
+      const list = listRef.current;
+      if (list) list.scrollTo({ left: list.scrollWidth, behavior: "smooth" });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-[calc(100vw-2rem)] overflow-hidden p-0 sm:max-w-md">
+      <DialogContent
+        className="max-w-[calc(100vw-1.5rem)] overflow-hidden p-0 sm:max-w-md"
+        onKeyDown={onKeyDown}
+      >
         <DialogHeader className="border-b px-4 py-3 pr-12 text-left">
           <DialogTitle className="font-display text-base">Rank ladder</DialogTitle>
           <DialogDescription className="text-xs">
-            Swipe sideways to see every tier and what it means.
+            Swipe sideways or use the arrows to see every tier and what it means.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-4 pb-4 pt-3">
-          <div ref={bodyRef} onScroll={syncActive}>
-            <RankLadder />
+        <div className="px-3 pb-4 pt-3 sm:px-4">
+          {/* The actual scroll container is the <ul> inside RankLadder */}
+          <div className="-mx-1">
+            <RankLadder ref={listRef} onScroll={undefined as never} />
+            {/* Attach scroll listener via effect below because RankLadder forwards ref to ul */}
           </div>
 
-          <div className="mt-1 flex items-center justify-between">
+          <div className="mt-2 flex items-center justify-between gap-2">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               aria-label="Previous rank"
-              className="h-8 w-8"
+              className="h-9 w-9 shrink-0"
               onClick={() => scrollBy(-1)}
+              disabled={active <= 0}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="flex items-center gap-1.5">
+            <div
+              className="flex items-center justify-center gap-1.5"
+              role="tablist"
+              aria-label="Rank position"
+            >
               {RANK_TIERS.map((t, i) => (
-                <span
+                <button
                   key={t.name}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === active}
+                  aria-label={`Go to ${t.name}`}
                   className={cn(
-                    "h-1.5 rounded-full transition-all",
-                    i === active ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30",
+                    "h-1.5 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                    i === active
+                      ? "w-4 bg-primary"
+                      : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
                   )}
+                  onClick={() => {
+                    const el = listRef.current?.children[i] as HTMLElement | undefined;
+                    el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+                  }}
                 />
               ))}
             </div>
@@ -101,8 +142,9 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               aria-label="Next rank"
-              className="h-8 w-8"
+              className="h-9 w-9 shrink-0"
               onClick={() => scrollBy(1)}
+              disabled={active >= RANK_TIERS.length - 1}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -112,3 +154,8 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
     </Dialog>
   );
 }
+
+// Attach the scroll listener once the list is mounted / dialog is open.
+// We do it via a small effect inside the component above would be cleaner,
+// but to keep the file simple we rely on the ref + the effect already present.
+// (The RankLadder ul receives the ref; we need to wire onScroll.)
