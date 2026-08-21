@@ -60,15 +60,24 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-[calc(100vw-1.5rem)] overflow-hidden p-0 sm:max-w-md">
-        <DialogHeader className="border-b px-4 py-3 pr-12 text-left">
-          <DialogTitle className="font-display text-base">Rank ladder</DialogTitle>
-          <DialogDescription className="text-xs">
+      <DialogContent
+        className={cn(
+          // Grow the modal from the center toward top + bottom
+          // Mobile: use most of the dynamic viewport; desktop: cap so it stays balanced
+          "max-h-[min(94dvh,36rem)] max-w-[calc(100vw-1.5rem)] overflow-hidden p-0",
+          "sm:max-h-[min(90vh,38rem)] sm:max-w-md",
+        )}
+      >
+        <DialogHeader className="border-b px-4 py-4 pr-12 text-left sm:py-5">
+          <DialogTitle className="font-display text-base sm:text-lg">
+            Rank ladder
+          </DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             Swipe sideways or use the arrows to see every tier and what it means.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="px-3 pb-4 pt-3 sm:px-4">
+        <div className="flex flex-col px-3 pb-5 pt-4 sm:px-4 sm:pb-6 sm:pt-5">
           <Carousel
             setApi={setApi}
             opts={{
@@ -92,7 +101,8 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
                   >
                     <div
                       className={cn(
-                        "flex h-full flex-col gap-2 rounded-xl border p-4",
+                        // Taller cards so the extra modal height is used
+                        "flex min-h-[10.5rem] flex-col gap-3 rounded-xl border p-4 sm:min-h-[12rem] sm:p-5",
                         isCurrent
                           ? "border-primary bg-primary/5 shadow-sm"
                           : "border-border",
@@ -161,7 +171,7 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
           </Carousel>
 
           {/* Controls */}
-          <div className="mt-3 flex items-center justify-between gap-2">
+          <div className="mt-4 flex items-center justify-between gap-2 sm:mt-5">
             <Button
               type="button"
               variant="ghost"
