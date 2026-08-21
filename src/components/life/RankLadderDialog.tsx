@@ -49,7 +49,6 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
   // When dialog opens, jump to the user's current rank
   useEffect(() => {
     if (!open || !api) return;
-    // Small delay so Embla has measured the slides
     const t = window.setTimeout(() => {
       api.scrollTo(currentIndex, true);
       setActive(currentIndex);
@@ -62,22 +61,25 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         className={cn(
-          // Grow the modal from the center toward top + bottom
-          // Mobile: use most of the dynamic viewport; desktop: cap so it stays balanced
-          "max-h-[min(94dvh,36rem)] max-w-[calc(100vw-1.5rem)] overflow-hidden p-0",
-          "sm:max-h-[min(90vh,38rem)] sm:max-w-md",
+          // Force a taller modal (min-height). Max only capped before — dialog stayed short.
+          // Mobile: ~58–70% of screen; desktop: comfortable fixed band.
+          "flex flex-col overflow-hidden p-0",
+          "min-h-[min(70dvh,26rem)] max-h-[min(92dvh,40rem)]",
+          "w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)]",
+          "sm:min-h-[28rem] sm:max-h-[min(88vh,42rem)] sm:w-full sm:max-w-md",
         )}
       >
-        <DialogHeader className="border-b px-4 py-4 pr-12 text-left sm:py-5">
+        <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 text-left sm:py-5">
           <DialogTitle className="font-display text-base sm:text-lg">
             Rank ladder
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
-            Swipe sideways or use the arrows to see every tier and what it means.
+            Swipe sideways to move between ranks. Each card is one rank and its full description.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col px-3 pb-5 pt-4 sm:px-4 sm:pb-6 sm:pt-5">
+        {/* Body grows to fill the taller modal */}
+        <div className="flex min-h-0 flex-1 flex-col px-3 pb-5 pt-4 sm:px-4 sm:pb-6 sm:pt-5">
           <Carousel
             setApi={setApi}
             opts={{
@@ -86,9 +88,9 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
               dragFree: false,
               skipSnaps: false,
             }}
-            className="w-full"
+            className="w-full flex-1"
           >
-            <CarouselContent className="-ml-3">
+            <CarouselContent className="-ml-3 h-full">
               {RANK_TIERS.map((tier, i) => {
                 const isCurrent = i === currentIndex;
                 const achieved = i < currentIndex;
@@ -97,12 +99,12 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
                 return (
                   <CarouselItem
                     key={tier.name}
-                    className="basis-[85%] pl-3 sm:basis-[78%]"
+                    className="basis-[88%] pl-3 sm:basis-[80%]"
                   >
                     <div
                       className={cn(
-                        // Taller cards so the extra modal height is used
-                        "flex min-h-[10.5rem] flex-col gap-3 rounded-xl border p-4 sm:min-h-[12rem] sm:p-5",
+                        // One rank per card: title + full description visible, no inner scroll
+                        "flex h-full min-h-[12rem] flex-col gap-3 rounded-xl border p-4 sm:min-h-[14rem] sm:gap-4 sm:p-5",
                         isCurrent
                           ? "border-primary bg-primary/5 shadow-sm"
                           : "border-border",
@@ -128,7 +130,7 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
                         </span>
                         <span
                           className={cn(
-                            "truncate font-display text-base font-semibold",
+                            "truncate font-display text-base font-semibold sm:text-lg",
                             isCurrent && "text-primary",
                           )}
                         >
@@ -145,7 +147,8 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
                         </span>
                       </div>
 
-                      <p className="text-sm leading-snug text-muted-foreground">
+                      {/* Full description — no clamp, no inner scroll */}
+                      <p className="text-sm leading-relaxed text-muted-foreground sm:text-[15px]">
                         {RANK_DESCRIPTIONS[tier.name]}
                       </p>
 
@@ -171,7 +174,7 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
           </Carousel>
 
           {/* Controls */}
-          <div className="mt-4 flex items-center justify-between gap-2 sm:mt-5">
+          <div className="mt-4 flex shrink-0 items-center justify-between gap-2 sm:mt-5">
             <Button
               type="button"
               variant="ghost"
