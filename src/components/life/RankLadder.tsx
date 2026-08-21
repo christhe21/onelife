@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, type UIEventHandler } from "react";
+import { useMemo } from "react";
 import { Check, Crown, MapPin } from "lucide-react";
 import { useAppData } from "@/lib/app-data";
 import { RANK_TIERS, RANK_DESCRIPTIONS, getRankIndex } from "@/lib/rank";
@@ -6,38 +6,26 @@ import { cn } from "@/lib/utils";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
-export interface RankLadderProps {
-  className?: string;
-  onScroll?: UIEventHandler<HTMLUListElement>;
-}
-
 /**
- * Display-only horizontal strip of every rank tier and where the user sits.
- * Designed for fluid sideways scrolling (Apple-style): snap points, touch-pan-x,
- * overscroll containment, responsive card width that fits phones → desktop.
+ * Display-only horizontal strip of rank tiers.
+ * Prefer RankLadderDialog (Embla carousel) for interactive browsing inside modals —
+ * native overflow scrolling is unreliable on mobile inside Radix Dialog.
+ * This component is kept for any non-modal / static use.
  */
-export const RankLadder = forwardRef<
-  HTMLUListElement,
-  RankLadderProps
->(function RankLadder({ className, onScroll }, ref) {
+export function RankLadder({ className }: { className?: string }) {
   const { totalPoints } = useAppData();
   const points = totalPoints ?? 0;
   const currentIndex = useMemo(() => getRankIndex(points), [points]);
 
   return (
     <ul
-      ref={ref}
       role="list"
-      aria-label="Rank ladder — swipe or use arrows to browse every tier"
-      tabIndex={0}
-      onScroll={onScroll}
+      aria-label="Rank ladder"
       className={cn(
-        // Horizontal strip that actually scrolls on touch + mouse
-        "flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain",
-        "touch-pan-x [-webkit-overflow-scrolling:touch]",
-        // Hide scrollbar for a clean Apple-like look (dots + arrows remain)
-        "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
-        "pb-1 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
+        "flex gap-3 overflow-x-auto overscroll-x-contain touch-pan-x",
+        "[-webkit-overflow-scrolling:touch] [scrollbar-width:none]",
+        "[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
+        "snap-x snap-mandatory pb-1",
         className,
       )}
     >
@@ -51,9 +39,7 @@ export const RankLadder = forwardRef<
             key={tier.name}
             role="listitem"
             data-current-rank={isCurrent ? "true" : undefined}
-            data-rank-index={i}
             className={cn(
-              // Responsive width: ~1 card + peek of next on phones, fixed on larger
               "flex w-[min(15rem,calc(100vw-3.5rem))] shrink-0 snap-center flex-col gap-2 rounded-xl border p-3 sm:w-60",
               isCurrent ? "border-primary bg-primary/5 shadow-sm" : "border-border",
               achieved && "opacity-70",
@@ -111,4 +97,4 @@ export const RankLadder = forwardRef<
       })}
     </ul>
   );
-});
+}

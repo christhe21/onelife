@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight, Check, Crown, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,84 +9,58 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { RankLadder } from "@/components/life/RankLadder";
-import { RANK_TIERS } from "@/lib/rank";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { useAppData } from "@/lib/app-data";
+import { RANK_TIERS, RANK_DESCRIPTIONS, getRankIndex } from "@/lib/rank";
 import { cn } from "@/lib/utils";
 
-/** Wraps the rank ladder in a modal; the caller supplies the trigger. */
+const fmt = (n: number) => n.toLocaleString("en-US");
+
+/** Rank ladder modal — horizontal Embla carousel (reliable on mobile inside Dialog). */
 export function RankLadderDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [api, setApi] = useState<CarouselApi>();
   const [active, setActive] = useState(0);
-  const listRef = useRef<HTMLUListElement>(null);
+  const { totalPoints } = useAppData();
+  const points = totalPoints ?? 0;
+  const currentIndex = getRankIndex(points);
 
-  const syncActive = useCallback(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const center = list.scrollLeft + list.clientWidth / 2;
-    let best = 0;
-    let bestDist = Infinity;
-    Array.from(list.children).forEach((child, i) => {
-      const el = child as HTMLElement;
-      const mid = el.offsetLeft + el.offsetWidth / 2;
-      const d = Math.abs(mid - center);
-      if (d < bestDist) {
-        bestDist = d;
-        best = i;
-      }
-    });
-    setActive(best);
+  const onSelect = useCallback((carouselApi: CarouselApi) => {
+    if (!carouselApi) return;
+    setActive(carouselApi.selectedScrollSnap());
   }, []);
 
-  // When the dialog opens, center the current rank and sync the dots.
   useEffect(() => {
-    if (!open) return;
+    if (!api) return;
+    onSelect(api);
+    api.on("select", onSelect);
+    api.on("reInit", onSelect);
+    return () => {
+      api.off("select", onSelect);
+      api.off("reInit", onSelect);
+    };
+  }, [api, onSelect]);
+
+  // When dialog opens, jump to the user's current rank
+  useEffect(() => {
+    if (!open || !api) return;
+    // Small delay so Embla has measured the slides
     const t = window.setTimeout(() => {
-      const el = listRef.current?.querySelector<HTMLElement>(
-        "[data-current-rank='true']",
-      );
-      el?.scrollIntoView({
-        inline: "center",
-        block: "nearest",
-        behavior: "instant",
-      });
-      requestAnimationFrame(() => syncActive());
-    }, 50);
+      api.scrollTo(currentIndex, true);
+      setActive(currentIndex);
+    }, 40);
     return () => window.clearTimeout(t);
-  }, [open, syncActive]);
-
-  const scrollBy = (dir: -1 | 1) => {
-    const list = listRef.current;
-    if (!list) return;
-    const step =
-      (list.firstElementChild as HTMLElement | null)?.offsetWidth ?? 240;
-    list.scrollBy({ left: dir * (step + 12), behavior: "smooth" });
-  };
-
-  // Keyboard support when the strip (or dialog) has focus
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      scrollBy(-1);
-    } else if (e.key === "ArrowRight") {
-      e.preventDefault();
-      scrollBy(1);
-    } else if (e.key === "Home") {
-      e.preventDefault();
-      listRef.current?.scrollTo({ left: 0, behavior: "smooth" });
-    } else if (e.key === "End") {
-      e.preventDefault();
-      const list = listRef.current;
-      if (list) list.scrollTo({ left: list.scrollWidth, behavior: "smooth" });
-    }
-  };
+  }, [open, api, currentIndex]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent
-        className="max-w-[calc(100vw-1.5rem)] overflow-hidden p-0 sm:max-w-md"
-        onKeyDown={onKeyDown}
-      >
+      <DialogContent className="max-w-[calc(100vw-1.5rem)] overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="border-b px-4 py-3 pr-12 text-left">
           <DialogTitle className="font-display text-base">Rank ladder</DialogTitle>
           <DialogDescription className="text-xs">
@@ -95,19 +69,107 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
         </DialogHeader>
 
         <div className="px-3 pb-4 pt-3 sm:px-4">
-          <div className="-mx-1">
-            <RankLadder ref={listRef} onScroll={syncActive} />
-          </div>
+          <Carousel
+            setApi={setApi}
+            opts={{
+              align: "center",
+              containScroll: "trimSnaps",
+              dragFree: false,
+              skipSnaps: false,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-3">
+              {RANK_TIERS.map((tier, i) => {
+                const isCurrent = i === currentIndex;
+                const achieved = i < currentIndex;
+                const isTop = i === RANK_TIERS.length - 1;
 
-          <div className="mt-2 flex items-center justify-between gap-2">
+                return (
+                  <CarouselItem
+                    key={tier.name}
+                    className="basis-[85%] pl-3 sm:basis-[78%]"
+                  >
+                    <div
+                      className={cn(
+                        "flex h-full flex-col gap-2 rounded-xl border p-4",
+                        isCurrent
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border",
+                        achieved && "opacity-70",
+                      )}
+                      data-current-rank={isCurrent ? "true" : undefined}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                            isCurrent
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                          aria-hidden
+                        >
+                          {achieved ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : (
+                            i + 1
+                          )}
+                        </span>
+                        <span
+                          className={cn(
+                            "truncate font-display text-base font-semibold",
+                            isCurrent && "text-primary",
+                          )}
+                        >
+                          {tier.name}
+                        </span>
+                        {isTop && (
+                          <Crown
+                            className="h-4 w-4 shrink-0 text-primary"
+                            aria-label="Top rank"
+                          />
+                        )}
+                        <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {fmt(tier.min)} pts
+                        </span>
+                      </div>
+
+                      <p className="text-sm leading-snug text-muted-foreground">
+                        {RANK_DESCRIPTIONS[tier.name]}
+                      </p>
+
+                      {isCurrent ? (
+                        <span className="mt-auto inline-flex w-fit items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                          <MapPin className="h-3.5 w-3.5" aria-hidden />
+                          You are here · {fmt(points)} pts
+                        </span>
+                      ) : achieved ? (
+                        <span className="mt-auto text-xs text-muted-foreground">
+                          Achieved
+                        </span>
+                      ) : (
+                        <span className="mt-auto text-xs text-muted-foreground">
+                          {fmt(Math.max(0, tier.min - points))} pts to go
+                        </span>
+                      )}
+                    </div>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+          </Carousel>
+
+          {/* Controls */}
+          <div className="mt-3 flex items-center justify-between gap-2">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               aria-label="Previous rank"
               className="h-9 w-9 shrink-0"
-              onClick={() => scrollBy(-1)}
-              disabled={active <= 0}
+              onClick={() => api?.scrollPrev()}
+              disabled={!api?.canScrollPrev()}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -130,16 +192,7 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
                       ? "w-4 bg-primary"
                       : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
                   )}
-                  onClick={() => {
-                    const el = listRef.current?.children[i] as
-                      | HTMLElement
-                      | undefined;
-                    el?.scrollIntoView({
-                      inline: "center",
-                      block: "nearest",
-                      behavior: "smooth",
-                    });
-                  }}
+                  onClick={() => api?.scrollTo(i)}
                 />
               ))}
             </div>
@@ -150,8 +203,8 @@ export function RankLadderDialog({ children }: { children: React.ReactNode }) {
               size="icon"
               aria-label="Next rank"
               className="h-9 w-9 shrink-0"
-              onClick={() => scrollBy(1)}
-              disabled={active >= RANK_TIERS.length - 1}
+              onClick={() => api?.scrollNext()}
+              disabled={!api?.canScrollNext()}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
