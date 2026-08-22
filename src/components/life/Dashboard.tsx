@@ -34,19 +34,23 @@ export function Dashboard() {
   const isEmpty = goals.length + tasks.length + bucketList.length === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="tour-dashboard">
       {isEmpty && <EmptyStateHero />}
 
-      <RankLadderDialog>
-        <button type="button" className="block w-full text-left">
-          <RankCard interactive />
-        </button>
-      </RankLadderDialog>
+      <div data-tour="tour-rank">
+        <RankLadderDialog>
+          <button type="button" className="block w-full text-left">
+            <RankCard interactive />
+          </button>
+        </RankLadderDialog>
+      </div>
 
-      <LifeTimeline />
+      <div data-tour="tour-timeline">
+        <LifeTimeline />
+      </div>
 
       {/* Hero stats */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="tour-stats">
         <StatCard
           icon={<Target className="h-4 w-4" />}
           label="Active goals"
