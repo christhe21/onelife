@@ -8,18 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner";
+import { APP_NAME } from "@/lib/site";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
   head: () => ({
     meta: [
-      { title: "Sign in — OneLife" },
+      { title: `Sign in — ${APP_NAME}` },
       {
         name: "description",
         content:
-          "Sign in to OneLife to sync your goals, sub-goals, tasks, skills and bucket list securely across devices.",
+          `Sign in to ${APP_NAME} to sync your goals, sub-goals, tasks, skills and bucket list securely across devices.`,
       },
-      { property: "og:title", content: "Sign in — OneLife" },
+      { property: "og:title", content: `Sign in — ${APP_NAME}` },
       {
         property: "og:description",
         content: "Sync your goals, tasks, skills and bucket list across devices.",
