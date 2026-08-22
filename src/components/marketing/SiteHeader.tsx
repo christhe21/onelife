@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Github, Menu, Sparkles, X } from "lucide-react";
+import { Github, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GITHUB_URL, APP_NAME } from "@/lib/site";
+import { BrandMark } from "@/components/marketing/BrandMark";
 
 const LINKS = [
   { to: "/", label: "Home" },
@@ -17,9 +18,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-5 py-3">
         <Link to="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <Sparkles className="h-4 w-4" />
-          </span>
+          <BrandMark />
           <span className="font-display text-base font-semibold tracking-tight">{APP_NAME}</span>
         </Link>
 
@@ -43,7 +42,7 @@ export function SiteHeader() {
               href={GITHUB_URL}
               target="_blank"
               rel="noreferrer noopener"
-              aria-label="OneLife on GitHub"
+              aria-label={`${APP_NAME} on GitHub`}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <Github className="h-[18px] w-[18px]" />

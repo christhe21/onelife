@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Github, Sparkles } from "lucide-react";
+import { Github } from "lucide-react";
 import { GITHUB_URL, APP_NAME, APP_TAGLINE } from "@/lib/site";
+import { BrandMark } from "@/components/marketing/BrandMark";
 
 export function SiteFooter() {
   return (
@@ -8,9 +9,7 @@ export function SiteFooter() {
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-12 sm:grid-cols-3">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
-            </span>
+            <BrandMark />
             <span className="font-display text-base font-semibold">{APP_NAME}</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-muted-foreground">{APP_TAGLINE}</p>
