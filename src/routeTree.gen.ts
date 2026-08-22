@@ -10,14 +10,27 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CreateGoalRouteImport } from './routes/create-goal'
+import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -28,6 +41,11 @@ const AuthRoute = AuthRouteImport.update({
 const CreateGoalRoute = CreateGoalRouteImport.update({
   id: '/create-goal',
   path: '/create-goal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomeRoute = HomeRouteImport.update({
@@ -44,23 +62,32 @@ const ApiPublicHooksSendRemindersRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
   '/create-goal': typeof CreateGoalRoute
+  '/features': typeof FeaturesRoute
   '/home': typeof HomeRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
   '/create-goal': typeof CreateGoalRoute
+  '/features': typeof FeaturesRoute
   '/home': typeof HomeRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/app': typeof AppRoute
   '/auth': typeof AuthRoute
   '/create-goal': typeof CreateGoalRoute
+  '/features': typeof FeaturesRoute
   '/home': typeof HomeRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
@@ -68,30 +95,42 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
+    | '/app'
     | '/auth'
     | '/create-goal'
+    | '/features'
     | '/home'
     | '/api/public/hooks/send-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
+    | '/app'
     | '/auth'
     | '/create-goal'
+    | '/features'
     | '/home'
     | '/api/public/hooks/send-reminders'
   id:
     | '__root__'
     | '/'
+    | '/about'
+    | '/app'
     | '/auth'
     | '/create-goal'
+    | '/features'
     | '/home'
     | '/api/public/hooks/send-reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AppRoute: typeof AppRoute
   AuthRoute: typeof AuthRoute
   CreateGoalRoute: typeof CreateGoalRoute
+  FeaturesRoute: typeof FeaturesRoute
   HomeRoute: typeof HomeRoute
   ApiPublicHooksSendRemindersRoute: typeof ApiPublicHooksSendRemindersRoute
 }
@@ -103,6 +142,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -117,6 +170,13 @@ declare module '@tanstack/react-router' {
       path: '/create-goal'
       fullPath: '/create-goal'
       preLoaderRoute: typeof CreateGoalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/home': {
@@ -138,8 +198,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AppRoute: AppRoute,
   AuthRoute: AuthRoute,
   CreateGoalRoute: CreateGoalRoute,
+  FeaturesRoute: FeaturesRoute,
   HomeRoute: HomeRoute,
   ApiPublicHooksSendRemindersRoute: ApiPublicHooksSendRemindersRoute,
 }

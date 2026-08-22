@@ -659,7 +659,7 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
             size="sm"
             onClick={() => {
               if (onGoMarketplace) onGoMarketplace();
-              else navigate({ to: "/" });
+              else navigate({ to: "/app", search: {} });
             }}
           >
             <Store className="h-4 w-4 mr-2" />

@@ -1,20 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Welcome } from "@/components/life/Welcome";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/home")({
-  component: Home,
-  head: () => ({
-    meta: [
-      { title: "Welcome — OneLife" },
-      {
-        name: "description",
-        content:
-          "Session-based life manager: organize goals by skill, track sub-goals on a timeline, manage tasks, and keep a bucket list. Export/import as JSON.",
-      },
-    ],
-  }),
+  beforeLoad: () => {
+    throw redirect({ to: "/", replace: true });
+  },
 });
-
-function Home() {
-  return <Welcome />;
-}

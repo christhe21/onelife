@@ -303,13 +303,13 @@ export function CreateGoalWizard() {
     }
 
     toast.success("Goal created");
-    navigate({ to: "/" });
+    navigate({ to: "/app", search: {} });
   };
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 pb-32">
       <div className="flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/" })} className="gap-2">
+        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/app", search: {} })} className="gap-2">
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
@@ -619,7 +619,7 @@ export function CreateGoalWizard() {
       {/* Sticky footer */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-4xl items-center justify-end gap-2">
-          <Button variant="ghost" onClick={() => navigate({ to: "/" })}>
+          <Button variant="ghost" onClick={() => navigate({ to: "/app", search: {} })}>
             Cancel
           </Button>
           <Button onClick={handleSave} className="gap-2">

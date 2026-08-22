@@ -40,11 +40,11 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/", search: {}, replace: true });
+      if (data.session) navigate({ to: "/app", search: {}, replace: true });
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-        navigate({ to: "/", search: {}, replace: true });
+        navigate({ to: "/app", search: {}, replace: true });
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -87,7 +87,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/", search: {}, replace: true });
+    navigate({ to: "/app", search: {}, replace: true });
   }
 
   return (
@@ -164,7 +164,7 @@ function AuthPage() {
         </button>
 
         <div className="mt-6 text-center">
-          <Link to="/home" className="text-xs text-muted-foreground hover:underline">
+          <Link to="/" className="text-xs text-muted-foreground hover:underline">
             Continue without an account
           </Link>
         </div>
