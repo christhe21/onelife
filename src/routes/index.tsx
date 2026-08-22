@@ -18,6 +18,7 @@ import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { GoalMarketplace } from "@/components/life/GoalMarketplace";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
+import { GuidedTour } from "@/components/life/GuidedTour";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
@@ -49,8 +50,14 @@ function Shell() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("dashboard");
+  const [tourSignal, setTourSignal] = useState(0);
   const { goals, tasks, bucketList, settings, importMarketplaceGoal } = useAppData();
   useAppSettingsEffects();
+  useEffect(() => {
+    const onReplay = () => setTourSignal((n) => n + 1);
+    window.addEventListener("onelife:start-tutorial", onReplay);
+    return () => window.removeEventListener("onelife:start-tutorial", onReplay);
+  }, []);
   const stats = {
     goals: goals.filter((g) => g.status !== "completed").length,
     tasks: tasks.filter((t) => !t.done).length,
@@ -67,6 +74,7 @@ function Shell() {
 
   return (
     <AppShell tab={tab} onTab={setTab} stats={stats} onHome={() => navigate({ to: "/home" })}>
+      <GuidedTour tab={tab} onTab={setTab} startSignal={tourSignal} />
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
       {tab === "today" && (
