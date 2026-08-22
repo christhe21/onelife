@@ -1,0 +1,231 @@
+import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
+import { ArrowRight, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAppData } from "@/lib/app-data";
+import { TOUR_STEPS, type CalendarTourView, type OverviewTourView } from "@/lib/product-tour";
+import type { TabId } from "@/components/life/AppShell";
+import { cn } from "@/lib/utils";
+
+type Phase = "idle" | "invite" | "running";
+
+type Rect = { top: number; left: number; width: number; height: number };
+
+export function ProductTour({
+  tab,
+  onTab,
+  onCalendarView,
+  onOverviewView,
+}: {
+  tab: TabId;
+  onTab: (t: TabId) => void;
+  onCalendarView?: (v: CalendarTourView) => void;
+  onOverviewView?: (v: OverviewTourView) => void;
+}) {
+  const { settings, updateSettings } = useAppData();
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [stepIdx, setStepIdx] = useState(0);
+  const [hole, setHole] = useState<Rect | null>(null);
+
+  const dismiss = useCallback(() => {
+    updateSettings({ tourCompletedAt: new Date().toISOString() });
+    setPhase("idle");
+    setStepIdx(0);
+  }, [updateSettings]);
+
+  const start = useCallback(() => {
+    setStepIdx(0);
+    setPhase("running");
+  }, []);
+
+  useEffect(() => {
+    if (!settings.onboardedAt || settings.tourCompletedAt) return;
+    const t = window.setTimeout(() => setPhase("invite"), 400);
+    return () => window.clearTimeout(t);
+  }, [settings.onboardedAt, settings.tourCompletedAt]);
+
+  useEffect(() => {
+    const onReplay = () => {
+      updateSettings({ tourCompletedAt: undefined });
+      start();
+    };
+    window.addEventListener("onelife:start-tour", onReplay);
+    return () => window.removeEventListener("onelife:start-tour", onReplay);
+  }, [start, updateSettings]);
+
+  const step = TOUR_STEPS[stepIdx];
+
+  useEffect(() => {
+    if (phase !== "running" || !step) return;
+    onTab(step.tab);
+    if (step.calendarView) onCalendarView?.(step.calendarView);
+    if (step.overviewView) onOverviewView?.(step.overviewView);
+  }, [phase, step, onTab, onCalendarView, onOverviewView]);
+
+  const measure = useCallback(() => {
+    if (phase !== "running" || !step?.target) {
+      setHole(null);
+      return;
+    }
+    const el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
+    if (!el) {
+      setHole(null);
+      return;
+    }
+    el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const r = el.getBoundingClientRect();
+    setHole({
+      top: r.top - 6,
+      left: r.left - 6,
+      width: r.width + 12,
+      height: r.height + 12,
+    });
+  }, [phase, step]);
+
+  useLayoutEffect(() => {
+    if (phase !== "running") return;
+    const t = window.setTimeout(measure, 80);
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [phase, stepIdx, tab, measure]);
+
+  const next = useCallback(() => {
+    if (stepIdx >= TOUR_STEPS.length - 1) {
+      dismiss();
+      return;
+    }
+    setStepIdx((i) => i + 1);
+  }, [dismiss, stepIdx]);
+
+  const back = useCallback(() => {
+    setStepIdx((i) => Math.max(0, i - 1));
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "running" || !step?.advanceOnTargetClick || !step.target) return;
+    const onClick = (e: MouseEvent) => {
+      const el = document.querySelector(`[data-tour="${step.target}"]`);
+      if (el && e.target instanceof Node && el.contains(e.target)) {
+        window.setTimeout(next, 120);
+      }
+    };
+    window.addEventListener("click", onClick, true);
+    return () => window.removeEventListener("click", onClick, true);
+  }, [phase, step, next]);
+
+  if (phase === "idle") return null;
+
+  if (phase === "invite") {
+    return (
+      <div className="fixed inset-0 z-[80] flex items-end justify-center bg-foreground/40 p-4 backdrop-blur-sm sm:items-center">
+        <div
+          role="dialog"
+          aria-labelledby="tour-invite-title"
+          className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl"
+        >
+          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <h2 id="tour-invite-title" className="font-display text-xl font-semibold">
+            Do you want a tutorial on this?
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            A short walk through Dashboard, Calendar, Overview, and Settings — what each section is
+            and what you can do there. You can skip and replay it later from Settings.
+          </p>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={dismiss}>
+              Not now
+            </Button>
+            <Button onClick={start}>
+              Start tutorial <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const tooltipStyle = tooltipPosition(hole);
+
+  return (
+    <div className="fixed inset-0 z-[80]" aria-live="polite">
+      <div className="absolute inset-0 bg-foreground/50" onClick={(e) => e.stopPropagation()} />
+      {hole && (
+        <div
+          className="pointer-events-none absolute rounded-xl ring-2 ring-primary shadow-[0_0_0_9999px_hsl(var(--foreground)/0.55)]"
+          style={{
+            top: hole.top,
+            left: hole.left,
+            width: hole.width,
+            height: hole.height,
+          }}
+        />
+      )}
+      <div
+        className={cn(
+          "absolute z-[81] w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border bg-card p-4 shadow-2xl",
+        )}
+        style={tooltipStyle}
+        role="dialog"
+        aria-labelledby="tour-step-title"
+      >
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-primary">
+            {step.section} · {stepIdx + 1} of {TOUR_STEPS.length}
+          </p>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            onClick={dismiss}
+            aria-label="Skip tutorial"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <h2 id="tour-step-title" className="font-display text-base font-semibold">
+          {step.title}
+        </h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">{step.body}</p>
+        {step.advanceOnTargetClick && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Click the highlighted control, or press Next.
+          </p>
+        )}
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <Button variant="ghost" size="sm" onClick={back} disabled={stepIdx === 0}>
+            Back
+          </Button>
+          <Button size="sm" onClick={next}>
+            {stepIdx === TOUR_STEPS.length - 1 ? "Finish" : "Next"}
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function tooltipPosition(hole: Rect | null): CSSProperties {
+  const width = Math.min(352, typeof window === "undefined" ? 352 : window.innerWidth - 24);
+  if (!hole) {
+    return { left: "50%", top: "50%", transform: "translate(-50%, -50%)" };
+  }
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const left = Math.min(Math.max(12, hole.left), vw - width - 12);
+  const below = hole.top + hole.height + 12;
+  if (below + 220 < vh) return { top: below, left };
+  const above = hole.top - 12 - 200;
+  if (above > 12) return { top: Math.max(12, above), left };
+  return { top: Math.max(12, vh / 2 - 110), left };
+}
+
+export function startProductTour() {
+  window.dispatchEvent(new Event("onelife:start-tour"));
+}
