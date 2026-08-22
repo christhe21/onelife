@@ -30,9 +30,9 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE_URL },
-      { property: "og:image", content: `${SITE_URL}/marketing/dashboard.png` },
+      { property: "og:image", content: `${SITE_URL}/marketing/dashboard.jpg` },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:image", content: `${SITE_URL}/marketing/dashboard.png` },
+      { name: "twitter:image", content: `${SITE_URL}/marketing/dashboard.jpg` },
     ],
     links: [{ rel: "canonical", href: SITE_URL }],
     scripts: [
@@ -141,7 +141,7 @@ function MarketingHome() {
 
           <Reveal delay={200} from="scale" className="mt-14">
             <ScreenshotFrame
-              src="/marketing/dashboard.png"
+              src="/marketing/dashboard.jpg"
               alt="OneLife dashboard showing rank progress, skills and upcoming goals"
               caption="The dashboard: rank, skills and what needs you next."
             />
@@ -186,14 +186,14 @@ function MarketingHome() {
           <div className="mt-10 grid gap-8 lg:grid-cols-2">
             <Reveal from="left">
               <ScreenshotFrame
-                src="/marketing/calendar.png"
+                src="/marketing/calendar.jpg"
                 alt="OneLife calendar with scheduled tasks, heatmap and progress rings"
                 caption="Calendar with drag-to-reschedule and auto-scheduling."
               />
             </Reveal>
             <Reveal from="right" delay={120}>
               <ScreenshotFrame
-                src="/marketing/overview.png"
+                src="/marketing/overview.jpg"
                 alt="OneLife mindmap overview linking skills, goals, milestones and tasks"
                 caption="Mindmap overview of everything you're working toward."
               />

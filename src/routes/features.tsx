@@ -64,7 +64,7 @@ const GROUPS: {
       "Configurable work hours, recurrence rules and .ics export",
     ],
     shot: {
-      src: "/marketing/calendar.png",
+      src: "/marketing/calendar.jpg",
       alt: "OneLife calendar with scheduled task blocks and progress rings",
     },
   },
@@ -78,7 +78,7 @@ const GROUPS: {
       "Theme-aware rendering in light and dark",
     ],
     shot: {
-      src: "/marketing/overview.png",
+      src: "/marketing/overview.jpg",
       alt: "OneLife mindmap of skills, goals, milestones and tasks",
     },
   },
@@ -92,7 +92,7 @@ const GROUPS: {
       "Confetti and sound when you rank up",
     ],
     shot: {
-      src: "/marketing/ranks.png",
+      src: "/marketing/ranks.jpg",
       alt: "OneLife rank ladder showing tiers from Beginner to One",
     },
   },
