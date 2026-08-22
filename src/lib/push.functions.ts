@@ -77,7 +77,7 @@ export const syncReminders = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .is("sent_at", null);
     if (keep.length > 0) {
-      del = del.not("dedupe_key", "in", `(${keep.map((k) => `\"${k}\"`).join(",")})`);
+      del = del.not("dedupe_key", "in", `(${keep.map((k) => '"' + k + '"').join(",")})`);
     }
     const { error: delError } = await del;
     if (delError) throw new Error(delError.message);
