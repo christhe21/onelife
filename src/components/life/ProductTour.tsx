@@ -19,6 +19,8 @@ const TARGET_LABELS: Record<string, string> = {
   "cal-month": "Month",
   "overview-tree": "Tree",
   "overview-map": "Map",
+  "settings-appearance": "Appearance",
+  "settings-type": "Text size",
 };
 
 export function findTourTarget(target?: string): HTMLElement | null {
@@ -27,12 +29,20 @@ export function findTourTarget(target?: string): HTMLElement | null {
   if (byAttr) return byAttr;
   const label = TARGET_LABELS[target];
   if (!label) return null;
-  return (
-    Array.from(document.querySelectorAll("button")).find((b) => {
+  const buttons = Array.from(document.querySelectorAll("button"));
+  const exactBtn =
+    buttons.find((b) => {
       const text = b.textContent?.replace(/\s+/g, " ").trim() ?? "";
       return text === label || text.endsWith(label);
-    }) ?? null
-  );
+    }) ?? null;
+  if (exactBtn) return exactBtn;
+  const titled = Array.from(document.querySelectorAll("h2, h3, div, span")).filter((el) => {
+    const text = el.textContent?.replace(/\s+/g, " ").trim() ?? "";
+    return text === label || text.startsWith(label + " ") || text.endsWith(" " + label);
+  });
+  titled.sort((a, b) => (a.textContent?.length ?? 0) - (b.textContent?.length ?? 0));
+  const hit = titled[0] as HTMLElement | undefined;
+  return (hit?.closest("[class*='rounded']") as HTMLElement | null) ?? hit ?? null;
 }
 
 function writeTourDoneFlag(done: boolean) {
@@ -63,7 +73,7 @@ export function ProductTour({
   onCalendarView?: (v: CalendarTourView) => void;
   onOverviewView?: (v: OverviewTourView) => void;
 }) {
-  const { settings, updateSettings } = useAppData();
+  const { settings } = useAppData();
   const [phase, setPhase] = useState<Phase>("idle");
   const [stepIdx, setStepIdx] = useState(0);
   const [hole, setHole] = useState<Rect | null>(null);
@@ -72,11 +82,10 @@ export function ProductTour({
 
   const dismiss = useCallback(() => {
     writeTourDoneFlag(true);
-    updateSettings({ tourCompletedAt: new Date().toISOString() });
     setPhase("idle");
     setStepIdx(0);
     setHole(null);
-  }, [updateSettings]);
+  }, []);
 
   const start = useCallback(() => {
     writeTourDoneFlag(false);
@@ -85,22 +94,21 @@ export function ProductTour({
   }, []);
 
   useEffect(() => {
-    if (!settings.onboardedAt || settings.tourCompletedAt || readTourDoneFlag()) return;
+    if (!settings.onboardedAt || readTourDoneFlag()) return;
     const t = window.setTimeout(() => {
       if (phaseRef.current === "idle") setPhase("invite");
     }, 450);
     return () => window.clearTimeout(t);
-  }, [settings.onboardedAt, settings.tourCompletedAt]);
+  }, [settings.onboardedAt]);
 
   useEffect(() => {
     const onReplay = () => {
       writeTourDoneFlag(false);
-      updateSettings({ tourCompletedAt: undefined });
       start();
     };
     window.addEventListener("onelife:start-tour", onReplay);
     return () => window.removeEventListener("onelife:start-tour", onReplay);
-  }, [start, updateSettings]);
+  }, [start]);
 
   const step = TOUR_STEPS[stepIdx];
 
@@ -109,6 +117,11 @@ export function ProductTour({
     onTab(step.tab);
     if (step.calendarView) onCalendarView?.(step.calendarView);
     if (step.overviewView) onOverviewView?.(step.overviewView);
+    const clickTimer = window.setTimeout(() => {
+      if (!step.target || !step.advanceOnTargetClick) return;
+      findTourTarget(step.target)?.click();
+    }, 70);
+    return () => window.clearTimeout(clickTimer);
   }, [phase, step, onTab, onCalendarView, onOverviewView]);
 
   const measure = useCallback(() => {
@@ -287,7 +300,6 @@ export function ProductTour({
   );
 }
 
-/** Four panes dim the page but leave the highlighted control clickable. */
 function SpotlightMask({ hole }: { hole: Rect | null }) {
   if (!hole) {
     return <div className="absolute inset-0 bg-foreground/50" />;
