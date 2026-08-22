@@ -1,4 +1,4 @@
-# OneLife — Go-to-Production Readiness Report
+# LifeVerse One — Go-to-Production Readiness Report
 
 **Date**: July 11, 2026  
 **Repo**: christhe21/onelife  
@@ -69,7 +69,7 @@
 
 ### 4. Cross-Cutting & Data Flow
 
-- **Persistence**: localStorage ("life-manager:v1"), robust normalize\* fns on import (ID regen on append, date correction for subtasks, validation).
+- **Persistence**: localStorage ("life-manager:v1"), robust normalize* fns on import (ID regen on append, date correction for subtasks, validation).
 - **Cascades**: SubGoal done → linked tasks done; Task/SubTask done → spentHours bump on goal; Goal completion celebration.
 - **Notifications**: use-notifications.ts + Android NotificationScheduler (AlarmManager). Some duplication noted.
 - **Export/Import**: Full JSON roundtrip (versioned), ICS calendar export. Marketplace templates import with optional auto-schedule.
@@ -96,7 +96,7 @@ These are drawn from code inspection, ANDROID.md (known issues section), plan.md
 
 ### Medium / Polish
 
-6. **Branding Inconsistency**: "Life Manager" (README, some headers, export filenames) vs "OneLife" (manifest, PWA, Android).
+6. **Branding Inconsistency**: "Life Manager" (README, some headers, export filenames) vs "LifeVerse One" (manifest, PWA, Android).
 7. **Route/UI Quirks**: `/create-goal` may lack full AppShell sidebar in some flows (per plan). Some dialogs or views have minor layout nits on mobile.
 8. **Android-Specific**:
    - System bar theme follows device, not in-app toggle.
