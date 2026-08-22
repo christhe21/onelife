@@ -13,9 +13,9 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { ScreenshotFrame } from "@/components/marketing/ScreenshotFrame";
 import { CTABand } from "@/components/marketing/CTABand";
-import { SITE_URL } from "@/lib/site";
+import { APP_NAME, SITE_URL } from "@/lib/site";
 
-const TITLE = "Features — OneLife";
+const TITLE = `Features — ${APP_NAME}`;
 const DESC =
   "Skills, goals, milestones and tasks, a drag-and-drop calendar with auto-scheduling, a mindmap overview, ranks and points, reminders, themes and cloud sync.";
 
@@ -54,7 +54,7 @@ const GROUPS: {
     ],
     shot: {
       src: "/marketing/goals.jpg",
-      alt: "OneLife goals list with skills, milestones and progress",
+      alt: `${APP_NAME} goals list with skills, milestones and progress`,
     },
   },
   {
@@ -69,7 +69,7 @@ const GROUPS: {
     ],
     shot: {
       src: "/marketing/calendar.jpg",
-      alt: "OneLife calendar with scheduled task blocks and progress rings",
+      alt: `${APP_NAME} calendar with scheduled task blocks and progress rings`,
     },
   },
   {
@@ -83,7 +83,7 @@ const GROUPS: {
     ],
     shot: {
       src: "/marketing/overview.jpg",
-      alt: "OneLife mindmap of skills, goals, milestones and tasks",
+      alt: `${APP_NAME} mindmap of skills, goals, milestones and tasks`,
     },
   },
   {
@@ -97,7 +97,7 @@ const GROUPS: {
     ],
     shot: {
       src: "/marketing/ranks.jpg",
-      alt: "OneLife rank ladder showing tiers from Beginner to One",
+      alt: `${APP_NAME} rank ladder showing tiers from Beginner to One`,
     },
   },
   {
@@ -148,7 +148,7 @@ function FeaturesPage() {
       <section className="mx-auto w-full max-w-6xl px-5 pb-6 pt-16 sm:pt-20">
         <Reveal>
           <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-            Everything OneLife does
+            Everything {APP_NAME} does
           </h1>
           <p className="mt-4 max-w-2xl text-sm text-muted-foreground sm:text-lg">{DESC}</p>
         </Reveal>
