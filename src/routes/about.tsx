@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { CTABand } from "@/components/marketing/CTABand";
-import { GITHUB_URL, SITE_URL } from "@/lib/site";
+import { APP_NAME, GITHUB_URL, SITE_URL } from "@/lib/site";
 
-const TITLE = "About — OneLife";
+const TITLE = `About — ${APP_NAME}`;
 const DESC =
-  "OneLife is built by a productivity practitioner focused on improving their own life and helping others do the same. Free to use, open to feedback.";
+  `${APP_NAME} is built by a productivity practitioner focused on improving their own life and helping others do the same. Free to use, open to feedback.`;
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -40,7 +40,7 @@ const VALUES = [
   {
     icon: Rocket,
     title: "Free while it grows",
-    desc: "OneLife is free to use today. No paywalls, no upsell in the middle of your planning session.",
+    desc: `${APP_NAME} is free to use today. No paywalls, no upsell in the middle of your planning session.`,
   },
 ];
 
@@ -50,7 +50,7 @@ function AboutPage() {
       <section className="mx-auto w-full max-w-3xl px-5 pt-16 sm:pt-24">
         <Reveal>
           <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
-            Why OneLife exists
+            Why {APP_NAME} exists
           </h1>
         </Reveal>
         <Reveal delay={90}>
@@ -62,7 +62,7 @@ function AboutPage() {
               ambition and useless on a Tuesday morning.
             </p>
             <p>
-              OneLife is my answer. It holds the whole chain in one place — the life skills you're
+              {APP_NAME} is my answer. It holds the whole chain in one place — the life skills you're
               investing in, the goals under them, the milestones that prove you're moving, the tasks
               that get it done, and the calendar where they finally take up real time.
             </p>
@@ -95,7 +95,7 @@ function AboutPage() {
           <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="font-display text-xl font-semibold">Where it stands today</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              OneLife runs on the web and ships as an Android build. It's free, actively developed,
+              {APP_NAME} runs on the web and ships as an Android build. It's free, actively developed,
               and shaped by the people who use it. If something is missing or annoying, say so — the
               fastest way in is an issue on GitHub.
             </p>
