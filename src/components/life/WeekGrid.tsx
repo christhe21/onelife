@@ -21,6 +21,7 @@ type CalDrag = {
 };
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const TIME_COL_PX = 56;
 
 function ymd(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -131,11 +132,11 @@ export function WeekGrid({
       <div
         className="grid"
         style={{
-          minWidth: 56 + 7 * WEEK_MIN_COL_PX,
-          gridTemplateColumns: `56px repeat(7, minmax(${WEEK_MIN_COL_PX}px, 1fr))`,
+          minWidth: TIME_COL_PX + 7 * WEEK_MIN_COL_PX,
+          gridTemplateColumns: `${TIME_COL_PX}px repeat(7, minmax(${WEEK_MIN_COL_PX}px, 1fr))`,
         }}
       >
-        <div className="sticky top-0 z-20 border-b bg-background" />
+        <div className="sticky top-0 left-0 z-40 border-b border-r bg-background" />
         {days.map((d, i) => {
           const isToday = sameDay(d, today);
           return (
@@ -156,7 +157,7 @@ export function WeekGrid({
           );
         })}
 
-        <div className="relative">
+        <div className="relative sticky left-0 z-30 bg-background shadow-[4px_0_8px_-4px_hsl(var(--foreground)/0.18)]">
           {showNow && (
             <div
               className="pointer-events-none absolute left-0 right-0 z-30 flex items-center justify-end pr-1"
@@ -175,7 +176,7 @@ export function WeekGrid({
           {HOURS.map((h) => (
             <div
               key={h}
-              className="border-t pl-1.5 pt-0.5 text-[10px] tabular-nums text-muted-foreground"
+              className="border-t border-r pl-1 pt-0.5 text-[10px] leading-tight tabular-nums text-muted-foreground"
               style={{ height: WEEK_HOUR_PX }}
             >
               {`${h % 12 || 12}:00 ${h >= 12 ? "PM" : "AM"}`}
@@ -202,7 +203,7 @@ export function WeekGrid({
             >
               {isToday && showNow && (
                 <div
-                  className="pointer-events-none absolute left-0 right-0 z-30 flex items-center"
+                  className="pointer-events-none absolute left-0 right-0 z-20 flex items-center"
                   style={{ top: nowTop - 1 }}
                 >
                   <div className="h-px flex-1 bg-primary" />
