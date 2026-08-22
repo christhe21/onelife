@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { APP_NAME } from "@/lib/site";
 import { BrandMark } from "@/components/marketing/BrandMark";
 import {
@@ -115,6 +115,14 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
   const stepIdx = STEPS.indexOf(step);
   const displayGoalTitle = goalTitle.trim() || "My first goal";
 
+  useEffect(() => {
+    const previous = document.title;
+    document.title = `Welcome — ${APP_NAME}`;
+    return () => {
+      document.title = previous;
+    };
+  }, []);
+
   const filteredTemplates = useMemo(() => TEMPLATES.filter((t) => areas.has(t.category)), [areas]);
 
   const next = () => setStep(STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]);
@@ -208,7 +216,12 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
       <div className="flex items-center gap-3 border-b px-4 py-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
           <BrandMark className="h-8 w-8 rounded-lg" />
-          <span className="font-display text-sm font-semibold">{APP_NAME}</span>
+          <div className="min-w-0">
+            <span className="block truncate font-display text-sm font-semibold">{APP_NAME}</span>
+            <span className="hidden text-[10px] uppercase tracking-wider text-muted-foreground sm:block">
+              Setup
+            </span>
+          </div>
         </div>
         <div className="min-w-0 flex-1 px-2">
           <div className="mx-auto h-1.5 max-w-xs overflow-hidden rounded-full bg-muted">
