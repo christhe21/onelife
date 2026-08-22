@@ -52,6 +52,10 @@ const GROUPS: {
       "Milestones as checkpoints on the way",
       "Tasks and subtasks with deadlines and priorities",
     ],
+    shot: {
+      src: "/marketing/goals.jpg",
+      alt: "OneLife goals list with skills, milestones and progress",
+    },
   },
   {
     icon: CalendarClock,
