@@ -93,7 +93,6 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex">
-        {/* Desktop sidebar */}
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex xl:w-72">
           <Brand />
           <nav className="flex-1 space-y-1 px-3 py-4">
@@ -110,9 +109,7 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
           <SidebarFooter />
         </aside>
 
-        {/* Main column */}
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Top bar — translucent material, content scrolls under (Apple materials) */}
           <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-background/60">
             <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
               <Button
@@ -131,7 +128,10 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
                     fallback={active.icon}
                     className="h-4 w-4 text-primary"
                   />
-                  <h1 className="font-display text-lg font-semibold tracking-tight">
+                  <h1
+                    data-tour="page-heading"
+                    className="font-display text-lg font-semibold tracking-tight"
+                  >
                     {active.label}
                   </h1>
                 </div>
@@ -157,7 +157,6 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
         </div>
       </div>
 
-      {/* Mobile drawer — simple portal; future: swap to vaul for full spring interruptibility */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
@@ -246,6 +245,7 @@ function NavButton({
   return (
     <button
       onClick={onClick}
+      data-tour={`nav-${item.id}`}
       className={cn(
         "group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-[color,background-color,transform] duration-100 ease-out active:scale-[0.98] motion-reduce:active:scale-100",
         active
@@ -287,8 +287,6 @@ function ThemedTabIcon({
 }) {
   const key = TAB_TO_ICON_KEY[id];
   const Icon = useThemedIcon(fallback, key ?? "goal");
-  // If no Frieren mapping for this tab, useThemedIcon will still return fallback when not in Frieren.
-  // When in Frieren but no key, fall back to the default icon.
   const Final = key ? Icon : fallback;
   return <Final className={className} />;
 }
