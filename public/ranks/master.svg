@@ -1,11 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-  <path stroke-width="2" d="M14 41c1-13 10-22 20-26 10 3 18 13 18 26 0 10-6 16-18 18-12-2-20-8-20-18z"/>
-  <path stroke-width="1.7" d="M18 33h28"/>
-  <path stroke-width="1.6" d="M20 26c4 8 11 12 14 12 4 0 10-4 14-12"/>
-  <path stroke-width="1.4" d="M26 26h12"/>
-  <path stroke-width="1.6" d="M22 45h20"/>
-  <path stroke-width="1.6" d="M32 14c2 3 4 6 4 9"/>
-  <path stroke-width="1.4" d="M28 16l4 7 4-7"/>
-  <circle cx="22" cy="33" r="1" fill="currentColor" stroke="none"/>
-  <circle cx="42" cy="33" r="1" fill="currentColor" stroke="none"/>
+  <path stroke-width="2" d="M18 40c0-13 6-22 14-22s14 9 14 22"/>
+  <path stroke-width="1.8" d="M16 40h32"/>
+  <path stroke-width="1.6" d="M32 40v9"/>
+  <path stroke-width="1.5" d="M22 40v7c0 2 2 4 4 4M42 40v7c0 2-2 4-4 4"/>
+  <path stroke-width="1.7" d="M31 18c0-8 3 -10 5 -12"/>
+  <path stroke-width="1.5" d="M34 18c0-6 2 -8 6 -10"/>
+  <path stroke-width="1.5" d="M26 37l6-3 6 3M26 32l6-3 6 3"/>
 </svg>
