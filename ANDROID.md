@@ -1,4 +1,4 @@
-# OneLife — Android App
+# LifeVerse One — Android App
 
 The `android/` directory contains a native **Kotlin shell app** that bundles the
 exact same web app you deploy to the web, rendered in a full-screen WebView.
@@ -11,7 +11,7 @@ framework, which is why the theme, UI/UX, functionality, and test cases match
 the web app exactly.
 
 ```
-src/  (web app) ──vite build──▶ dist/client ──copied──▶ android/app/src/main/assets/www ──gradle──▶ APK
+src/  (web app) ——vite build——▶ dist/client ——copied——▶ android/app/src/main/assets/www ——gradle——▶ APK
 ```
 
 ## How it works
@@ -148,7 +148,7 @@ app matches the web app, warts and all:
 7. **`autoScheduleGoal()` has no UI** — exposed in the data context, but only
    `autoScheduleSkill` is reachable (Skills tab).
 8. **Branding** — resolved: app UI, docs, export filenames, manifest and the
-   Android shell all use "OneLife".
+   Android shell all use "LifeVerse One".
 9. **`/create-goal` lacks the AppShell sidebar**, contrary to the original
    Lovable plan doc.
 10. **Stale repo artifacts** — removed (`dom.html`, `dom2.html`,
