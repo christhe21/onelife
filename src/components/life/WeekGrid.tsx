@@ -9,7 +9,7 @@ type EventChip = {
   end: Date;
   color: string;
   done: boolean;
-  isSub?: boolean;
+  isSub: boolean;
 };
 
 type DragItem = { id: string; title: string; color: string };
