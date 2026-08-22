@@ -1,4 +1,4 @@
-# OneLife / Goal Journey Vault TODO
+# LifeVerse One / Goal Journey Vault TODO
 
 ## Features
 

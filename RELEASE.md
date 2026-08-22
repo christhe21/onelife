@@ -1,4 +1,4 @@
-# Releasing OneLife
+# Releasing LifeVerse One
 
 Everything here is optional for personal use — debug APKs and the web preview
 work without any of it. Follow this when you want a signed APK you can install
