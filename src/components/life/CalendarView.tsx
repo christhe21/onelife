@@ -63,6 +63,8 @@ import {
   filtersActiveCount,
   EMPTY_FILTERS,
 } from "@/components/life/CalendarFilters";
+import { WeekGrid as WeekGridView } from "@/components/life/WeekGrid";
+import { HOUR_PX } from "@/components/life/calendar-week-layout";
 
 type ViewMode = "month" | "week" | "day" | "agenda";
 
@@ -83,7 +85,6 @@ interface Event {
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i); // 0..23
-const HOUR_PX = 48;
 
 function ymd(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -165,7 +166,8 @@ function useCalendarDrag(
     if (zone.getAttribute("data-drop-time") !== "1") return { day, time: null };
     const rect = zone.getBoundingClientRect();
     const base = Number(zone.getAttribute("data-drop-base") ?? 0) * 60;
-    const raw = base + ((y - rect.top) / HOUR_PX) * 60;
+    const hourPx = Number(zone.getAttribute("data-drop-hour-px") ?? HOUR_PX) || HOUR_PX;
+    const raw = base + ((y - rect.top) / hourPx) * 60;
     const snap = snapRef.current;
     const mins = Math.max(0, Math.min(24 * 60 - snap, Math.round(raw / snap) * snap));
     return {
@@ -815,7 +817,7 @@ export function CalendarView({
             />
           )}
           {view === "week" && (
-            <WeekGrid
+            <WeekGridView
               cursor={cursor}
               events={events}
               drag={drag}
@@ -1408,6 +1410,7 @@ function WeekGrid({
                   data-drop-base={baseHour}
                   className={cn(
                     "relative border-l",
+                    isCurrentDay && "bg-primary/5",
                     drag.dragging && drag.target?.day === key && "bg-primary/10",
                   )}
                 >
@@ -1434,7 +1437,7 @@ function WeekGrid({
                       e.end.getHours() + e.end.getMinutes() / 60,
                     );
                     const top = (startH - baseHour) * HOUR_PX;
-                    const height = Math.max(20, (endH - startH) * HOUR_PX - 2);
+                    const height = Math.max(40, (endH - startH) * HOUR_PX - 2);
                     return (
                       <div
                         key={e.id}
@@ -1448,7 +1451,7 @@ function WeekGrid({
                         }}
                         title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                         className={cn(
-                          "absolute inset-x-1 cursor-grab touch-none overflow-hidden rounded-md px-1.5 py-1 text-[10px] shadow-sm active:cursor-grabbing flex flex-col transition-all hover:scale-[1.02] hover:shadow-md hover:z-10",
+                          "absolute inset-x-0.5 cursor-grab touch-none overflow-hidden rounded-md px-1.5 py-0 text-[12px] leading-none shadow-sm active:cursor-grabbing flex items-center hover:z-10",
                           e.done && "opacity-60 line-through",
                           drag.dragId === e.id && "opacity-40",
                         )}
@@ -1462,16 +1465,10 @@ function WeekGrid({
                         }}
                       >
                         <div
-                          className="break-words font-medium leading-tight mb-0.5 line-clamp-2"
-                          style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}
+                          className="min-w-0 flex-1 truncate font-medium"
+                          style={{ color: `color-mix(in oklab, ${e.color} 90%, currentColor)` }}
                         >
                           {e.title}
-                        </div>
-                        <div
-                          className="truncate opacity-80 mt-auto"
-                          style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}
-                        >
-                          {hm(e.start)}–{hm(e.end)}
                         </div>
                       </div>
                     );
@@ -1532,6 +1529,7 @@ function DayGrid({
         data-drop-date={ymd(cursor)}
         data-drop-time="1"
         data-drop-base={baseHour}
+        data-drop-hour-px={HOUR_PX}
       >
         {HOURS.map((h) => (
           <div

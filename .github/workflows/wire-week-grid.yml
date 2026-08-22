@@ -1,0 +1,29 @@
+name: Wire week grid
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  wire:
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Patch CalendarView
+        run: python3 scripts/apply-week-chip-fix.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/life/CalendarView.tsx
+          if git diff --cached --quiet; then
+            echo "no CalendarView changes"
+          else
+            git commit -m "fix(calendar): use WeekGridView and single-line 30-min titles"
+            git push
+          fi
