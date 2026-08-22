@@ -216,8 +216,7 @@ export function WeekGrid({
                 const startH = e.start.getHours() + e.start.getMinutes() / 60;
                 const endH = Math.max(startH + 0.25, e.end.getHours() + e.end.getMinutes() / 60);
                 const top = (startH - baseHour) * WEEK_HOUR_PX;
-                const height = Math.max(32, (endH - startH) * WEEK_HOUR_PX - 2);
-                const compact = height < 44;
+                const height = Math.max(40, (endH - startH) * WEEK_HOUR_PX - 2);
                 return (
                   <div
                     key={e.id}
@@ -229,8 +228,7 @@ export function WeekGrid({
                     }}
                     title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                     className={cn(
-                      "absolute inset-x-1 cursor-grab touch-none overflow-hidden rounded-md px-1.5 text-[11px] shadow-sm active:cursor-grabbing flex flex-col justify-center transition-all hover:scale-[1.02] hover:shadow-md hover:z-10",
-                      compact ? "py-0.5" : "py-1",
+                      "absolute inset-x-0.5 cursor-grab touch-none overflow-hidden rounded-md px-1.5 py-0 text-[12px] leading-none shadow-sm active:cursor-grabbing flex items-center hover:z-10",
                       e.done && "opacity-60 line-through",
                       drag.dragId === e.id && "opacity-40",
                     )}
@@ -244,19 +242,11 @@ export function WeekGrid({
                     }}
                   >
                     <div
-                      className="truncate font-medium leading-tight"
-                      style={{ color: `color-mix(in oklab, ${e.color} 85%, currentColor)` }}
+                      className="min-w-0 flex-1 truncate font-medium"
+                      style={{ color: `color-mix(in oklab, ${e.color} 90%, currentColor)` }}
                     >
                       {e.title}
                     </div>
-                    {!compact && (
-                      <div
-                        className="truncate opacity-80"
-                        style={{ color: `color-mix(in oklab, ${e.color} 80%, currentColor)` }}
-                      >
-                        {hm(e.start)}–{hm(e.end)}
-                      </div>
-                    )}
                   </div>
                 );
               })}
