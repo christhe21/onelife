@@ -119,8 +119,9 @@ export const TOUR_STEPS: TourStep[] = [
     tab: "overview",
     target: "overview-tree",
     title: "Overview · tree",
-    body: "The same hierarchy as onboarding, as a tree: life area → goal → milestone → task. Tap a node to expand. Long-press to rename.",
+    body: "The same hierarchy as onboarding, as a tree: life area → goal → milestone → task. Tap a node to expand. Click Tree to open it.",
     overviewView: "tree",
+    advanceOnTargetClick: true,
   },
   {
     id: "overview-map",
@@ -128,8 +129,9 @@ export const TOUR_STEPS: TourStep[] = [
     tab: "overview",
     target: "overview-map",
     title: "Overview · map",
-    body: "A spatial mind map of the same data. Drag to pan, scroll to zoom.",
+    body: "A spatial mind map of the same data. Click Map, then drag to pan and scroll to zoom.",
     overviewView: "map",
+    advanceOnTargetClick: true,
   },
   {
     id: "goals",
