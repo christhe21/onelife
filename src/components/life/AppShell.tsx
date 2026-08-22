@@ -18,6 +18,8 @@ import {
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/site";
+import { BrandMark } from "@/components/marketing/BrandMark";
 import { useThemedIcon, type FrierenIconKey } from "@/lib/frieren-icons";
 import { useAppData } from "@/lib/app-data";
 import { getRankProgress } from "@/lib/rank";
@@ -208,11 +210,9 @@ function countFor(id: TabId, s: Props["stats"]) {
 function Brand() {
   return (
     <div className="flex items-center gap-2.5 border-b border-sidebar-border px-5 py-5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-        <Sparkles className="h-4 w-4" />
-      </div>
+      <BrandMark className="h-9 w-9" />
       <div>
-        <div className="font-display text-sm font-semibold leading-tight">OneLife</div>
+        <div className="font-display text-sm font-semibold leading-tight">{APP_NAME}</div>
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
           Session workspace
         </div>
