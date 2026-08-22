@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createFileRoute, useNavigate, Navigate } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { useAppData } from "@/lib/app-data";
 import { AppShell, type TabId } from "@/components/life/AppShell";
+import { ProductTour } from "@/components/life/ProductTour";
+import { TourReplayCard } from "@/components/life/TourReplayCard";
 import { z } from "zod";
 import { Dashboard } from "@/components/life/Dashboard";
 import { Today } from "@/components/life/Today";
@@ -49,6 +51,7 @@ function Shell() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("dashboard");
+  const [overviewView, setOverviewView] = useState<"tree" | "map">("tree");
   const { goals, tasks, bucketList, settings, importMarketplaceGoal } = useAppData();
   useAppSettingsEffects();
   const stats = {
@@ -77,12 +80,17 @@ function Shell() {
         />
       )}
       {tab === "calendar" && <CalendarView onGoTasks={() => setTab("tasks")} />}
-      {tab === "overview" && <Overview />}
+      {tab === "overview" && <Overview view={overviewView} onViewChange={setOverviewView} />}
       {tab === "goals" && <Goals onGoMarketplace={() => setTab("marketplace")} />}
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
       {tab === "skills" && <Skills />}
-      {tab === "settings" && <SettingsView />}
+      {tab === "settings" && (
+        <>
+          <TourReplayCard />
+          <SettingsView />
+        </>
+      )}
       {tab === "marketplace" && (
         <GoalMarketplace
           onImport={(t, opts) => {
@@ -91,6 +99,7 @@ function Shell() {
           }}
         />
       )}
+      <ProductTour tab={tab} onTab={setTab} onOverviewView={setOverviewView} />
     </AppShell>
   );
 }

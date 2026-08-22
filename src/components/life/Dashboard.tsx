@@ -37,16 +37,20 @@ export function Dashboard() {
     <div className="space-y-6">
       {isEmpty && <EmptyStateHero />}
 
-      <RankLadderDialog>
-        <button type="button" className="block w-full text-left">
-          <RankCard interactive />
-        </button>
-      </RankLadderDialog>
+      <div data-tour="dash-rank">
+        <RankLadderDialog>
+          <button type="button" className="block w-full text-left">
+            <RankCard interactive />
+          </button>
+        </RankLadderDialog>
+      </div>
 
-      <LifeTimeline />
+      <div data-tour="dash-timeline">
+        <LifeTimeline />
+      </div>
 
       {/* Hero stats */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div data-tour="dash-stats" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<Target className="h-4 w-4" />}
           label="Active goals"
@@ -75,7 +79,7 @@ export function Dashboard() {
       </div>
 
       {!isEmpty && (
-        <div className="grid gap-4 lg:grid-cols-5">
+        <div data-tour="dash-progress" className="grid gap-4 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <SkillsRadar />
           </div>

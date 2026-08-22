@@ -100,11 +100,22 @@ function EditableLabel({
   );
 }
 
-export function Overview() {
+export function Overview({
+  view: viewProp,
+  onViewChange,
+}: {
+  view?: "tree" | "map";
+  onViewChange?: (v: "tree" | "map") => void;
+} = {}) {
   const { goals, tasks, skills, updateSkill, updateGoal, updateTask } = useAppData();
   const [openSkills, setOpenSkills] = useState<Set<string>>(new Set());
   const [openGoals, setOpenGoals] = useState<Set<string>>(new Set());
-  const [view, setView] = useState<"tree" | "map">("tree");
+  const [internalView, setInternalView] = useState<"tree" | "map">("tree");
+  const view = viewProp ?? internalView;
+  const setView = (v: "tree" | "map") => {
+    onViewChange?.(v);
+    if (viewProp === undefined) setInternalView(v);
+  };
 
   const toggle = (set: Set<string>, id: string, setter: (s: Set<string>) => void) => {
     const n = new Set(set);
@@ -129,6 +140,7 @@ export function Overview() {
                 size="sm"
                 variant={view === "tree" ? "secondary" : "ghost"}
                 className="h-7 px-2 text-xs"
+                data-tour="overview-tree"
                 onClick={() => setView("tree")}
               >
                 <ListTree className="mr-1 h-3.5 w-3.5" />
@@ -138,6 +150,7 @@ export function Overview() {
                 size="sm"
                 variant={view === "map" ? "secondary" : "ghost"}
                 className="h-7 px-2 text-xs"
+                data-tour="overview-map"
                 onClick={() => setView("map")}
               >
                 <Network className="mr-1 h-3.5 w-3.5" />
