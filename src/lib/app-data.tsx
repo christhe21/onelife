@@ -1954,7 +1954,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
       const uid = userId;
       const done = () => {
-        window.location.href = "/home";
+        window.location.href = "/";
       };
       if (uid) {
         void supabase.from("user_app_data").delete().eq("user_id", uid).then(done, done);
@@ -1975,7 +1975,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       } catch {
         /* ignore */
       }
-      window.location.href = "/home";
+      window.location.href = "/";
     },
   };
 
