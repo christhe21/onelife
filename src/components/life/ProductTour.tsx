@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 type Phase = "idle" | "invite" | "running";
 
-type Rect = { top: number; left: number; width: number; height: number };
+type Rect = { top: number; left: number; width: number; height: number; radius: number };
 
 const TOUR_DONE_KEY = "onelife:tour-completed";
 
@@ -43,6 +43,14 @@ export function findTourTarget(target?: string): HTMLElement | null {
   titled.sort((a, b) => (a.textContent?.length ?? 0) - (b.textContent?.length ?? 0));
   const hit = titled[0] as HTMLElement | undefined;
   return (hit?.closest("[class*='rounded']") as HTMLElement | null) ?? hit ?? null;
+}
+
+function readCornerRadius(el: HTMLElement, holeW: number, holeH: number) {
+  const raw = window.getComputedStyle(el).borderTopLeftRadius || "0";
+  const parsed = Number.parseFloat(raw);
+  const fromEl = Number.isFinite(parsed) ? parsed : 0;
+  const padded = fromEl > 2 ? fromEl + 6 : 14;
+  return Math.min(padded, holeW / 2, holeH / 2);
 }
 
 function writeTourDoneFlag(done: boolean) {
@@ -140,11 +148,15 @@ export function ProductTour({
       setHole(null);
       return false;
     }
+    const pad = 8;
+    const width = r.width + pad * 2;
+    const height = r.height + pad * 2;
     setHole({
-      top: r.top - 6,
-      left: r.left - 6,
-      width: r.width + 12,
-      height: r.height + 12,
+      top: r.top - pad,
+      left: r.left - pad,
+      width,
+      height,
+      radius: readCornerRadius(el, width, height),
     });
     return true;
   }, [phase, step]);
@@ -253,7 +265,7 @@ export function ProductTour({
   const tooltipStyle = tooltipPosition(hole);
 
   return (
-    <div className="fixed inset-0 z-[80]" aria-live="polite">
+    <div className="fixed inset-0 z-[80] overflow-hidden" aria-live="polite">
       <SpotlightMask hole={hole} />
       <div
         className={cn(
@@ -300,29 +312,30 @@ export function ProductTour({
   );
 }
 
+/** Dim the page with a rounded cutout so the ring and the hole share the same curve. */
 function SpotlightMask({ hole }: { hole: Rect | null }) {
   if (!hole) {
     return <div className="absolute inset-0 bg-foreground/50" />;
   }
-  const { top, left, width, height } = hole;
+  const { top, left, width, height, radius } = hole;
   return (
     <>
-      <div className="absolute bg-foreground/50" style={{ top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
+      <div className="absolute" style={{ top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
+      <div className="absolute" style={{ top: top + height, left: 0, right: 0, bottom: 0 }} />
+      <div className="absolute" style={{ top, left: 0, width: Math.max(0, left), height }} />
+      <div className="absolute" style={{ top, left: left + width, right: 0, height }} />
       <div
-        className="absolute bg-foreground/50"
-        style={{ top: top + height, left: 0, right: 0, bottom: 0 }}
-      />
-      <div
-        className="absolute bg-foreground/50"
-        style={{ top, left: 0, width: Math.max(0, left), height }}
-      />
-      <div
-        className="absolute bg-foreground/50"
-        style={{ top, left: left + width, right: 0, height }}
-      />
-      <div
-        className="pointer-events-none absolute rounded-xl ring-2 ring-primary"
-        style={{ top, left, width, height }}
+        className="pointer-events-none absolute"
+        style={{
+          top,
+          left,
+          width,
+          height,
+          borderRadius: radius,
+          boxShadow: "0 0 0 9999px hsl(var(--foreground) / 0.5)",
+          outline: "2px solid hsl(var(--primary))",
+          outlineOffset: 0,
+        }}
       />
     </>
   );
