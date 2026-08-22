@@ -4,7 +4,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAppData } from "@/lib/app-data";
 import { AppShell, type TabId } from "@/components/life/AppShell";
 import { ProductTour } from "@/components/life/ProductTour";
-import type { ViewMode } from "@/components/life/CalendarView";
 import { z } from "zod";
 import { Dashboard } from "@/components/life/Dashboard";
 import { Today } from "@/components/life/Today";
@@ -51,8 +50,6 @@ function Shell() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("dashboard");
-  const [calendarView, setCalendarView] = useState<ViewMode>("month");
-  const [overviewView, setOverviewView] = useState<"tree" | "map">("tree");
   const { goals, tasks, bucketList, settings, importMarketplaceGoal } = useAppData();
   useAppSettingsEffects();
   const stats = {
@@ -80,14 +77,8 @@ function Shell() {
           onGoCalendar={() => setTab("calendar")}
         />
       )}
-      {tab === "calendar" && (
-        <CalendarView
-          onGoTasks={() => setTab("tasks")}
-          view={calendarView}
-          onViewChange={setCalendarView}
-        />
-      )}
-      {tab === "overview" && <Overview view={overviewView} onViewChange={setOverviewView} />}
+      {tab === "calendar" && <CalendarView onGoTasks={() => setTab("tasks")} />}
+      {tab === "overview" && <Overview />}
       {tab === "goals" && <Goals onGoMarketplace={() => setTab("marketplace")} />}
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
@@ -101,12 +92,7 @@ function Shell() {
           }}
         />
       )}
-      <ProductTour
-        tab={tab}
-        onTab={setTab}
-        onCalendarView={setCalendarView}
-        onOverviewView={setOverviewView}
-      />
+      <ProductTour tab={tab} onTab={setTab} />
     </AppShell>
   );
 }
