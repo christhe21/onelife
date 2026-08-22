@@ -3,7 +3,7 @@
   <path stroke-width="1.8" d="M16 40h32"/>
   <path stroke-width="1.6" d="M32 40v9"/>
   <path stroke-width="1.5" d="M22 40v7c0 2 2 4 4 4M42 40v7c0 2-2 4-4 4"/>
-  <path stroke-width="1.5" d="M32 18v-4"/>
+  <path stroke-width="1.6" d="M32 18v-5"/>
   <circle cx="24" cy="34" r="1.2" fill="currentColor" stroke="none"/>
   <circle cx="40" cy="34" r="1.2" fill="currentColor" stroke="none"/>
 </svg>

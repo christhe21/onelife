@@ -3,8 +3,8 @@
   <path stroke-width="1.8" d="M16 40h32"/>
   <path stroke-width="1.6" d="M32 40v9"/>
   <path stroke-width="1.5" d="M22 40v7c0 2 2 4 4 4M42 40v7c0 2-2 4-4 4"/>
-  <path stroke-width="1.7" d="M32 18c0-8 3-13 6-16-2 5-2 11-2 16"/>
-  <path stroke-width="1.4" d="M25 44h4M35 44h4"/>
-  <path stroke-width="1.4" d="M14 44c0 5 3 8 6 9M50 44c0 5-3 8-6 9"/>
-  <path stroke-width="1.5" d="M26 37l6-3 6 3M26 33l6-3 6 3"/>
+  <path stroke-width="1.7" d="M31 18c0-11 4 -13 6 -15"/>
+  <path stroke-width="1.5" d="M34 18c0-9 3 -11 7 -13"/>
+  <path stroke-width="1.5" d="M26 37l6-3 6 3M26 32l6-3 6 3"/>
+  <path stroke-width="1.4" d="M13 42c0 6 3 10 7 12M51 42c0 6-3 10-7 12"/>
 </svg>
