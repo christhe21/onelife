@@ -43,32 +43,39 @@ describe("Onboarding Workflow", () => {
     await user.type(nameInput, "John");
     await user.click(screen.getByText("Continue"));
 
-    // Step 3: Areas
+    // Step 3: Overview + setup mode
+    expect(screen.getByText(/you start with a goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Goal$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Milestones$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Tasks$/i)).toBeInTheDocument();
+    expect(screen.getByText(/Something amazing is coming/i)).toBeInTheDocument();
+    expect(screen.getByText(/Try AI \(disabled\)/i)).toBeInTheDocument();
+    await user.click(screen.getByText("Continue"));
+
+    // Step 4: Areas
     expect(screen.getByText(/Which life areas matter to you\?/i)).toBeInTheDocument();
     await user.click(screen.getByText("Continue"));
 
-    // Step 4: Template
-    expect(screen.getByText(/Start from a science-backed template\?/i)).toBeInTheDocument();
-    await user.click(screen.getByText("Start blank"));
+    // Step 5: Template goal selection
+    expect(screen.getByText(/Template goal selection/i)).toBeInTheDocument();
+    await user.click(screen.getByText("Blank goal"));
 
-    // Step 5: Goal
-    expect(screen.getByText(/Your first goal/i)).toBeInTheDocument();
-    // It's just a text label not an actual <label for="..."> so getByLabelText fails
+    // Step 6: Goal
+    expect(screen.getByText(/Create a blank goal/i)).toBeInTheDocument();
     const goalTitle = screen.getByPlaceholderText(/e.g. Run a 5K under 25 minutes/i);
     await user.type(goalTitle, "Learn testing");
-    // Select skill (already selected)
-    // Select date (already populated)
     await user.click(screen.getByText("Create goal"));
 
-    // Step 6: Milestones
+    // Step 7: Milestones — goal name is shown as context
     expect(screen.getByText(/Add milestones/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Learn testing").length).toBeGreaterThan(0);
     await user.click(screen.getByText("Continue"));
 
-    // Step 7: Tasks
+    // Step 8: Tasks
     expect(screen.getByText(/Add starter tasks/i)).toBeInTheDocument();
     await user.click(screen.getByText("Continue"));
 
-    // Step 8: Done
+    // Step 9: Done
     expect(screen.getByText(/You're all set, John/i)).toBeInTheDocument();
     await user.click(screen.getByText("Enter dashboard"));
   });
