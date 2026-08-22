@@ -157,7 +157,7 @@ export function WeekGrid({
           );
         })}
 
-        <div className="sticky left-0 z-30 bg-background shadow-[4px_0_8px_-4px_hsl(var(--foreground)/0.18)]">
+        <div className="relative sticky left-0 z-30 bg-background shadow-[4px_0_8px_-4px_hsl(var(--foreground)/0.18)]">
           {showNow && (
             <div
               className="pointer-events-none absolute left-0 right-0 z-30 flex items-center justify-end pr-1"
