@@ -35,6 +35,7 @@ describe("Onboarding Workflow", () => {
 
     // Step 1: Welcome
     expect(await screen.findByText(/Welcome to/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/LifeVerse One/i).length).toBeGreaterThan(0);
     await user.click(screen.getByText("Get started"));
 
     // Step 2: Name
