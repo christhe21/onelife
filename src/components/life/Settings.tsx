@@ -53,11 +53,10 @@ const THEME_MODES: { id: ThemeMode; label: string }[] = [
 ];
 
 const THEME_COLORS: { id: ThemeColor; label: string; primary: string; secondary: string }[] = [
-  { id: "sage", label: "Sage & Cream", primary: "bg-[#7d9b76]", secondary: "bg-[#a8c0a0]" },
   { id: "ocean", label: "Ocean Blue", primary: "bg-[#2563eb]", secondary: "bg-[#93c5fd]" },
   { id: "sunset", label: "Sunset Coral", primary: "bg-[#f43f5e]", secondary: "bg-[#fda4af]" },
   { id: "lavender", label: "Lavender", primary: "bg-[#8b5cf6]", secondary: "bg-[#c4b5fd]" },
-  { id: "monochrome", label: "Monochrome", primary: "bg-[#171717]", secondary: "bg-[#a3a3a3]" },
+  { id: "monochrome", label: "Monochrome (default)", primary: "bg-[#171717]", secondary: "bg-[#a3a3a3]" },
 ];
 
 const SPECIAL_THEMES: { id: ThemeColor; label: string; primary: string; secondary: string }[] = [
