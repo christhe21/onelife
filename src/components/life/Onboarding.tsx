@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { APP_NAME } from "@/lib/site";
+import { BrandMark } from "@/components/marketing/BrandMark";
 import {
-  Sparkles,
   ArrowRight,
   ArrowLeft,
   Check,
@@ -206,10 +207,8 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
       {/* Top bar — skip/close is a 44px target and never collides with progress */}
       <div className="flex items-center gap-3 border-b px-4 py-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="h-3.5 w-3.5" />
-          </div>
-          <span className="font-display text-sm font-semibold">OneLife</span>
+          <BrandMark className="h-8 w-8 rounded-lg" />
+          <span className="font-display text-sm font-semibold">{APP_NAME}</span>
         </div>
         <div className="min-w-0 flex-1 px-2">
           <div className="mx-auto h-1.5 max-w-xs overflow-hidden rounded-full bg-muted">
@@ -249,13 +248,13 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                   <div className="absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-fuchsia-400/20 blur-3xl" />
                   <div className="absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/10 blur-2xl" />
                 </div>
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-fuchsia-500 text-primary-foreground shadow-2xl shadow-primary/30 ring-1 ring-white/20">
-                  <Sparkles className="h-9 w-9" />
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl shadow-2xl shadow-primary/30 ring-1 ring-white/20">
+                  <BrandMark className="h-20 w-20 rounded-3xl" alt="" />
                 </div>
                 <h1 className="font-display text-4xl font-semibold tracking-tight">
                   Welcome to{" "}
                   <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
-                    OneLife
+                    {APP_NAME}
                   </span>
                 </h1>
                 <p className="mx-auto mt-4 max-w-sm text-base text-muted-foreground">
@@ -295,13 +294,13 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
               <div className="space-y-5">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wider text-primary">
-                    How OneLife works
+                    How {APP_NAME} works
                   </p>
                   <h1 className="font-display mt-1 text-2xl font-semibold">
                     {name.trim() ? `${name.trim()}, you` : "You"} start with a goal
                   </h1>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Everything in OneLife follows the same pattern: a goal is the destination,
+                    Everything in {APP_NAME} follows the same pattern: a goal is the destination,
                     milestones are checkpoints, and tasks are the next actions.
                   </p>
                 </div>
