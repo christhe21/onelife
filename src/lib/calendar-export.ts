@@ -137,7 +137,7 @@ export function blocksToICS(blocks: Block[]): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//OneLife//Focus Schedule//EN",
+    "PRODID:-//LifeVerse One//Focus Schedule//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
   ];
@@ -180,7 +180,7 @@ export function downloadICS(tasks: Task[], goalsTitleById: Record<string, string
     return;
   }
   const ics = blocksToICS(blocks);
-  const filename = `onelife-schedule-${new Date().toISOString().slice(0, 10)}.ics`;
+  const filename = `lifeverse-one-schedule-${new Date().toISOString().slice(0, 10)}.ics`;
   // Inside the Android shell, anchor-clicking a blob: URL does nothing —
   // route through the native "Save as" dialog instead.
   if (nativeSaveFile(filename, "text/calendar", ics)) return;

@@ -19,6 +19,7 @@ import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { GoalMarketplace } from "@/components/life/GoalMarketplace";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
+import { APP_NAME } from "@/lib/site";
 
 export const Route = createFileRoute("/app")({
   validateSearch: z.object({
@@ -27,11 +28,11 @@ export const Route = createFileRoute("/app")({
   component: AppRoute,
   head: () => ({
     meta: [
-      { title: "Your workspace — OneLife" },
+      { title: `Your workspace — ${APP_NAME}` },
       {
         name: "description",
         content:
-          "The OneLife workspace: organize goals by skill, track milestones, manage tasks and schedule everything on your calendar.",
+          `The ${APP_NAME} workspace: organize goals by skill, track milestones, manage tasks and schedule everything on your calendar.`,
       },
       { name: "robots", content: "noindex" },
     ],
