@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowRight, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
@@ -9,6 +9,48 @@ import { cn } from "@/lib/utils";
 type Phase = "idle" | "invite" | "running";
 
 type Rect = { top: number; left: number; width: number; height: number };
+
+const TOUR_DONE_KEY = "onelife:tour-completed";
+
+const TARGET_LABELS: Record<string, string> = {
+  "cal-agenda": "Agenda",
+  "cal-day": "Day",
+  "cal-week": "Week",
+  "cal-month": "Month",
+  "overview-tree": "Tree",
+  "overview-map": "Map",
+};
+
+export function findTourTarget(target?: string): HTMLElement | null {
+  if (!target) return null;
+  const byAttr = document.querySelector<HTMLElement>(`[data-tour="${target}"]`);
+  if (byAttr) return byAttr;
+  const label = TARGET_LABELS[target];
+  if (!label) return null;
+  return (
+    Array.from(document.querySelectorAll("button")).find((b) => {
+      const text = b.textContent?.replace(/\s+/g, " ").trim() ?? "";
+      return text === label || text.endsWith(label);
+    }) ?? null
+  );
+}
+
+function writeTourDoneFlag(done: boolean) {
+  try {
+    if (done) window.localStorage.setItem(TOUR_DONE_KEY, "1");
+    else window.localStorage.removeItem(TOUR_DONE_KEY);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function readTourDoneFlag() {
+  try {
+    return window.localStorage.getItem(TOUR_DONE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export function ProductTour({
   tab,
@@ -25,26 +67,34 @@ export function ProductTour({
   const [phase, setPhase] = useState<Phase>("idle");
   const [stepIdx, setStepIdx] = useState(0);
   const [hole, setHole] = useState<Rect | null>(null);
+  const phaseRef = useRef<Phase>("idle");
+  phaseRef.current = phase;
 
   const dismiss = useCallback(() => {
+    writeTourDoneFlag(true);
     updateSettings({ tourCompletedAt: new Date().toISOString() });
     setPhase("idle");
     setStepIdx(0);
+    setHole(null);
   }, [updateSettings]);
 
   const start = useCallback(() => {
+    writeTourDoneFlag(false);
     setStepIdx(0);
     setPhase("running");
   }, []);
 
   useEffect(() => {
-    if (!settings.onboardedAt || settings.tourCompletedAt) return;
-    const t = window.setTimeout(() => setPhase("invite"), 400);
+    if (!settings.onboardedAt || settings.tourCompletedAt || readTourDoneFlag()) return;
+    const t = window.setTimeout(() => {
+      if (phaseRef.current === "idle") setPhase("invite");
+    }, 450);
     return () => window.clearTimeout(t);
   }, [settings.onboardedAt, settings.tourCompletedAt]);
 
   useEffect(() => {
     const onReplay = () => {
+      writeTourDoneFlag(false);
       updateSettings({ tourCompletedAt: undefined });
       start();
     };
@@ -64,30 +114,42 @@ export function ProductTour({
   const measure = useCallback(() => {
     if (phase !== "running" || !step?.target) {
       setHole(null);
-      return;
+      return false;
     }
-    const el = document.querySelector<HTMLElement>(`[data-tour="${step.target}"]`);
+    const el = findTourTarget(step.target);
     if (!el) {
       setHole(null);
-      return;
+      return false;
     }
     el.scrollIntoView({ block: "nearest", inline: "nearest" });
     const r = el.getBoundingClientRect();
+    if (r.width < 2 && r.height < 2) {
+      setHole(null);
+      return false;
+    }
     setHole({
       top: r.top - 6,
       left: r.left - 6,
       width: r.width + 12,
       height: r.height + 12,
     });
+    return true;
   }, [phase, step]);
 
   useLayoutEffect(() => {
     if (phase !== "running") return;
-    const t = window.setTimeout(measure, 80);
+    let attempts = 0;
+    let timer = 0;
+    const tick = () => {
+      const ok = measure();
+      attempts += 1;
+      if (!ok && attempts < 16) timer = window.setTimeout(tick, 60);
+    };
+    tick();
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
     return () => {
-      window.clearTimeout(t);
+      window.clearTimeout(timer);
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
@@ -106,15 +168,40 @@ export function ProductTour({
   }, []);
 
   useEffect(() => {
+    if (phase !== "running") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss();
+      if (e.key === "ArrowRight" || e.key === "Enter") {
+        e.preventDefault();
+        next();
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        back();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [phase, next, back, dismiss]);
+
+  useEffect(() => {
     if (phase !== "running" || !step?.advanceOnTargetClick || !step.target) return;
+    let armed = false;
+    const arm = window.setTimeout(() => {
+      armed = true;
+    }, 180);
     const onClick = (e: MouseEvent) => {
-      const el = document.querySelector(`[data-tour="${step.target}"]`);
+      if (!armed) return;
+      const el = findTourTarget(step.target);
       if (el && e.target instanceof Node && el.contains(e.target)) {
-        window.setTimeout(next, 120);
+        window.setTimeout(next, 140);
       }
     };
     window.addEventListener("click", onClick, true);
-    return () => window.removeEventListener("click", onClick, true);
+    return () => {
+      window.clearTimeout(arm);
+      window.removeEventListener("click", onClick, true);
+    };
   }, [phase, step, next]);
 
   if (phase === "idle") return null;
@@ -154,18 +241,7 @@ export function ProductTour({
 
   return (
     <div className="fixed inset-0 z-[80]" aria-live="polite">
-      <div className="absolute inset-0 bg-foreground/50" onClick={(e) => e.stopPropagation()} />
-      {hole && (
-        <div
-          className="pointer-events-none absolute rounded-xl ring-2 ring-primary shadow-[0_0_0_9999px_hsl(var(--foreground)/0.55)]"
-          style={{
-            top: hole.top,
-            left: hole.left,
-            width: hole.width,
-            height: hole.height,
-          }}
-        />
-      )}
+      <SpotlightMask hole={hole} />
       <div
         className={cn(
           "absolute z-[81] w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border bg-card p-4 shadow-2xl",
@@ -194,7 +270,7 @@ export function ProductTour({
         <p className="mt-1.5 text-sm text-muted-foreground">{step.body}</p>
         {step.advanceOnTargetClick && (
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Click the highlighted control, or press Next.
+            Click the highlighted control to open it, or press Next.
           </p>
         )}
         <div className="mt-4 flex items-center justify-between gap-2">
@@ -211,6 +287,35 @@ export function ProductTour({
   );
 }
 
+/** Four panes dim the page but leave the highlighted control clickable. */
+function SpotlightMask({ hole }: { hole: Rect | null }) {
+  if (!hole) {
+    return <div className="absolute inset-0 bg-foreground/50" />;
+  }
+  const { top, left, width, height } = hole;
+  return (
+    <>
+      <div className="absolute bg-foreground/50" style={{ top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
+      <div
+        className="absolute bg-foreground/50"
+        style={{ top: top + height, left: 0, right: 0, bottom: 0 }}
+      />
+      <div
+        className="absolute bg-foreground/50"
+        style={{ top, left: 0, width: Math.max(0, left), height }}
+      />
+      <div
+        className="absolute bg-foreground/50"
+        style={{ top, left: left + width, right: 0, height }}
+      />
+      <div
+        className="pointer-events-none absolute rounded-xl ring-2 ring-primary"
+        style={{ top, left, width, height }}
+      />
+    </>
+  );
+}
+
 function tooltipPosition(hole: Rect | null): CSSProperties {
   const width = Math.min(352, typeof window === "undefined" ? 352 : window.innerWidth - 24);
   if (!hole) {
@@ -220,8 +325,8 @@ function tooltipPosition(hole: Rect | null): CSSProperties {
   const vh = window.innerHeight;
   const left = Math.min(Math.max(12, hole.left), vw - width - 12);
   const below = hole.top + hole.height + 12;
-  if (below + 220 < vh) return { top: below, left };
-  const above = hole.top - 12 - 200;
+  if (below + 230 < vh) return { top: below, left };
+  const above = hole.top - 12 - 210;
   if (above > 12) return { top: Math.max(12, above), left };
   return { top: Math.max(12, vh / 2 - 110), left };
 }
