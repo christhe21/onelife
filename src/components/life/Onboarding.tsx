@@ -1,5 +1,19 @@
 import { useMemo, useState } from "react";
-import { Sparkles, ArrowRight, ArrowLeft, Check, Plus, Trash2, X } from "lucide-react";
+import {
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Plus,
+  Trash2,
+  X,
+  Target,
+  Flag,
+  ListChecks,
+  Wand2,
+  PenLine,
+  Lock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +33,7 @@ import { DatePicker } from "@/components/ui/pickers/DatePicker";
 const STEPS = [
   "welcome",
   "name",
+  "overview",
   "areas",
   "template",
   "goal",
@@ -27,6 +42,7 @@ const STEPS = [
   "done",
 ] as const;
 type Step = (typeof STEPS)[number];
+type SetupMode = "manual" | "ai";
 
 const AREA_LABELS: Record<Category | "Creative" | "Financial" | "Social" | "Learning", string> = {
   Career: "Career",
@@ -66,11 +82,23 @@ function addDays(base: Date, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+function GoalContextChip({ title }: { title: string }) {
+  if (!title.trim()) return null;
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs">
+      <Target className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <span className="text-muted-foreground">Adding to</span>
+      <span className="truncate font-semibold text-foreground">{title}</span>
+    </div>
+  );
+}
+
 export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
   const { addSkill, addGoal, addSubGoal, addTask, updateSettings, skills, ensureDefaultMilestone } =
     useAppData();
   const [step, setStep] = useState<Step>("welcome");
   const [name, setName] = useState("");
+  const [setupMode, setSetupMode] = useState<SetupMode>("manual");
   const [areas, setAreas] = useState<Set<string>>(new Set(["Career", "Health"]));
   const [template, setTemplate] = useState<GoalTemplate | null>(null);
   const today = new Date().toISOString().slice(0, 10);
@@ -84,6 +112,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
   >([]);
 
   const stepIdx = STEPS.indexOf(step);
+  const displayGoalTitle = goalTitle.trim() || "My first goal";
 
   const filteredTemplates = useMemo(() => TEMPLATES.filter((t) => areas.has(t.category)), [areas]);
 
@@ -97,7 +126,6 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
   };
 
   const handleAreasNext = () => {
-    // Ensure selected areas have skill entries
     for (const a of areas) {
       const m = AREA_TO_SKILL[a];
       if (!m) continue;
@@ -175,32 +203,35 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-primary/5 via-background to-background">
-      {/* Top bar */}
-      <div className="flex items-center justify-between border-b px-5 py-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+      {/* Top bar — skip/close is a 44px target and never collides with progress */}
+      <div className="flex items-center gap-3 border-b px-4 py-3 sm:px-5">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Sparkles className="h-3.5 w-3.5" />
           </div>
           <span className="font-display text-sm font-semibold">OneLife</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          {STEPS.map((s, i) => (
-            <span
-              key={s}
-              className={cn(
-                "h-1.5 w-6 rounded-full transition-colors",
-                i <= stepIdx ? "bg-primary" : "bg-muted",
-              )}
+        <div className="min-w-0 flex-1 px-2">
+          <div className="mx-auto h-1.5 max-w-xs overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${((stepIdx + 1) / STEPS.length) * 100}%` }}
             />
-          ))}
+          </div>
+          <p className="mt-1 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
+            Step {stepIdx + 1} of {STEPS.length}
+          </p>
         </div>
         <Button
-          variant="ghost"
-          size="sm"
+          type="button"
+          variant="outline"
           onClick={finish}
-          className="text-xs text-muted-foreground"
+          aria-label="Skip setup"
+          className="h-11 shrink-0 gap-1.5 rounded-full px-3.5 text-sm font-medium sm:px-4"
         >
-          Skip setup <X className="ml-1 h-3 w-3" />
+          <span className="hidden sm:inline">Skip setup</span>
+          <span className="sm:hidden">Skip</span>
+          <X className="h-4 w-4" />
         </Button>
       </div>
 
@@ -210,7 +241,6 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
           <div className="w-full">
             {step === "welcome" && (
               <div className="relative text-center">
-                {/* decorative background blobs */}
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
@@ -229,8 +259,8 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                   </span>
                 </h1>
                 <p className="mx-auto mt-4 max-w-sm text-base text-muted-foreground">
-                  Let&apos;s set up your dashboard in a few easy steps — like setting up a new
-                  phone. You can change anything later.
+                  Build one clear <span className="font-medium text-foreground">goal</span>, break it
+                  into milestones, then turn it into tasks you can actually do.
                 </p>
                 <div className="mt-8 flex flex-col items-center gap-3">
                   <Button
@@ -249,7 +279,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
               <div className="space-y-4">
                 <h1 className="font-display text-2xl font-semibold">What should we call you?</h1>
                 <p className="text-sm text-muted-foreground">
-                  We&apos;ll use this for your greeting and at the center of your mind map.
+                  We'll use this for your greeting and at the center of your mind map.
                 </p>
                 <Input
                   autoFocus
@@ -261,13 +291,125 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
               </div>
             )}
 
+            {step === "overview" && (
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-primary">
+                    How OneLife works
+                  </p>
+                  <h1 className="font-display mt-1 text-2xl font-semibold">
+                    {name.trim() ? `${name.trim()}, you` : "You"} start with a goal
+                  </h1>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Everything in OneLife follows the same pattern: a goal is the destination,
+                    milestones are checkpoints, and tasks are the next actions.
+                  </p>
+                </div>
+
+                <ol className="space-y-2.5">
+                  <li className="flex gap-3 rounded-2xl border bg-card p-3.5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                      <Target className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Goal</p>
+                      <p className="text-xs text-muted-foreground">
+                        The outcome you want — specific, dated, and owned by one life area.
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3 rounded-2xl border bg-card p-3.5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/15 text-fuchsia-500">
+                      <Flag className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Milestones</p>
+                      <p className="text-xs text-muted-foreground">
+                        Sub-goals under that goal. Checkpoints that prove you are moving.
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3 rounded-2xl border bg-card p-3.5">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-500">
+                      <ListChecks className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Tasks</p>
+                      <p className="text-xs text-muted-foreground">
+                        Concrete actions under a milestone. These show up on Today and Calendar.
+                      </p>
+                    </div>
+                  </li>
+                </ol>
+
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">How do you want to set this up?</p>
+                  <div className="grid gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSetupMode("manual")}
+                      className={cn(
+                        "flex items-start gap-3 rounded-2xl border p-3.5 text-left transition",
+                        setupMode === "manual"
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                          : "bg-card hover:border-primary/40",
+                      )}
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <PenLine className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold">Manual</p>
+                          <Badge variant="secondary" className="text-[10px]">
+                            Available
+                          </Badge>
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          You pick a life area, then a template or blank goal, then add milestones
+                          and tasks one by one.
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled
+                      aria-disabled="true"
+                      title="AI mode is coming soon"
+                      className="relative flex cursor-not-allowed items-start gap-3 rounded-2xl border border-dashed bg-muted/30 p-3.5 text-left opacity-70"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/10 text-fuchsia-500">
+                        <Wand2 className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold">AI mode</p>
+                          <Badge variant="outline" className="gap-1 text-[10px]">
+                            <Lock className="h-3 w-3" /> Coming soon
+                          </Badge>
+                        </div>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          Something amazing is coming. AI will ask a few questions and draft your
+                          goal, milestones, and tasks for you.
+                        </p>
+                        <span className="mt-2 inline-flex h-8 items-center rounded-full border px-3 text-[11px] font-medium text-muted-foreground">
+                          Try AI (disabled)
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {step === "areas" && (
               <div className="space-y-4">
                 <h1 className="font-display text-2xl font-semibold">
                   Which life areas matter to you?
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Pick a few. We&apos;ll color-code your goals by area.
+                  Pick a few. We'll color-code your goals by area.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {AREA_OPTIONS.map((a) => {
@@ -301,11 +443,10 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
 
             {step === "template" && (
               <div className="space-y-4">
-                <h1 className="font-display text-2xl font-semibold">
-                  Start from a science-backed template?
-                </h1>
+                <h1 className="font-display text-2xl font-semibold">Template goal selection</h1>
                 <p className="text-sm text-muted-foreground">
-                  Pick one to pre-fill milestones and starter tasks, or skip to start blank.
+                  Start from a science-backed pattern, or create a blank goal and add milestones
+                  yourself.
                 </p>
                 <div className="grid gap-2">
                   {filteredTemplates.length === 0 && (
@@ -337,7 +478,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                     onClick={() => pickTemplate(null)}
                     className="rounded-lg border border-dashed bg-muted/30 p-3 text-left text-sm transition hover:bg-muted/60"
                   >
-                    Start blank <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+                    Blank goal <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -345,9 +486,11 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
 
             {step === "goal" && (
               <div className="space-y-4">
-                <h1 className="font-display text-2xl font-semibold">Your first goal</h1>
+                <h1 className="font-display text-2xl font-semibold">
+                  {template ? "Confirm your goal" : "Create a blank goal"}
+                </h1>
                 <p className="text-sm text-muted-foreground">
-                  A clear, specific outcome you want to reach.
+                  A goal is the outcome. Next you will add milestones under this goal, then tasks.
                 </p>
                 <div className="space-y-3">
                   <div>
@@ -385,9 +528,12 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
 
             {step === "milestones" && (
               <div className="space-y-4">
-                <h1 className="font-display text-2xl font-semibold">Add milestones (sub-goals)</h1>
+                <GoalContextChip title={displayGoalTitle} />
+                <h1 className="font-display text-2xl font-semibold">Add milestones</h1>
                 <p className="text-sm text-muted-foreground">
-                  Break the goal into checkpoints. Skip if you&apos;d rather add them later.
+                  Milestones are sub-goals of{" "}
+                  <span className="font-medium text-foreground">{displayGoalTitle}</span>. Skip if
+                  you'd rather add them later.
                 </p>
                 <div className="space-y-3">
                   {milestones.map((m, i) => (
@@ -439,9 +585,12 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
 
             {step === "tasks" && (
               <div className="space-y-4">
+                <GoalContextChip title={displayGoalTitle} />
                 <h1 className="font-display text-2xl font-semibold">Add starter tasks</h1>
                 <p className="text-sm text-muted-foreground">
-                  Concrete next actions you can do this week.
+                  Tasks sit under a milestone of{" "}
+                  <span className="font-medium text-foreground">{displayGoalTitle}</span>. Add a few
+                  you can do this week.
                 </p>
                 <div className="space-y-3">
                   {tasksDraft.map((t, i) => (
@@ -520,7 +669,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                   <Check className="h-7 w-7" />
                 </div>
                 <h1 className="font-display text-3xl font-semibold">
-                  You&apos;re all set{name ? `, ${name}` : ""}
+                  You're all set{name ? `, ${name}` : ""}
                 </h1>
                 <p className="mt-3 text-sm text-muted-foreground">
                   {createdGoalId
