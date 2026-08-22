@@ -3,6 +3,7 @@ import { Check, Crown, MapPin } from "lucide-react";
 import { useAppData } from "@/lib/app-data";
 import { RANK_TIERS, RANK_DESCRIPTIONS, getRankIndex } from "@/lib/rank";
 import { cn } from "@/lib/utils";
+import { RankIcon } from "@/components/life/RankIcon";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
@@ -46,6 +47,14 @@ export function RankLadder({ className }: { className?: string }) {
             )}
           >
             <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                  isCurrent ? "bg-primary/10" : "bg-muted/60",
+                )}
+              >
+                <RankIcon rank={tier.name} className="h-9 w-9" />
+              </div>
               <span
                 className={cn(
                   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",

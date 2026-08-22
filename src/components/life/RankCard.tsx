@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import { useAppData } from "@/lib/app-data";
 import { getRankProgress } from "@/lib/rank";
+import { RankIcon } from "@/components/life/RankIcon";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
@@ -22,7 +23,7 @@ export function RankCard({ interactive = false }: { interactive?: boolean }) {
       <CardContent className="space-y-3 p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Shield className="h-6 w-6" />
+            <RankIcon rank={p.rank} className="h-9 w-9" />
             <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-background text-[10px] font-semibold text-primary ring-1 ring-border">
               {p.index + 1}
             </span>
