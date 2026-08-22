@@ -1,6 +1,6 @@
-# OneLife
+# LifeVerse One
 
-OneLife is a session-based web application designed to help you organize your life. Track your goals by skill, manage sub-goals on a timeline, handle daily tasks, and maintain your bucket list. Everything is kept locally, and you can easily export or import your data as JSON.
+LifeVerse One is a session-based web application designed to help you organize your life. Track your goals by skill, manage sub-goals on a timeline, handle daily tasks, and maintain your bucket list. Everything is kept locally, and you can easily export or import your data as JSON.
 
 ## Key Features
 

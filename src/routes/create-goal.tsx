@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { CreateGoalWizard } from "@/components/life/CreateGoalWizard";
+import { APP_NAME } from "@/lib/site";
 
 export const Route = createFileRoute("/create-goal")({
   component: CreateGoalPage,
   head: () => ({
     meta: [
-      { title: "Create a Goal — OneLife" },
+      { title: `Create a Goal — ${APP_NAME}` },
       {
         name: "description",
         content:

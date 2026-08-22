@@ -1,4 +1,4 @@
-/* OneLife push service worker. Handles server-sent reminders only —
+/* LifeVerse One push service worker. Handles server-sent reminders only —
    it deliberately does not cache anything, so the app has no offline mode. */
 
 self.addEventListener("install", () => self.skipWaiting());

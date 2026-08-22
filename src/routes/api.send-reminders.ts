@@ -29,9 +29,9 @@ export const APIRoute = {
       for (const milestone of milestones) {
         try {
           await resend.emails.send({
-            from: "OneLife <onboarding@resend.dev>",
+            from: "LifeVerse One <onboarding@resend.dev>",
             to: email,
-            subject: `OneLife check-in: "${milestone.title}"`,
+            subject: `LifeVerse One check-in: "${milestone.title}"`,
             html: `
                <p>Hi,</p>
                <p>Today is the target date for this milestone:</p>
@@ -39,9 +39,9 @@ export const APIRoute = {
                📌 Goal: <strong>${milestone.goalTitle}</strong><br/>
                📅 Target date: <strong>${milestone.targetDate}</strong></p>
                <p>Have you completed it?</p>
-               <p>→ Open OneLife and mark it done<br/>
+               <p>→ Open LifeVerse One and mark it done<br/>
                (or reply to this email if you prefer)</p>
-               <p>— OneLife</p>
+               <p>— LifeVerse One</p>
              `,
           });
           sentCount++;

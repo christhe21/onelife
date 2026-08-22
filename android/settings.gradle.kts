@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OneLife"
+rootProject.name = "LifeVerseOne"
 include(":app")
