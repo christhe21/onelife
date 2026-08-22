@@ -15,9 +15,9 @@ import { MarketingLayout } from "@/components/marketing/MarketingLayout";
 import { Reveal } from "@/components/marketing/Reveal";
 import { ScreenshotFrame } from "@/components/marketing/ScreenshotFrame";
 import { CTABand } from "@/components/marketing/CTABand";
-import { APP_DESCRIPTION, GITHUB_URL, SITE_URL } from "@/lib/site";
+import { APP_DESCRIPTION, APP_NAME, GITHUB_URL, SITE_URL } from "@/lib/site";
 
-const TITLE = "OneLife — Plan your life like you plan your week";
+const TITLE = `${APP_NAME} — Plan your life like you plan your week`;
 const DESC = APP_DESCRIPTION;
 
 export const Route = createFileRoute("/")({
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "OneLife",
+          name: APP_NAME,
           applicationCategory: "ProductivityApplication",
           operatingSystem: "Web, Android",
           description: DESC,
@@ -142,7 +142,7 @@ function MarketingHome() {
           <Reveal delay={200} from="scale" className="mt-14">
             <ScreenshotFrame
               src="/marketing/dashboard.jpg"
-              alt="OneLife dashboard showing rank progress, skills and upcoming goals"
+              alt={`${APP_NAME} dashboard showing rank progress, skills and upcoming goals`}
               caption="The dashboard: rank, skills and what needs you next."
             />
           </Reveal>
@@ -153,10 +153,10 @@ function MarketingHome() {
       <section className="mx-auto w-full max-w-6xl px-5 py-16">
         <Reveal>
           <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
-            What is OneLife?
+            What is {APP_NAME}?
           </h2>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
-            A single workspace for the long game. Most tools track today's to-dos; OneLife connects
+            A single workspace for the long game. Most tools track today's to-dos; {APP_NAME} connects
             them to the life you're actually trying to build.
           </p>
         </Reveal>
@@ -187,14 +187,14 @@ function MarketingHome() {
             <Reveal from="left">
               <ScreenshotFrame
                 src="/marketing/calendar.jpg"
-                alt="OneLife calendar with scheduled tasks, heatmap and progress rings"
+                alt={`${APP_NAME} calendar with scheduled tasks, heatmap and progress rings`}
                 caption="Calendar with drag-to-reschedule and auto-scheduling."
               />
             </Reveal>
             <Reveal from="right" delay={120}>
               <ScreenshotFrame
                 src="/marketing/overview.jpg"
-                alt="OneLife mindmap overview linking skills, goals, milestones and tasks"
+                alt={`${APP_NAME} mindmap overview linking skills, goals, milestones and tasks`}
                 caption="Mindmap overview of everything you're working toward."
               />
             </Reveal>
