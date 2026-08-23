@@ -71,6 +71,7 @@ const GROUPS: {
   },
   {
     icon: CalendarClock,
+    outcome: "schedule",
     title: "Calendar and auto-scheduling",
     desc: "Put the work in real time slots. Drag it around when life changes.",
     points: [
@@ -86,6 +87,7 @@ const GROUPS: {
   },
   {
     icon: Network,
+    outcome: "see",
     title: "Mindmap overview",
     desc: "Zoom out and see the whole structure of your life plan in one canvas — or as a tree.",
     points: [
@@ -100,6 +102,7 @@ const GROUPS: {
   },
   {
     icon: Trophy,
+    outcome: "see",
     title: "Ranks and points",
     desc: "Completions earn points; points move you along a nine-tier ladder from Beginner to One.",
     points: [
@@ -114,6 +117,7 @@ const GROUPS: {
   },
   {
     icon: Store,
+    outcome: "plan",
     title: "Goal marketplace",
     desc: "Start from a ready-made plan instead of a blank page.",
     points: [
@@ -124,6 +128,7 @@ const GROUPS: {
   },
   {
     icon: Bell,
+    outcome: "schedule",
     title: "Reminders",
     desc: "Nudges that reach you where you are.",
     points: [
@@ -134,6 +139,7 @@ const GROUPS: {
   },
   {
     icon: Palette,
+    outcome: "keep",
     title: "Themes",
     desc: "Make the workspace yours.",
     points: [
@@ -144,6 +150,7 @@ const GROUPS: {
   },
   {
     icon: CloudUpload,
+    outcome: "keep",
     title: "Your data, portable",
     desc: "Sign in to sync, or keep it local and carry it in a file.",
     points: [
