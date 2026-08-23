@@ -35,8 +35,18 @@ export const Route = createFileRoute("/features")({
   }),
 });
 
+const OUTCOMES = [
+  { id: "plan", label: "Plan it", desc: "Turn an intention into a structure you can work." },
+  { id: "schedule", label: "Schedule it", desc: "Put the work into real hours and get reminded." },
+  { id: "see", label: "See it", desc: "Zoom out and know exactly where you stand." },
+  { id: "keep", label: "Keep it", desc: "Make it yours and take it with you." },
+] as const;
+
+type OutcomeId = (typeof OUTCOMES)[number]["id"];
+
 const GROUPS: {
   icon: typeof Target;
+  outcome: OutcomeId;
   title: string;
   desc: string;
   points: string[];
@@ -44,6 +54,8 @@ const GROUPS: {
 }[] = [
   {
     icon: Target,
+    outcome: "plan",
+
     title: "The planning hierarchy",
     desc: "Skills hold goals, goals hold milestones, milestones hold tasks and subtasks. Nothing floats without a reason to exist.",
     points: [
