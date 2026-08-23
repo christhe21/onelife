@@ -166,47 +166,82 @@ function FeaturesPage() {
     <MarketingLayout>
       <section className="mx-auto w-full max-w-6xl px-5 pb-6 pt-16 sm:pt-20">
         <Reveal>
-          <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Features
+          </p>
+          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
             Everything {APP_NAME} does
           </h1>
           <p className="mt-4 max-w-2xl text-sm text-muted-foreground sm:text-lg">{DESC}</p>
         </Reveal>
+        <Reveal delay={120}>
+          <nav
+            aria-label="Feature sections"
+            className="mt-8 flex flex-wrap gap-2 border-t border-border pt-6"
+          >
+            {OUTCOMES.map((o) => (
+              <a
+                key={o.id}
+                href={`#${o.id}`}
+                className="rounded-full border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {o.label}
+              </a>
+            ))}
+          </nav>
+        </Reveal>
       </section>
 
-      <div className="mx-auto w-full max-w-6xl space-y-16 px-5 py-10">
-        {GROUPS.map((g, i) => (
-          <section key={g.title} className="grid items-center gap-8 lg:grid-cols-2">
-            <Reveal from={i % 2 === 0 ? "left" : "right"} className={i % 2 ? "lg:order-2" : ""}>
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <g.icon className="h-5 w-5" />
-              </div>
-              <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight">{g.title}</h2>
-              <p className="mt-2 text-sm text-muted-foreground">{g.desc}</p>
-              <ul className="mt-5 space-y-2">
-                {g.points.map((p) => (
-                  <li key={p} className="flex gap-2.5 text-sm">
-                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                    <span className="text-foreground/90">{p}</span>
-                  </li>
-                ))}
-              </ul>
+      <div className="mx-auto w-full max-w-6xl px-5 py-10">
+        {OUTCOMES.map((o) => (
+          <div key={o.id} id={o.id} className="scroll-mt-24 border-t border-border py-14 first:border-t-0">
+            <Reveal>
+              <h2 className="font-display text-3xl font-semibold tracking-tight">{o.label}</h2>
+              <p className="mt-2 max-w-xl text-sm text-muted-foreground">{o.desc}</p>
             </Reveal>
-            <Reveal
-              from={i % 2 === 0 ? "right" : "left"}
-              delay={100}
-              className={i % 2 ? "lg:order-1" : ""}
-            >
-              {g.shot ? (
-                <ScreenshotFrame src={g.shot.src} alt={g.shot.alt} />
-              ) : (
-                <div className="flex h-full min-h-40 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-10">
-                  <g.icon className="h-12 w-12 text-primary/40" />
-                </div>
-              )}
-            </Reveal>
-          </section>
+            <div className="mt-12 space-y-16">
+              {GROUPS.filter((g) => g.outcome === o.id).map((g, i) => (
+                <section key={g.title} className="grid items-center gap-8 lg:grid-cols-2">
+                  <Reveal
+                    from={i % 2 === 0 ? "left" : "right"}
+                    className={i % 2 ? "lg:order-2" : ""}
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <g.icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="mt-4 font-display text-2xl font-semibold tracking-tight">
+                      {g.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{g.desc}</p>
+                    <ul className="mt-5 space-y-2">
+                      {g.points.map((p) => (
+                        <li key={p} className="flex gap-2.5 text-sm">
+                          <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          <span className="text-foreground/90">{p}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </Reveal>
+                  <Reveal
+                    from={i % 2 === 0 ? "right" : "left"}
+                    delay={100}
+                    className={i % 2 ? "lg:order-1" : ""}
+                  >
+                    {g.shot ? (
+                      <ScreenshotFrame src={g.shot.src} alt={g.shot.alt} />
+                    ) : (
+                      <div className="flex h-full min-h-40 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 p-10">
+                        <g.icon className="h-12 w-12 text-primary/40" />
+                      </div>
+                    )}
+                  </Reveal>
+                </section>
+              ))}
+            </div>
+          </div>
         ))}
       </div>
+
 
       <CTABand />
     </MarketingLayout>
