@@ -7,6 +7,7 @@ import { BrandMark } from "@/components/marketing/BrandMark";
 
 const LINKS = [
   { to: "/", label: "Home" },
+  { to: "/how-it-works", label: "How it works" },
   { to: "/features", label: "Features" },
   { to: "/about", label: "About" },
 ] as const;
