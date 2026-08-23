@@ -6,9 +6,11 @@ import { userEvent } from "@testing-library/user-event";
 
 const STORAGE_KEY = "life-manager:v1";
 const TOUR_DONE_KEY = "onelife:tour-completed";
+const TOUR_NEVER_KEY = "onelife:tour-never";
 
 function seedOnboarded(extra: Record<string, unknown> = {}) {
   window.localStorage.removeItem(TOUR_DONE_KEY);
+  window.localStorage.removeItem(TOUR_NEVER_KEY);
   window.localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
@@ -34,8 +36,8 @@ describe("Product tour", () => {
       </AppDataProvider>,
     );
 
-    expect(await screen.findByText(/Do you want a tutorial on this\?/i)).toBeInTheDocument();
-    await user.click(screen.getByText("Start tutorial"));
+    expect(await screen.findByText(/Want a quick tour\?/i)).toBeInTheDocument();
+    await user.click(screen.getByText("Take the tour"));
     expect(await screen.findByText(/This is your dashboard/i)).toBeInTheDocument();
     expect(screen.getByText(/Dashboard · 1 of/i)).toBeInTheDocument();
   });
@@ -49,9 +51,9 @@ describe("Product tour", () => {
       </AppDataProvider>,
     );
 
-    await user.click(await screen.findByText("Start tutorial"));
+    await user.click(await screen.findByText("Take the tour"));
     await user.click(screen.getByRole("button", { name: /Next/i }));
-    expect(await screen.findByText(/^Rank$/)).toBeInTheDocument();
+    expect(await screen.findByText(/Rank and points/)).toBeInTheDocument();
     expect(screen.getByText(/Dashboard · 2 of/i)).toBeInTheDocument();
   });
 
@@ -64,9 +66,9 @@ describe("Product tour", () => {
       </AppDataProvider>,
     );
 
-    expect(await screen.findByText(/Do you want a tutorial on this\?/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Want a quick tour\?/i)).toBeInTheDocument();
     await user.click(screen.getByText("Not now"));
-    expect(screen.queryByText(/Do you want a tutorial on this\?/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Want a quick tour\?/i)).not.toBeInTheDocument();
     expect(window.localStorage.getItem(TOUR_DONE_KEY)).toBe("1");
 
     unmount();
@@ -76,6 +78,6 @@ describe("Product tour", () => {
       </AppDataProvider>,
     );
     await new Promise((r) => setTimeout(r, 600));
-    expect(screen.queryByText(/Do you want a tutorial on this\?/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Want a quick tour\?/i)).not.toBeInTheDocument();
   });
 });
