@@ -11,9 +11,9 @@ import {
   Target,
   Flag,
   ListChecks,
-  Wand2,
+  Compass,
   PenLine,
-  Lock,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,19 +31,16 @@ import { TEMPLATES, CATEGORIES, type Category, type GoalTemplate } from "@/lib/t
 import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
 
-const STEPS = [
-  "welcome",
-  "name",
-  "overview",
-  "areas",
-  "template",
-  "goal",
-  "milestones",
-  "tasks",
-  "done",
-] as const;
+const STEPS = ["welcome", "areas", "start", "shape", "done"] as const;
 type Step = (typeof STEPS)[number];
-type SetupMode = "manual" | "ai";
+
+const STEP_LABELS: Record<Step, string> = {
+  welcome: "Welcome",
+  areas: "Life areas",
+  start: "Starting point",
+  shape: "Your goal",
+  done: "Done",
+};
 
 const AREA_LABELS: Record<Category | "Creative" | "Financial" | "Social" | "Learning", string> = {
   Career: "Career",
@@ -77,6 +74,8 @@ const AREA_TO_SKILL: Record<string, { id: string; color: string }> = {
   Learning: { id: "learning", color: "#14b8a6" },
 };
 
+const DEFAULT_AREAS = ["Career", "Health"];
+
 function addDays(base: Date, days: number): string {
   const d = new Date(base);
   d.setDate(d.getDate() + days);
@@ -86,7 +85,7 @@ function addDays(base: Date, days: number): string {
 function GoalContextChip({ title }: { title: string }) {
   if (!title.trim()) return null;
   return (
-    <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs">
+    <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs">
       <Target className="h-3.5 w-3.5 shrink-0 text-primary" />
       <span className="text-muted-foreground">Adding to</span>
       <span className="truncate font-semibold text-foreground">{title}</span>
@@ -99,14 +98,13 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
     useAppData();
   const [step, setStep] = useState<Step>("welcome");
   const [name, setName] = useState("");
-  const [setupMode, setSetupMode] = useState<SetupMode>("manual");
-  const [areas, setAreas] = useState<Set<string>>(new Set(["Career", "Health"]));
+  const [areas, setAreas] = useState<Set<string>>(new Set(DEFAULT_AREAS));
   const [template, setTemplate] = useState<GoalTemplate | null>(null);
   const today = new Date().toISOString().slice(0, 10);
   const [goalTitle, setGoalTitle] = useState("");
   const [goalSkill, setGoalSkill] = useState<string>("life");
   const [targetDate, setTargetDate] = useState(addDays(new Date(), 90));
-  const [createdGoalId, setCreatedGoalId] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ milestones: number; tasks: number } | null>(null);
   const [milestones, setMilestones] = useState<{ title: string; date: string }[]>([]);
   const [tasksDraft, setTasksDraft] = useState<
     { title: string; due: string; priority: "low" | "medium" | "high" }[]
@@ -123,7 +121,10 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
     };
   }, []);
 
-  const filteredTemplates = useMemo(() => TEMPLATES.filter((t) => areas.has(t.category)), [areas]);
+  const filteredTemplates = useMemo(() => {
+    const picked = TEMPLATES.filter((t) => areas.has(t.category));
+    return picked.length ? picked : TEMPLATES;
+  }, [areas]);
 
   const next = () => setStep(STEPS[Math.min(stepIdx + 1, STEPS.length - 1)]);
   const back = () => setStep(STEPS[Math.max(stepIdx - 1, 0)]);
@@ -134,28 +135,31 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
     onFinish?.();
   };
 
-  const handleAreasNext = () => {
-    for (const a of areas) {
+  const ensureSkills = (list: Iterable<string>) => {
+    for (const a of list) {
       const m = AREA_TO_SKILL[a];
       if (!m) continue;
       if (!skills.some((s) => s.id === m.id)) {
         addSkill({ id: m.id, label: AREA_LABELS[a as keyof typeof AREA_LABELS], color: m.color });
       }
     }
-    next();
   };
 
-  const pickTemplate = (t: GoalTemplate | null) => {
+  const goToStart = (useDefaults?: boolean) => {
+    const chosen = useDefaults || areas.size === 0 ? new Set(DEFAULT_AREAS) : areas;
+    setAreas(chosen);
+    ensureSkills(chosen);
+    setStep("start");
+  };
+
+  const applyTemplate = (t: GoalTemplate | null) => {
     setTemplate(t);
     if (t) {
       setGoalTitle(t.title);
       setGoalSkill(t.skill);
       setTargetDate(addDays(new Date(today), t.durationDays));
       setMilestones(
-        t.subGoals.map((sg) => ({
-          title: sg.title,
-          date: addDays(new Date(today), sg.offsetDays),
-        })),
+        t.subGoals.map((sg) => ({ title: sg.title, date: addDays(new Date(today), sg.offsetDays) })),
       );
       setTasksDraft(
         t.tasks.map((task) => ({
@@ -165,15 +169,17 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
         })),
       );
     } else {
+      setGoalTitle("");
       setMilestones([]);
       setTasksDraft([]);
     }
-    setStep("goal");
+    setStep("shape");
   };
 
-  const createGoal = () => {
-    const title = goalTitle.trim() || "My first goal";
-    const id = addGoal({
+  /** Create the goal, its milestones and starter tasks in one go. */
+  const commit = (opts?: { silentTitle?: string }) => {
+    const title = opts?.silentTitle ?? (goalTitle.trim() || "My first goal");
+    const goalId = addGoal({
       title,
       description: template ? `${template.description}\n\nWhy: ${template.rationale}` : "",
       skill: goalSkill || "life",
@@ -182,24 +188,12 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
       status: "not_started",
       currentActivity: "",
     });
-    setCreatedGoalId(id);
-    next();
-  };
-
-  const saveMilestones = () => {
-    if (!createdGoalId) return next();
-    milestones
-      .filter((m) => m.title.trim())
-      .forEach((m) => addSubGoal(createdGoalId, m.title.trim(), m.date || undefined));
-    next();
-  };
-
-  const saveTasks = () => {
-    if (!createdGoalId) return next();
-    const subGoalId = ensureDefaultMilestone(createdGoalId);
-    tasksDraft
-      .filter((t) => t.title.trim())
-      .forEach((t) =>
+    const cleanMilestones = milestones.filter((m) => m.title.trim());
+    cleanMilestones.forEach((m) => addSubGoal(goalId, m.title.trim(), m.date || undefined));
+    const cleanTasks = tasksDraft.filter((t) => t.title.trim());
+    if (cleanTasks.length) {
+      const subGoalId = ensureDefaultMilestone(goalId);
+      cleanTasks.forEach((t) =>
         addTask({
           title: t.title.trim(),
           dueDate: t.due || undefined,
@@ -207,36 +201,104 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
           subGoalId,
         }),
       );
-    next();
+    }
+    setCreated({ milestones: cleanMilestones.length, tasks: cleanTasks.length });
+    setStep("done");
+  };
+
+  /** "Just explore" — seed a small, realistic goal so the dashboard is never empty. */
+  const exploreWithSample = () => {
+    const sample = filteredTemplates[0] ?? TEMPLATES[0];
+    if (!sample) {
+      setCreated(null);
+      setStep("done");
+      return;
+    }
+    setTemplate(sample);
+    setGoalSkill(sample.skill);
+    setTargetDate(addDays(new Date(today), sample.durationDays));
+    const ms = sample.subGoals
+      .slice(0, 3)
+      .map((sg) => ({ title: sg.title, date: addDays(new Date(today), sg.offsetDays) }));
+    const ts = sample.tasks.slice(0, 3).map((t) => ({
+      title: t.title,
+      due: addDays(new Date(today), t.offsetDays),
+      priority: t.priority,
+    }));
+    const goalId = addGoal({
+      title: sample.title,
+      description: `${sample.description}\n\nSample goal added while exploring — edit or delete it any time.`,
+      skill: sample.skill,
+      startDate: today,
+      targetDate: addDays(new Date(today), sample.durationDays),
+      status: "not_started",
+      currentActivity: "",
+    });
+    ms.forEach((m) => addSubGoal(goalId, m.title, m.date));
+    if (ts.length) {
+      const subGoalId = ensureDefaultMilestone(goalId);
+      ts.forEach((t) =>
+        addTask({ title: t.title, dueDate: t.due, priority: t.priority, subGoalId }),
+      );
+    }
+    setGoalTitle(sample.title);
+    setCreated({ milestones: ms.length, tasks: ts.length });
+    setStep("done");
+  };
+
+  const canContinue = step !== "shape" || goalTitle.trim().length > 0;
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter") return;
+    const el = e.target as HTMLElement;
+    if (el.tagName === "TEXTAREA" || el.tagName === "BUTTON") return;
+    if (step === "welcome") {
+      e.preventDefault();
+      next();
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-primary/5 via-background to-background">
-      {/* Top bar — skip/close is a 44px target and never collides with progress */}
+    <div
+      onKeyDown={handleKeyDown}
+      className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-primary/5 via-background to-background"
+    >
+      {/* Top bar */}
       <div className="flex items-center gap-3 border-b px-4 py-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2">
           <BrandMark className="h-8 w-8 rounded-lg" />
-          <div className="min-w-0">
-            <span className="block truncate font-display text-sm font-semibold">{APP_NAME}</span>
-            <span className="hidden text-[10px] uppercase tracking-wider text-muted-foreground sm:block">
-              Setup
-            </span>
-          </div>
+          <span className="hidden truncate font-display text-sm font-semibold sm:block">
+            {APP_NAME}
+          </span>
         </div>
-        <div className="min-w-0 flex-1 px-2">
-          <div className="mx-auto h-1.5 max-w-xs overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${((stepIdx + 1) / STEPS.length) * 100}%` }}
-            />
-          </div>
-          <p className="mt-1 text-center text-[10px] uppercase tracking-wider text-muted-foreground">
-            Step {stepIdx + 1} of {STEPS.length}
+        <div className="min-w-0 flex-1 px-1">
+          <ol className="mx-auto flex max-w-md items-center gap-1.5">
+            {STEPS.map((s, i) => (
+              <li key={s} className="flex-1">
+                <div
+                  className={cn(
+                    "h-1.5 rounded-full transition-colors",
+                    i <= stepIdx ? "bg-primary" : "bg-muted",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "mt-1 hidden text-center text-[10px] uppercase tracking-wider sm:block",
+                    i === stepIdx ? "text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {STEP_LABELS[s]}
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-1 text-center text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden">
+            {STEP_LABELS[step]} · {stepIdx + 1}/{STEPS.length}
           </p>
         </div>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           onClick={finish}
           aria-label="Skip setup"
           className="h-11 shrink-0 gap-1.5 rounded-full px-3.5 text-sm font-medium sm:px-4"
@@ -249,168 +311,48 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex min-h-full w-full max-w-lg items-center justify-center p-6">
-          <div className="w-full">
+        <div className="mx-auto flex min-h-full w-full max-w-xl items-center justify-center p-5 sm:p-6">
+          <div className="w-full py-2">
             {step === "welcome" && (
               <div className="relative text-center">
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
                 >
-                  <div className="absolute -top-20 -left-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-                  <div className="absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-fuchsia-400/20 blur-3xl" />
-                  <div className="absolute top-1/2 left-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-400/10 blur-2xl" />
+                  <div className="absolute -left-16 -top-20 h-64 w-64 rounded-full bg-primary/15 blur-3xl" />
+                  <div className="absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-accent/40 blur-3xl" />
                 </div>
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl shadow-2xl shadow-primary/30 ring-1 ring-white/20">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl shadow-2xl shadow-primary/20">
                   <BrandMark className="h-20 w-20 rounded-3xl" alt="" />
                 </div>
-                <h1 className="font-display text-4xl font-semibold tracking-tight">
-                  Welcome to{" "}
-                  <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
-                    {APP_NAME}
-                  </span>
+                <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Welcome to {APP_NAME}
                 </h1>
-                <p className="mx-auto mt-4 max-w-sm text-base text-muted-foreground">
-                  Build one clear <span className="font-medium text-foreground">goal</span>, break it
-                  into milestones, then turn it into tasks you can actually do.
+                <p className="mx-auto mt-3 max-w-sm text-base text-muted-foreground">
+                  One clear goal, broken into milestones, turned into tasks you can actually do.
+                  Setup takes about a minute.
                 </p>
-                <div className="mt-8 flex flex-col items-center gap-3">
+                <div className="mx-auto mt-7 max-w-xs text-left">
+                  <Label className="text-xs" htmlFor="onboarding-name">
+                    What should we call you? <span className="text-muted-foreground">(optional)</span>
+                  </Label>
+                  <Input
+                    id="onboarding-name"
+                    autoFocus
+                    placeholder="Your first name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="mt-1.5 text-base"
+                  />
+                </div>
+                <div className="mt-6 flex flex-col items-center gap-2">
                   <Button
                     size="lg"
                     onClick={next}
-                    className="h-12 w-full max-w-xs rounded-full text-base shadow-lg shadow-primary/30 transition hover:shadow-xl hover:shadow-primary/40"
+                    className="h-12 w-full max-w-xs rounded-full text-base shadow-lg shadow-primary/20"
                   >
                     Get started <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                  <span className="text-xs text-muted-foreground">Takes about 2 minutes</span>
-                </div>
-              </div>
-            )}
-
-            {step === "name" && (
-              <div className="space-y-4">
-                <h1 className="font-display text-2xl font-semibold">What should we call you?</h1>
-                <p className="text-sm text-muted-foreground">
-                  We'll use this for your greeting and at the center of your mind map.
-                </p>
-                <Input
-                  autoFocus
-                  placeholder="Your first name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="text-base"
-                />
-              </div>
-            )}
-
-            {step === "overview" && (
-              <div className="space-y-5">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-primary">
-                    How {APP_NAME} works
-                  </p>
-                  <h1 className="font-display mt-1 text-2xl font-semibold">
-                    {name.trim() ? `${name.trim()}, you` : "You"} start with a goal
-                  </h1>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Everything in {APP_NAME} follows the same pattern: a goal is the destination,
-                    milestones are checkpoints, and tasks are the next actions.
-                  </p>
-                </div>
-
-                <ol className="space-y-2.5">
-                  <li className="flex gap-3 rounded-2xl border bg-card p-3.5">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                      <Target className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Goal</p>
-                      <p className="text-xs text-muted-foreground">
-                        The outcome you want — specific, dated, and owned by one life area.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex gap-3 rounded-2xl border bg-card p-3.5">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/15 text-fuchsia-500">
-                      <Flag className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Milestones</p>
-                      <p className="text-xs text-muted-foreground">
-                        Sub-goals under that goal. Checkpoints that prove you are moving.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex gap-3 rounded-2xl border bg-card p-3.5">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-500">
-                      <ListChecks className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold">Tasks</p>
-                      <p className="text-xs text-muted-foreground">
-                        Concrete actions under a milestone. These show up on Today and Calendar.
-                      </p>
-                    </div>
-                  </li>
-                </ol>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">How do you want to set this up?</p>
-                  <div className="grid gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSetupMode("manual")}
-                      className={cn(
-                        "flex items-start gap-3 rounded-2xl border p-3.5 text-left transition",
-                        setupMode === "manual"
-                          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                          : "bg-card hover:border-primary/40",
-                      )}
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <PenLine className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold">Manual</p>
-                          <Badge variant="secondary" className="text-[10px]">
-                            Available
-                          </Badge>
-                        </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          You pick a life area, then a template or blank goal, then add milestones
-                          and tasks one by one.
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled
-                      aria-disabled="true"
-                      title="AI mode is coming soon"
-                      className="relative flex cursor-not-allowed items-start gap-3 rounded-2xl border border-dashed bg-muted/30 p-3.5 text-left opacity-70"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/10 text-fuchsia-500">
-                        <Wand2 className="h-4 w-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold">AI mode</p>
-                          <Badge variant="outline" className="gap-1 text-[10px]">
-                            <Lock className="h-3 w-3" /> Coming soon
-                          </Badge>
-                        </div>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          Something amazing is coming. AI will ask a few questions and draft your
-                          goal, milestones, and tasks for you.
-                        </p>
-                        <span className="mt-2 inline-flex h-8 items-center rounded-full border px-3 text-[11px] font-medium text-muted-foreground">
-                          Try AI (disabled)
-                        </span>
-                      </div>
-                    </button>
-                  </div>
                 </div>
               </div>
             )}
@@ -421,7 +363,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                   Which life areas matter to you?
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Pick a few. We'll color-code your goals by area.
+                  Pick a few — goals get color-coded by area. You can change these later in Settings.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {AREA_OPTIONS.map((a) => {
@@ -430,16 +372,17 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                       <button
                         key={a}
                         type="button"
-                        onClick={() => {
+                        aria-pressed={on}
+                        onClick={() =>
                           setAreas((prev) => {
                             const n = new Set(prev);
                             if (n.has(a)) n.delete(a);
                             else n.add(a);
                             return n;
-                          });
-                        }}
+                          })
+                        }
                         className={cn(
-                          "rounded-full border px-4 py-1.5 text-sm font-medium transition",
+                          "rounded-full border px-4 py-2 text-sm font-medium transition",
                           on
                             ? "border-primary bg-primary text-primary-foreground"
                             : "bg-card hover:bg-muted",
@@ -450,64 +393,98 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                     );
                   })}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => goToStart(true)}
+                  className="text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                  Skip — use Career and Health
+                </button>
               </div>
             )}
 
-            {step === "template" && (
+            {step === "start" && (
               <div className="space-y-4">
-                <h1 className="font-display text-2xl font-semibold">Template goal selection</h1>
+                <h1 className="font-display text-2xl font-semibold">Choose a starting point</h1>
                 <p className="text-sm text-muted-foreground">
-                  Start from a science-backed pattern, or create a blank goal and add milestones
-                  yourself.
+                  Start from a proven plan, write your own, or look around with sample data.
                 </p>
-                <div className="grid gap-2">
-                  {filteredTemplates.length === 0 && (
-                    <p className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-                      No templates for the areas you selected yet. You can start blank.
-                    </p>
-                  )}
-                  {filteredTemplates.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => pickTemplate(t)}
-                      className="rounded-lg border bg-card p-3 text-left transition hover:border-primary hover:bg-primary/5"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold">{t.title}</span>
-                        <Badge variant="secondary" className="text-[10px]">
-                          {t.category} · {Math.round(t.durationDays / 7)}w
-                        </Badge>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
-                      <p className="mt-1 text-[11px] italic text-muted-foreground/80">
-                        {t.rationale}
-                      </p>
-                    </button>
-                  ))}
+
+                <div className="grid gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    onClick={() => pickTemplate(null)}
-                    className="rounded-lg border border-dashed bg-muted/30 p-3 text-left text-sm transition hover:bg-muted/60"
+                    onClick={() => applyTemplate(null)}
+                    className="flex items-start gap-3 rounded-2xl border bg-card p-4 text-left transition hover:border-primary hover:bg-primary/5"
                   >
-                    Blank goal <ArrowRight className="ml-1 inline h-3.5 w-3.5" />
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <PenLine className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Blank goal</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Write your own goal, milestones and tasks.
+                      </p>
+                    </div>
                   </button>
+                  <button
+                    type="button"
+                    onClick={exploreWithSample}
+                    className="flex items-start gap-3 rounded-2xl border bg-card p-4 text-left transition hover:border-primary hover:bg-primary/5"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                      <Compass className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold">Just explore</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Adds a sample goal so nothing is empty. Delete it any time.
+                      </p>
+                    </div>
+                  </button>
+                </div>
+
+                <div className="pt-2">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Or start from a template
+                  </p>
+                  <div className="mt-2 grid gap-2">
+                    {filteredTemplates.slice(0, 6).map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => applyTemplate(t)}
+                        className="rounded-xl border bg-card p-3 text-left transition hover:border-primary hover:bg-primary/5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-semibold">{t.title}</span>
+                          <Badge variant="secondary" className="shrink-0 text-[10px]">
+                            {t.category} · {Math.round(t.durationDays / 7)}w
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">{t.description}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
-            {step === "goal" && (
-              <div className="space-y-4">
-                <h1 className="font-display text-2xl font-semibold">
-                  {template ? "Confirm your goal" : "Create a blank goal"}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  A goal is the outcome. Next you will add milestones under this goal, then tasks.
-                </p>
-                <div className="space-y-3">
+            {step === "shape" && (
+              <div className="space-y-5">
+                <div className="space-y-1.5">
+                  <h1 className="font-display text-2xl font-semibold">
+                    {template ? "Confirm your goal" : "Shape your first goal"}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Goal, checkpoints and a few starter tasks — all on one screen.
+                  </p>
+                </div>
+
+                <div className="space-y-3 rounded-2xl border bg-card p-4">
                   <div>
                     <Label className="text-xs">Goal title</Label>
                     <Input
+                      autoFocus
                       value={goalTitle}
                       onChange={(e) => setGoalTitle(e.target.value)}
                       placeholder="e.g. Run a 5K under 25 minutes"
@@ -535,19 +512,14 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {step === "milestones" && (
-              <div className="space-y-4">
-                <GoalContextChip title={displayGoalTitle} />
-                <h1 className="font-display text-2xl font-semibold">Add milestones</h1>
-                <p className="text-sm text-muted-foreground">
-                  Milestones are sub-goals of{" "}
-                  <span className="font-medium text-foreground">{displayGoalTitle}</span>. Skip if
-                  you'd rather add them later.
-                </p>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <Flag className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-semibold">Milestones</h2>
+                    <span className="text-xs text-muted-foreground">optional</span>
+                  </div>
+                  <GoalContextChip title={displayGoalTitle} />
                   {milestones.map((m, i) => (
                     <div
                       key={i}
@@ -575,6 +547,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label={`Remove milestone ${i + 1}`}
                         className="self-end sm:self-auto"
                         onClick={() => setMilestones((cur) => cur.filter((_, j) => j !== i))}
                       >
@@ -585,26 +558,18 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() =>
-                      setMilestones((cur) => [...cur, { title: "", date: targetDate }])
-                    }
+                    onClick={() => setMilestones((cur) => [...cur, { title: "", date: targetDate }])}
                   >
                     <Plus className="mr-1 h-3.5 w-3.5" /> Add milestone
                   </Button>
                 </div>
-              </div>
-            )}
 
-            {step === "tasks" && (
-              <div className="space-y-4">
-                <GoalContextChip title={displayGoalTitle} />
-                <h1 className="font-display text-2xl font-semibold">Add starter tasks</h1>
-                <p className="text-sm text-muted-foreground">
-                  Tasks sit under a milestone of{" "}
-                  <span className="font-medium text-foreground">{displayGoalTitle}</span>. Add a few
-                  you can do this week.
-                </p>
-                <div className="space-y-3">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <ListChecks className="h-4 w-4 text-primary" />
+                    <h2 className="text-sm font-semibold">Starter tasks</h2>
+                    <span className="text-xs text-muted-foreground">optional</span>
+                  </div>
                   {tasksDraft.map((t, i) => (
                     <div
                       key={i}
@@ -652,6 +617,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`Remove task ${i + 1}`}
                           onClick={() => setTasksDraft((cur) => cur.filter((_, j) => j !== i))}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -681,14 +647,21 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                   <Check className="h-7 w-7" />
                 </div>
                 <h1 className="font-display text-3xl font-semibold">
-                  You're all set{name ? `, ${name}` : ""}
+                  You're all set{name.trim() ? `, ${name.trim()}` : ""}
                 </h1>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {createdGoalId
-                    ? `1 goal · ${milestones.filter((m) => m.title.trim()).length} milestones · ${tasksDraft.filter((t) => t.title.trim()).length} tasks`
+                  {created
+                    ? `1 goal · ${created.milestones} milestones · ${created.tasks} tasks`
                     : "You can add goals anytime from the dashboard."}
                 </p>
-                <Button className="mt-6" size="lg" onClick={finish}>
+                <div className="mx-auto mt-6 flex max-w-sm items-start gap-2.5 rounded-2xl border bg-card p-4 text-left">
+                  <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <p className="text-xs text-muted-foreground">
+                    Next: a short tour of the dashboard, calendar and overview — you can skip it and
+                    replay it later from Settings.
+                  </p>
+                </div>
+                <Button className="mt-6 h-12 rounded-full px-7" size="lg" onClick={finish}>
                   Enter dashboard <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -697,45 +670,38 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Sticky footer nav */}
       {step !== "welcome" && step !== "done" && (
-        <div className="flex items-center justify-between gap-4 border-t bg-card/60 px-5 py-3 backdrop-blur sm:px-8 sm:py-4">
-          <Button variant="ghost" onClick={back} className="sm:h-11 sm:px-5 sm:text-sm">
+        <div className="sticky bottom-0 flex items-center justify-between gap-4 border-t bg-card/80 px-4 py-3 backdrop-blur sm:px-8 sm:py-4">
+          <Button variant="ghost" onClick={back} className="h-11 px-4 sm:px-5">
             <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
           </Button>
-          {(() => {
-            const common =
-              "h-10 rounded-full px-5 text-sm shadow-md shadow-primary/20 sm:h-12 sm:min-w-[180px] sm:px-7 sm:text-base sm:shadow-lg sm:shadow-primary/30 sm:hover:shadow-xl sm:hover:shadow-primary/40 transition";
-            if (step === "areas")
-              return (
-                <Button onClick={handleAreasNext} disabled={areas.size === 0} className={common}>
-                  Continue <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              );
-            if (step === "goal")
-              return (
-                <Button onClick={createGoal} disabled={!goalTitle.trim()} className={common}>
-                  Create goal <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              );
-            if (step === "milestones")
-              return (
-                <Button onClick={saveMilestones} className={common}>
-                  Continue <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              );
-            if (step === "tasks")
-              return (
-                <Button onClick={saveTasks} className={common}>
-                  Continue <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              );
-            return (
-              <Button onClick={next} disabled={step === "name" && !name.trim()} className={common}>
-                Continue <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            );
-          })()}
+          {step === "areas" && (
+            <Button
+              onClick={() => goToStart()}
+              className="h-11 min-w-[140px] rounded-full px-6 text-base sm:h-12 sm:min-w-[180px]"
+            >
+              Continue <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+          {step === "shape" && (
+            <Button
+              onClick={() => commit()}
+              disabled={!canContinue}
+              className="h-11 min-w-[140px] rounded-full px-6 text-base sm:h-12 sm:min-w-[180px]"
+            >
+              Create goal <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+          {step === "start" && (
+            <Button
+              variant="outline"
+              onClick={() => applyTemplate(null)}
+              className="h-11 rounded-full px-6"
+            >
+              Start blank <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
     </div>

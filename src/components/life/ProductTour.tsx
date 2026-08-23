@@ -11,6 +11,7 @@ type Phase = "idle" | "invite" | "running";
 type Rect = { top: number; left: number; width: number; height: number; radius: number };
 
 const TOUR_DONE_KEY = "onelife:tour-completed";
+const TOUR_NEVER_KEY = "onelife:tour-never";
 
 const TARGET_LABELS: Record<string, string> = {
   "cal-agenda": "Agenda",
@@ -70,6 +71,30 @@ function readTourDoneFlag() {
   }
 }
 
+function writeTourNeverFlag() {
+  try {
+    window.localStorage.setItem(TOUR_NEVER_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+function clearTourNeverFlag() {
+  try {
+    window.localStorage.removeItem(TOUR_NEVER_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readTourNeverFlag() {
+  try {
+    return window.localStorage.getItem(TOUR_NEVER_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function ProductTour({
   tab,
   onTab,
@@ -95,14 +120,23 @@ export function ProductTour({
     setHole(null);
   }, []);
 
+  const never = useCallback(() => {
+    writeTourNeverFlag();
+    writeTourDoneFlag(true);
+    setPhase("idle");
+    setStepIdx(0);
+    setHole(null);
+  }, []);
+
   const start = useCallback(() => {
     writeTourDoneFlag(false);
+    clearTourNeverFlag();
     setStepIdx(0);
     setPhase("running");
   }, []);
 
   useEffect(() => {
-    if (!settings.onboardedAt || readTourDoneFlag()) return;
+    if (!settings.onboardedAt || readTourDoneFlag() || readTourNeverFlag()) return;
     const t = window.setTimeout(() => {
       if (phaseRef.current === "idle") setPhase("invite");
     }, 450);
@@ -243,18 +277,21 @@ export function ProductTour({
             <Sparkles className="h-5 w-5" />
           </div>
           <h2 id="tour-invite-title" className="font-display text-xl font-semibold">
-            Do you want a tutorial on this?
+            Want a quick tour?
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            A short walk through Dashboard, Calendar, Overview, and Settings — what each section is
-            and what you can do there. You can skip and replay it later from Settings.
+            Eight short stops: dashboard, today, calendar, overview, goals, tasks and settings. Takes
+            under a minute, and you can replay it later from Settings.
           </p>
-          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <Button variant="ghost" onClick={never} className="sm:mr-auto">
+              Never show this
+            </Button>
             <Button variant="ghost" onClick={dismiss}>
               Not now
             </Button>
             <Button onClick={start}>
-              Start tutorial <ArrowRight className="ml-2 h-4 w-4" />
+              Take the tour <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -298,14 +335,30 @@ export function ProductTour({
             Click the highlighted control to open it, or press Next.
           </p>
         )}
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="mt-3 flex items-center justify-center gap-1.5" aria-hidden>
+          {TOUR_STEPS.map((s, i) => (
+            <span
+              key={s.id}
+              className={cn(
+                "h-1.5 rounded-full transition-all",
+                i === stepIdx ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30",
+              )}
+            />
+          ))}
+        </div>
+        <div className="mt-3 flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={back} disabled={stepIdx === 0}>
             Back
           </Button>
-          <Button size="sm" onClick={next}>
-            {stepIdx === TOUR_STEPS.length - 1 ? "Finish" : "Next"}
-            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
+          <div className="flex items-center gap-1.5">
+            <Button variant="ghost" size="sm" onClick={dismiss}>
+              Skip tour
+            </Button>
+            <Button size="sm" onClick={next}>
+              {stepIdx === TOUR_STEPS.length - 1 ? "Finish" : "Next"}
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
