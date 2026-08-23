@@ -300,8 +300,7 @@ function MarketingHome() {
                   <div className="mt-3 text-sm font-semibold">{s.label}</div>
                   <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{s.desc}</p>
                 </li>
-              ))}
-            </Reveal>
+              </Reveal>
             ))}
           </ol>
           <Reveal delay={200} className="mt-10">
