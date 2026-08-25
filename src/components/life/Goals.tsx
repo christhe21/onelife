@@ -665,7 +665,9 @@ export function Goals({ onGoMarketplace }: { onGoMarketplace?: () => void }) {
             <Store className="h-4 w-4 mr-2" />
             Marketplace
           </Button>
+          <AiPlanGoalButton />
           <NewGoalButton label={`New ${vocab.goal.toLowerCase()}`} />
+
         </div>
       </div>
       {filtered.length === 0 ? (
