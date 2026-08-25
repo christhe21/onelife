@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ListChecks, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ListChecks,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppData, type Task } from "@/lib/app-data";
-import { cn } from "@/lib/utils";
+import { cn, clampDate } from "@/lib/utils";
 import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
 import { RecurrenceEditor } from "@/components/life/RecurrenceEditor";
 import { presetToRule, ruleToLegacy, type RecurrenceRule } from "@/lib/recurrence";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
+import { AiSuggestDialog } from "@/components/life/ai/AiSuggestDialog";
 
 const STEPS = ["basics", "priority", "link", "schedule", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
@@ -63,6 +74,7 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
 
   const [subs, setSubs] = useState<SubDraft[]>([]);
   const [subEditorOpen, setSubEditorOpen] = useState(false);
+  const [aiBreakdownOpen, setAiBreakdownOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
   // visibleIdx defined below after isDaily-aware visibleSteps memo
