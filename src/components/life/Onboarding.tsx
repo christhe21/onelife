@@ -724,7 +724,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
               Create goal <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
-          {step === "start" && (
+          {step === "start" && !aiMode && (
             <Button
               variant="outline"
               onClick={() => applyTemplate(null)}
@@ -733,6 +733,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
               Start blank <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
+
         </div>
       )}
     </div>
