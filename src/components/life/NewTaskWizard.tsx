@@ -472,16 +472,47 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
                     </Button>
                   </div>
                 ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setEditIdx(null);
-                    setSubEditorOpen(true);
-                  }}
-                >
-                  <Plus className="mr-1 h-3.5 w-3.5" /> Add sub-task
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditIdx(null);
+                      setSubEditorOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Add sub-task
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!title.trim()}
+                    onClick={() => setAiBreakdownOpen(true)}
+                  >
+                    <Sparkles className="mr-1 h-3.5 w-3.5" /> Break down with AI
+                  </Button>
+                </div>
+                <AiSuggestDialog
+                  open={aiBreakdownOpen}
+                  onOpenChange={setAiBreakdownOpen}
+                  kind="subtasks"
+                  goalTitle={selectedGoal?.title ?? title}
+                  goalDescription={description || undefined}
+                  targetDate={goalMax}
+                  parentTitle={title}
+                  existing={subs.map((s) => s.title)}
+                  onAccept={(items) =>
+                    setSubs((cur) => [
+                      ...cur,
+                      ...items.map((i) => ({
+                        title: i.title,
+                        priority: "medium" as const,
+                        endDate: clampDate(i.date ?? dueDate ?? minDate, minDate, goalMax),
+                      })),
+                    ])
+                  }
+                />
+
               </div>
               <SubtaskFormDialog
                 open={subEditorOpen}
