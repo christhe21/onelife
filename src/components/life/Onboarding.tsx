@@ -30,6 +30,8 @@ import { useAppData, DEFAULT_SKILLS } from "@/lib/app-data";
 import { TEMPLATES, CATEGORIES, type Category, type GoalTemplate } from "@/lib/templates";
 import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
+import { AiInterview } from "@/components/life/ai/AiInterview";
+
 
 const STEPS = ["welcome", "areas", "start", "shape", "done"] as const;
 type Step = (typeof STEPS)[number];
