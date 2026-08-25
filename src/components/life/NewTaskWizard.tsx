@@ -1,5 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ListChecks, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ListChecks,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,11 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAppData, type Task } from "@/lib/app-data";
-import { cn } from "@/lib/utils";
+import { cn, clampDate } from "@/lib/utils";
 import { SubtaskFormDialog, type SubtaskDraft } from "./SubtaskFormDialog";
 import { RecurrenceEditor } from "@/components/life/RecurrenceEditor";
 import { presetToRule, ruleToLegacy, type RecurrenceRule } from "@/lib/recurrence";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
+import { AiSuggestDialog } from "@/components/life/ai/AiSuggestDialog";
 
 const STEPS = ["basics", "priority", "link", "schedule", "subtasks", "done"] as const;
 type Step = (typeof STEPS)[number];
@@ -63,6 +74,7 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
 
   const [subs, setSubs] = useState<SubDraft[]>([]);
   const [subEditorOpen, setSubEditorOpen] = useState(false);
+  const [aiBreakdownOpen, setAiBreakdownOpen] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
 
   // visibleIdx defined below after isDaily-aware visibleSteps memo
@@ -472,16 +484,47 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
                     </Button>
                   </div>
                 ))}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setEditIdx(null);
-                    setSubEditorOpen(true);
-                  }}
-                >
-                  <Plus className="mr-1 h-3.5 w-3.5" /> Add sub-task
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditIdx(null);
+                      setSubEditorOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Add sub-task
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!title.trim()}
+                    onClick={() => setAiBreakdownOpen(true)}
+                  >
+                    <Sparkles className="mr-1 h-3.5 w-3.5" /> Break down with AI
+                  </Button>
+                </div>
+                <AiSuggestDialog
+                  open={aiBreakdownOpen}
+                  onOpenChange={setAiBreakdownOpen}
+                  kind="subtasks"
+                  goalTitle={selectedGoal?.title ?? title}
+                  goalDescription={description || undefined}
+                  targetDate={goalMax}
+                  parentTitle={title}
+                  existing={subs.map((s) => s.title)}
+                  onAccept={(items) =>
+                    setSubs((cur) => [
+                      ...cur,
+                      ...items.map((i) => ({
+                        title: i.title,
+                        priority: "medium" as const,
+                        endDate: clampDate(i.date ?? dueDate ?? minDate, minDate, goalMax),
+                      })),
+                    ])
+                  }
+                />
+
               </div>
               <SubtaskFormDialog
                 open={subEditorOpen}
