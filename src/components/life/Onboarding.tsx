@@ -403,12 +403,43 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
               </div>
             )}
 
-            {step === "start" && (
+            {step === "start" && aiMode && (
+              <AiInterview
+                preferredSkill={Array.from(areas)[0]}
+                onCancel={() => setAiMode(false)}
+                onDone={() => {
+                  setAiMode(false);
+                  setCreated(null);
+                  setStep("done");
+                }}
+              />
+            )}
+
+            {step === "start" && !aiMode && (
               <div className="space-y-4">
                 <h1 className="font-display text-2xl font-semibold">Choose a starting point</h1>
                 <p className="text-sm text-muted-foreground">
-                  Start from a proven plan, write your own, or look around with sample data.
+                  Let AI interview you, start from a proven plan, write your own, or look around
+                  with sample data.
                 </p>
+
+                <button
+                  type="button"
+                  onClick={() => setAiMode(true)}
+                  className="flex w-full items-start gap-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 text-left transition hover:border-primary hover:bg-primary/10"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold">Plan with AI</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Answer a few questions and get a goal with milestones and tasks.
+                    </p>
+                  </div>
+                </button>
+
+
 
                 <div className="grid gap-2 sm:grid-cols-2">
                   <button
