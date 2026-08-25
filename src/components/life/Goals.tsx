@@ -11,6 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SkillProgress } from "@/components/life/SkillProgress";
 import { DatePicker } from "@/components/ui/pickers/DatePicker";
 import { NewGoalButton } from "@/components/life/NewGoalButton";
+import { AiPlanGoalButton } from "@/components/life/ai/AiPlanGoalButton";
+
 import {
   Select,
   SelectContent,
