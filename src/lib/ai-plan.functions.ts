@@ -96,7 +96,9 @@ function transcriptText(messages: AiChatMessage[]) {
 }
 
 async function run<T>(fn: (model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>) => Promise<T>) {
-  const gateway = createLovableAiGatewayProvider(requireLovableApiKey());
+  const gateway = createLovableAiGatewayProvider(requireLovableApiKey(), undefined, {
+    structuredOutputs: true,
+  });
   try {
     return await fn(gateway(PLANNING_MODEL));
   } catch (error) {
