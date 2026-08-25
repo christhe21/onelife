@@ -99,6 +99,8 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
   const { addSkill, addGoal, addSubGoal, addTask, updateSettings, skills, ensureDefaultMilestone } =
     useAppData();
   const [step, setStep] = useState<Step>("welcome");
+  const [aiMode, setAiMode] = useState(false);
+
   const [name, setName] = useState("");
   const [areas, setAreas] = useState<Set<string>>(new Set(DEFAULT_AREAS));
   const [template, setTemplate] = useState<GoalTemplate | null>(null);
