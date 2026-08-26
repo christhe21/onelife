@@ -1227,7 +1227,7 @@ function MonthGrid({
                     e.stopPropagation();
                     onPickDay(d);
                   }}
-                  className="rounded-full transition-all duration-300 pointer-events-auto select-none outline-none"
+                  className="pointer-events-auto select-none rounded-full outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label={`Open ${key}`}
                 >
                   <DayBadge day={d.getDate()} ratio={ratio} isToday={isToday} />
