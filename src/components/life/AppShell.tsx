@@ -149,7 +149,10 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
             </div>
           </header>
 
-          <main className="flex-1 overflow-x-hidden px-4 py-6 lg:px-10 lg:py-10 xl:px-12 xl:py-12 2xl:px-16">
+          <main
+            id="main-content"
+            className="flex-1 overflow-x-hidden px-4 py-6 lg:px-10 lg:py-10 xl:px-12 xl:py-12 2xl:px-16"
+          >
             <div className="mx-auto w-full min-w-0 max-w-[1600px]">{children}</div>
           </main>
 
