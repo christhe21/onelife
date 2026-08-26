@@ -239,6 +239,7 @@ function SkillNode({
       <button
         type="button"
         className="group flex w-full select-none items-center gap-2 rounded-md px-2 py-2 text-left hover:bg-muted/60"
+        aria-expanded={open}
         onClick={onToggle}
         {...longPress}
       >
