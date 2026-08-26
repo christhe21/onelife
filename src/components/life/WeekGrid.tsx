@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { WEEK_HOUR_PX, WEEK_MIN_COL_PX } from "@/components/life/calendar-week-layout";
+import { chipKeyboardProps, CHIP_FOCUS_CLASS, type EventNudge } from "@/components/life/calendar-a11y";
 
 type EventChip = {
   id: string;
@@ -97,6 +98,7 @@ export function WeekGrid({
   drag,
   onPickDay,
   onEventClick,
+  onEventNudge,
   onLongPressDay,
 }: {
   cursor: Date;
@@ -104,6 +106,7 @@ export function WeekGrid({
   drag: CalDrag;
   onPickDay: (d: Date) => void;
   onEventClick: (e: EventChip) => void;
+  onEventNudge?: EventNudge;
   onLongPressDay: (d: Date) => void;
 }) {
   const start = startOfWeek(cursor);
@@ -223,6 +226,7 @@ export function WeekGrid({
                   <div
                     key={e.id}
                     draggable={false}
+                    {...chipKeyboardProps(e, onEventClick, onEventNudge)}
                     onPointerDown={(ev) => drag.begin(ev, { id: e.id, title: e.title, color: e.color })}
                     onClick={(ev) => {
                       ev.stopPropagation();
@@ -231,6 +235,7 @@ export function WeekGrid({
                     title={`${hm(e.start)}–${hm(e.end)} ${e.title} — drag to reschedule`}
                     className={cn(
                       "absolute inset-x-0.5 cursor-grab touch-none overflow-hidden rounded-md px-1.5 py-0 text-[12px] leading-none shadow-sm active:cursor-grabbing flex items-center hover:z-10",
+                      CHIP_FOCUS_CLASS,
                       e.done && "opacity-60 line-through",
                       drag.dragId === e.id && "opacity-40",
                     )}

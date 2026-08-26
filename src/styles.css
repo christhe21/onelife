@@ -677,3 +677,12 @@ body.calendar-dragging {
     background-color: var(--color-background);
   }
 }
+
+/* Keyboard focus safety net: any control that forgets a focus utility still
+   shows a visible ring. Mouse clicks are unaffected (:focus-visible only). */
+@layer base {
+  :where(a, button, [role="button"], [role="tab"], input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-ring, currentColor);
+    outline-offset: 2px;
+  }
+}

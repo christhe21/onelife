@@ -65,6 +65,7 @@ import {
 } from "@/components/life/CalendarFilters";
 import { WeekGrid as WeekGridView } from "@/components/life/WeekGrid";
 import { HOUR_PX } from "@/components/life/calendar-week-layout";
+import { chipKeyboardProps, CHIP_FOCUS_CLASS, type EventNudge } from "@/components/life/calendar-a11y";
 
 type ViewMode = "month" | "week" | "day" | "agenda";
 
@@ -425,6 +426,13 @@ export function CalendarView({
       const [tid, sid] = base.slice(4).split("|");
       if (tid && sid) rescheduleSubtask(tid, sid, day, time ?? undefined);
     }
+  };
+
+  /** Keyboard equivalent of dragging a chip: shift its start by minutes. */
+  const nudgeEvent: EventNudge = (e, deltaMinutes) => {
+    const next = new Date(e.start.getTime() + deltaMinutes * 60000);
+    const time = `${String(next.getHours()).padStart(2, "0")}:${String(next.getMinutes()).padStart(2, "0")}`;
+    applyMove(e.id, ymd(next), time);
   };
 
   const baseIdOf = (id: string) => id.replace(/#.*$/, "").replace(/_\d+$/, "");
@@ -813,6 +821,7 @@ export function CalendarView({
                 setView("day");
               }}
               onEventClick={onEventClick}
+              onEventNudge={nudgeEvent}
               onLongPressDay={openCreateTask}
             />
           )}
@@ -826,6 +835,7 @@ export function CalendarView({
                 setView("day");
               }}
               onEventClick={onEventClick}
+              onEventNudge={nudgeEvent}
               onLongPressDay={openCreateTask}
             />
           )}
@@ -835,6 +845,7 @@ export function CalendarView({
               events={events.filter((e) => sameDay(e.start, cursor))}
               drag={drag}
               onEventClick={onEventClick}
+              onEventNudge={nudgeEvent}
               onLongPressEmpty={openCreateTask}
             />
           )}
@@ -1130,6 +1141,7 @@ function MonthGrid({
   drag,
   onPickDay,
   onEventClick,
+  onEventNudge,
   onLongPressDay,
 }: {
   cursor: Date;
@@ -1140,6 +1152,7 @@ function MonthGrid({
   drag: CalDrag;
   onPickDay: (d: Date) => void;
   onEventClick: (e: Event) => void;
+  onEventNudge?: EventNudge;
   onLongPressDay: (d: Date) => void;
 }) {
   const first = startOfMonth(cursor);
@@ -1227,7 +1240,7 @@ function MonthGrid({
                     e.stopPropagation();
                     onPickDay(d);
                   }}
-                  className="rounded-full transition-all duration-300 pointer-events-auto select-none outline-none"
+                  className="pointer-events-auto select-none rounded-full outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label={`Open ${key}`}
                 >
                   <DayBadge day={d.getDate()} ratio={ratio} isToday={isToday} />
@@ -1249,11 +1262,17 @@ function MonthGrid({
                       <span
                         key={e.id}
                         draggable={false}
+                        {...chipKeyboardProps(e, onEventClick, onEventNudge)}
                         onPointerDown={(ev) =>
                           drag.begin(ev, { id: e.id, title: e.title, color: e.color })
                         }
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          if (!drag.dragging) onEventClick(e);
+                        }}
                         className={cn(
                           "h-2 w-2 cursor-grab touch-none rounded-full active:cursor-grabbing",
+                          CHIP_FOCUS_CLASS,
                           drag.dragId === e.id && "opacity-40",
                         )}
                         style={{ backgroundColor: e.color, touchAction: "none" }}
@@ -1272,6 +1291,7 @@ function MonthGrid({
                     <span
                       key={e.id}
                       draggable={false}
+                      {...chipKeyboardProps(e, onEventClick, onEventNudge)}
                       onPointerDown={(ev) =>
                         drag.begin(ev, { id: e.id, title: e.title, color: e.color })
                       }
@@ -1281,6 +1301,7 @@ function MonthGrid({
                       }}
                       className={cn(
                         "cursor-grab touch-none truncate rounded-md px-1.5 py-0.5 text-[10px] font-medium leading-tight active:cursor-grabbing transition-all hover:scale-[1.02] hover:shadow-sm shrink-0",
+                        CHIP_FOCUS_CLASS,
                         e.done && "line-through opacity-60",
                         drag.dragId === e.id && "opacity-40",
                       )}
@@ -1490,12 +1511,14 @@ function DayGrid({
   events,
   drag,
   onEventClick,
+  onEventNudge,
   onLongPressEmpty,
 }: {
   cursor: Date;
   events: Event[];
   drag: CalDrag;
   onEventClick: (e: Event) => void;
+  onEventNudge?: EventNudge;
   onLongPressEmpty: (d: Date) => void;
 }) {
   const baseHour = HOURS[0];
@@ -1601,6 +1624,7 @@ function DayGrid({
                 <div
                   key={e.id}
                   draggable={false}
+                  {...chipKeyboardProps(e, onEventClick, onEventNudge)}
                   onPointerDown={(ev) =>
                     drag.begin(ev, { id: e.id, title: e.title, color: e.color })
                   }
@@ -1610,6 +1634,7 @@ function DayGrid({
                   }}
                   className={cn(
                     "pointer-events-auto absolute right-1 touch-none rounded-md px-2 py-1 text-xs shadow-sm flex flex-col overflow-hidden transition-all hover:scale-[1.01] hover:shadow-md hover:z-30 cursor-grab active:cursor-grabbing",
+                    CHIP_FOCUS_CLASS,
                     e.done && "opacity-60 line-through",
                     drag.dragId === e.id && "opacity-40",
                   )}

@@ -359,6 +359,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                       variant="ghost"
                       size="icon"
                       className="self-end sm:self-auto"
+                      aria-label="Delete milestone"
                       onClick={() => setMilestones((cur) => cur.filter((_, j) => j !== i))}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -435,6 +436,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Delete task"
                         onClick={() => setTasks((cur) => cur.filter((_, j) => j !== i))}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -506,6 +508,7 @@ export function NewGoalWizard({ open, onOpenChange, defaultSkill }: Props) {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label="Delete sub-task"
                                 onClick={() =>
                                   setTasks((cur) =>
                                     cur.map((x, j) =>

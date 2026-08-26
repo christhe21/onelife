@@ -10,6 +10,7 @@ import {
   Shuffle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAppData, type Task } from "@/lib/app-data";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -540,6 +541,38 @@ export function MindMapCanvas() {
     if (n.childCount > 0) toggle(n.id);
   };
 
+  /** Keyboard equivalents for pointer panning / zooming the canvas. */
+  const onCanvasKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 120 : 40;
+    switch (e.key) {
+      case "ArrowLeft":
+        setTx((v) => v + step);
+        break;
+      case "ArrowRight":
+        setTx((v) => v - step);
+        break;
+      case "ArrowUp":
+        setTy((v) => v + step);
+        break;
+      case "ArrowDown":
+        setTy((v) => v - step);
+        break;
+      case "+":
+      case "=":
+        setScale((sc) => Math.min(3, sc * 1.2));
+        break;
+      case "-":
+        setScale((sc) => Math.max(0.2, sc * 0.8));
+        break;
+      case "0":
+        reset();
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+  };
+
   const containerCls = fullscreen
     ? "fixed inset-0 z-50 bg-background p-3 flex flex-col"
     : "relative";
@@ -670,7 +703,14 @@ export function MindMapCanvas() {
       </div>
 
       <div
-        className={canvasCls}
+        className={cn(
+          canvasCls,
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        )}
+        role="application"
+        aria-label="Mind map canvas. Arrow keys pan, plus and minus zoom, 0 resets."
+        tabIndex={0}
+        onKeyDown={onCanvasKeyDown}
         onPointerDown={onCanvasDown}
         onPointerMove={onCanvasMove}
         onPointerUp={onCanvasUp}
@@ -765,6 +805,22 @@ export function MindMapCanvas() {
                 onPointerEnter={() => setHoverId(n.id)}
                 onPointerLeave={() => setHoverId((id) => (id === n.id ? null : id))}
                 onClick={(e) => onNodeClick(e, n)}
+                tabIndex={interactive ? 0 : -1}
+                role={interactive ? "button" : undefined}
+                aria-expanded={interactive ? n.expanded : undefined}
+                aria-label={
+                  interactive
+                    ? `${n.label}, ${n.childCount} children. Press Enter to ${n.expanded ? "collapse" : "expand"}.`
+                    : n.label
+                }
+                onKeyDown={(e) => {
+                  if (!interactive) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggle(n.id);
+                  }
+                }}
               >
                 <title>{n.label}</title>
                 {renderShape(n, hovered, halfW, halfH)}

@@ -181,7 +181,12 @@ export function BucketList() {
                     </Button>
                   )}
                   <EditBucketDialog item={b} />
-                  <Button size="icon" variant="ghost" onClick={() => deleteBucket(b.id)}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Delete idea"
+                    onClick={() => deleteBucket(b.id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

@@ -111,6 +111,7 @@ export function ProductTour({
   const [stepIdx, setStepIdx] = useState(0);
   const [hole, setHole] = useState<Rect | null>(null);
   const phaseRef = useRef<Phase>("idle");
+  const tooltipRef = useRef<HTMLDivElement>(null);
   phaseRef.current = phase;
 
   const dismiss = useCallback(() => {
@@ -226,6 +227,37 @@ export function ProductTour({
     setStepIdx((i) => Math.max(0, i - 1));
   }, []);
 
+  // Move focus into the step card and keep Tab cycling inside it.
+  useEffect(() => {
+    if (phase !== "running") return;
+    const card = tooltipRef.current;
+    if (!card) return;
+    const previous = document.activeElement as HTMLElement | null;
+    card.focus();
+    const onTrap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const focusables = Array.from(
+        card.querySelectorAll<HTMLElement>("button:not([disabled]), [href], [tabindex]:not([tabindex='-1'])"),
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === card)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onTrap);
+    return () => {
+      document.removeEventListener("keydown", onTrap);
+      previous?.focus?.();
+    };
+  }, [phase, stepIdx]);
+
   useEffect(() => {
     if (phase !== "running") return;
     const onKey = (e: KeyboardEvent) => {
@@ -270,6 +302,7 @@ export function ProductTour({
       <div className="fixed inset-0 z-[80] flex items-end justify-center bg-foreground/40 p-4 backdrop-blur-sm sm:items-center">
         <div
           role="dialog"
+          aria-modal="true"
           aria-labelledby="tour-invite-title"
           className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl"
         >
@@ -309,8 +342,11 @@ export function ProductTour({
           "tour-tooltip-in absolute z-[81] w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border bg-card p-4 shadow-2xl",
         )}
         key={step.id}
+        ref={tooltipRef}
+        tabIndex={-1}
         style={tooltipStyle}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="tour-step-title"
       >
         <div className="mb-2 flex items-center justify-between gap-2">
