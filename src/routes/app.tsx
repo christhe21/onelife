@@ -15,6 +15,7 @@ import { Skills } from "@/components/life/Skills";
 import { DueBanner } from "@/components/life/DueBanner";
 import { Overview } from "@/components/life/Overview";
 import { Onboarding } from "@/components/life/Onboarding";
+import { LifeGraphSteps } from "@/components/life/LifeGraphSteps";
 import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { GoalMarketplace } from "@/components/life/GoalMarketplace";
@@ -53,6 +54,7 @@ function Shell() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("dashboard");
   const [overviewView, setOverviewView] = useState<"tree" | "map">("tree");
+  const [lifeGraphDone, setLifeGraphDone] = useState(false);
   const { goals, tasks, bucketList, settings, importMarketplaceGoal } = useAppData();
   useAppSettingsEffects();
   const stats = {
@@ -61,7 +63,14 @@ function Shell() {
     bucket: bucketList.filter((b) => !b.achieved).length,
   };
 
-  if (search.onboarding === 1 || !settings.onboardedAt) {
+  const needsOnboarding = search.onboarding === 1 || !settings.onboardedAt;
+  const needsLifeGraph = needsOnboarding && !settings.jobRole && !lifeGraphDone;
+
+  if (needsLifeGraph) {
+    return <LifeGraphSteps onDone={() => setLifeGraphDone(true)} />;
+  }
+
+  if (needsOnboarding) {
     return (
       <Onboarding onFinish={() => navigate({ to: "/app", search: { onboarding: undefined } })} />
     );
