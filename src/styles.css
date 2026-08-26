@@ -639,6 +639,12 @@ body.calendar-dragging {
     animation: none !important;
   }
 
+  .tour-ring-in,
+  .tour-tooltip-in {
+    animation-duration: 0.01ms !important;
+    transform: none !important;
+  }
+
 
   /* Kill the Frieren ambient particle loops */
   :root[data-theme="frieren"] body::before,
