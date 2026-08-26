@@ -98,6 +98,7 @@ export function WeekGrid({
   drag,
   onPickDay,
   onEventClick,
+  onEventNudge,
   onLongPressDay,
 }: {
   cursor: Date;
@@ -105,6 +106,7 @@ export function WeekGrid({
   drag: CalDrag;
   onPickDay: (d: Date) => void;
   onEventClick: (e: EventChip) => void;
+  onEventNudge?: EventNudge;
   onLongPressDay: (d: Date) => void;
 }) {
   const start = startOfWeek(cursor);
