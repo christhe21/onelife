@@ -22,8 +22,10 @@ export function RankLadder({ className }: { className?: string }) {
     <ul
       role="list"
       aria-label="Rank ladder"
+      tabIndex={0}
       className={cn(
         "flex gap-3 overflow-x-auto overscroll-x-contain touch-pan-x",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "[-webkit-overflow-scrolling:touch] [scrollbar-width:none]",
         "[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
         "snap-x snap-mandatory pb-1",
