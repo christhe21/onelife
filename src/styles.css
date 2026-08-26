@@ -634,9 +634,11 @@ body.calendar-dragging {
  * -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .animate-long-press,
-  .animate-long-press-block {
+  .animate-long-press-block,
+  .tour-pulse {
     animation: none !important;
   }
+
 
   /* Kill the Frieren ambient particle loops */
   :root[data-theme="frieren"] body::before,
