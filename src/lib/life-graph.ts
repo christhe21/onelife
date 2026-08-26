@@ -2,13 +2,20 @@ import type { Recurrence } from "@/lib/app-data";
 
 export type HomeSupport = "self" | "supported";
 
+declare module "@/lib/app-data" {
+  interface Settings {
+    jobRole?: string;
+    jobLabel?: string;
+    homeTaskIds?: string[];
+    homeSupport?: HomeSupport;
+  }
+}
+
 export interface LifeRole {
   id: string;
   label: string;
   blurb: string;
-  /** Life-area chips to preselect on the next step. */
   areas: string[];
-  /** Extra skills added to the user's graph for this role. */
   skills: { id: string; label: string; color: string }[];
 }
 
@@ -108,7 +115,6 @@ export const LIFE_ROLES: LifeRole[] = [
   },
 ];
 
-/** Simple household chores only — no relationship or living-arrangement questions. */
 export const HOME_TASK_PRESETS: HomeTaskPreset[] = [
   { id: "dishes", title: "Wash dishes", blurb: "Clear the sink.", recurrence: "daily" },
   { id: "laundry", title: "Clean clothes", blurb: "Wash and put away laundry.", recurrence: "weekly" },
