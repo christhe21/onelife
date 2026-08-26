@@ -10,6 +10,7 @@ import {
   Shuffle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAppData, type Task } from "@/lib/app-data";
 import { useTheme } from "@/hooks/use-theme";
 
