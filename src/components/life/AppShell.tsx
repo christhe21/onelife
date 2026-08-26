@@ -94,6 +94,12 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus-visible:not-sr-only focus-visible:absolute focus-visible:left-4 focus-visible:top-4 focus-visible:z-[100]"
+      >
+        Skip to content
+      </a>
       <div className="flex">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex xl:w-72">
           <Brand />
