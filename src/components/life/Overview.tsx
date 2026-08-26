@@ -261,13 +261,18 @@ function SkillNode({
               const gOpen = openGoals.has(g.id);
               return (
                 <div key={g.id}>
-                  <div
-                    className="group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60"
-                    onClick={() => toggleGoal(g.id)}
-                  >
-                    <ChevronRight
-                      className={`h-3.5 w-3.5 shrink-0 transition-transform ${gOpen ? "rotate-90" : ""}`}
-                    />
+                  <div className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60">
+                    <button
+                      type="button"
+                      onClick={() => toggleGoal(g.id)}
+                      aria-expanded={gOpen}
+                      aria-label={`${gOpen ? "Collapse" : "Expand"} ${g.title}`}
+                      className="-m-1 flex shrink-0 items-center rounded p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <ChevronRight
+                        className={`h-3.5 w-3.5 shrink-0 transition-transform ${gOpen ? "rotate-90" : ""}`}
+                      />
+                    </button>
                     <span
                       className="h-2 w-2 shrink-0 rounded-full"
                       style={{ backgroundColor: skill.color, opacity: 0.7 }}
