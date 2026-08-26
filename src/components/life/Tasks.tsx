@@ -248,6 +248,7 @@ function SubtasksPanel({ task }: { task: Task }) {
                 size="icon"
                 variant="ghost"
                 className="h-7 w-7"
+                aria-label={`Delete sub-task ${s.title}`}
                 onClick={() => deleteSubtask(task.id, s.id)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -466,7 +467,12 @@ function TaskRow({ task }: { task: Task }) {
           )}
           <Popover>
             <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost" className="-mr-1 mt-0.5 h-8 w-8 shrink-0">
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={`More actions for ${task.title}`}
+                className="-mr-1 mt-0.5 h-8 w-8 shrink-0"
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </PopoverTrigger>

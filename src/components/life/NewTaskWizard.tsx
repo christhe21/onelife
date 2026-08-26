@@ -467,6 +467,7 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
+                      aria-label={`Edit sub-task ${s.title}`}
                       onClick={() => {
                         setEditIdx(i);
                         setSubEditorOpen(true);
@@ -478,6 +479,7 @@ export function NewTaskWizard({ open, onOpenChange, defaultDate }: Props) {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
+                      aria-label={`Delete sub-task ${s.title}`}
                       onClick={() => setSubs((cur) => cur.filter((_, j) => j !== i))}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

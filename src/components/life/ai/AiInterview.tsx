@@ -183,7 +183,12 @@ export function AiInterview({ onDone, onCancel, preferredSkill }: Props) {
           }}
           disabled={busy}
         />
-        <Button size="icon" onClick={() => send(answer)} disabled={busy || !answer.trim()}>
+        <Button
+          size="icon"
+          aria-label="Send answer"
+          onClick={() => send(answer)}
+          disabled={busy || !answer.trim()}
+        >
           <Send className="h-4 w-4" />
         </Button>
       </div>
