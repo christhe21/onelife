@@ -2,6 +2,15 @@ import type { Recurrence } from "@/lib/app-data";
 
 export type HomeSupport = "self" | "supported";
 
+declare module "@/lib/app-data" {
+  interface Settings {
+    jobRole?: string;
+    jobLabel?: string;
+    homeTaskIds?: string[];
+    homeSupport?: HomeSupport;
+  }
+}
+
 export interface LifeRole {
   id: string;
   label: string;
