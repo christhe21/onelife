@@ -303,11 +303,12 @@ export function ProductTour({
 
   return (
     <div className="fixed inset-0 z-[80] overflow-hidden" aria-live="polite">
-      <SpotlightMask hole={hole} />
+      <SpotlightMask hole={hole} stepKey={step.id} />
       <div
         className={cn(
-          "absolute z-[81] w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border bg-card p-4 shadow-2xl",
+          "tour-tooltip-in absolute z-[81] w-[min(22rem,calc(100vw-1.5rem))] rounded-2xl border bg-card p-4 shadow-2xl",
         )}
+        key={step.id}
         style={tooltipStyle}
         role="dialog"
         aria-labelledby="tour-step-title"
@@ -366,33 +367,34 @@ export function ProductTour({
 }
 
 /** Dim the page with a rounded cutout so the ring and the hole share the same curve. */
-function SpotlightMask({ hole }: { hole: Rect | null }) {
+function SpotlightMask({ hole, stepKey }: { hole: Rect | null; stepKey?: string }) {
   if (!hole) {
-    return <div className="absolute inset-0 bg-foreground/50" />;
+    return <div className="absolute inset-0 bg-foreground/60 dark:bg-background/70" />;
   }
   const { top, left, width, height, radius } = hole;
+  const dim = "absolute bg-foreground/60 dark:bg-background/70";
   return (
     <>
-      <div className="absolute" style={{ top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
-      <div className="absolute" style={{ top: top + height, left: 0, right: 0, bottom: 0 }} />
-      <div className="absolute" style={{ top, left: 0, width: Math.max(0, left), height }} />
-      <div className="absolute" style={{ top, left: left + width, right: 0, height }} />
+      <div className={dim} style={{ top: 0, left: 0, right: 0, height: Math.max(0, top) }} />
+      <div className={dim} style={{ top: top + height, left: 0, right: 0, bottom: 0 }} />
+      <div className={dim} style={{ top, left: 0, width: Math.max(0, left), height }} />
+      <div className={dim} style={{ top, left: left + width, right: 0, height }} />
+      {/* Ring + pulse around the highlighted target */}
       <div
-        className="pointer-events-none absolute"
-        style={{
-          top,
-          left,
-          width,
-          height,
-          borderRadius: radius,
-          boxShadow: "0 0 0 9999px hsl(var(--foreground) / 0.5)",
-          outline: "2px solid hsl(var(--primary))",
-          outlineOffset: 0,
-        }}
-      />
+        key={stepKey}
+        className="tour-ring-in pointer-events-none absolute ring-2 ring-primary ring-offset-0"
+        style={{ top, left, width, height, borderRadius: radius }}
+      >
+        <div
+          className="tour-pulse absolute inset-0"
+          style={{ borderRadius: radius }}
+          aria-hidden
+        />
+      </div>
     </>
   );
 }
+
 
 function tooltipPosition(hole: Rect | null): CSSProperties {
   const width = Math.min(352, typeof window === "undefined" ? 352 : window.innerWidth - 24);

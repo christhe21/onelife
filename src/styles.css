@@ -565,6 +565,62 @@
   animation: long-press-fill-block 1.2s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
 }
 
+/* --------------------------------------------------------------------------
+ * Product tour spotlight — token-based (oklch) so it renders in light + dark.
+ * -------------------------------------------------------------------------- */
+@keyframes tour-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent),
+      0 0 0 0 color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+  70% {
+    box-shadow:
+      0 0 0 10px color-mix(in oklab, var(--primary) 0%, transparent),
+      0 0 22px 6px color-mix(in oklab, var(--primary) 14%, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent),
+      0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent);
+  }
+}
+.tour-pulse {
+  animation: tour-pulse 1.9s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+}
+
+@keyframes tour-ring-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.tour-ring-in {
+  animation: tour-ring-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tour-tooltip-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.tour-tooltip-in {
+  animation: tour-tooltip-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+
 body.calendar-dragging {
   user-select: none;
   -webkit-user-select: none;
@@ -578,9 +634,17 @@ body.calendar-dragging {
  * -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .animate-long-press,
-  .animate-long-press-block {
+  .animate-long-press-block,
+  .tour-pulse {
     animation: none !important;
   }
+
+  .tour-ring-in,
+  .tour-tooltip-in {
+    animation-duration: 0.01ms !important;
+    transform: none !important;
+  }
+
 
   /* Kill the Frieren ambient particle loops */
   :root[data-theme="frieren"] body::before,
