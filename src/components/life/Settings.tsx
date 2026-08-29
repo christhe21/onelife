@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Bell, BellOff, Type, Music, Volume2, Upload, Star, Mail } from "lucide-react";
+import { Bell, BellOff, Type, Music, Volume2, Upload, Star, Mail, Download } from "lucide-react";
+import { InstallAppButton } from "@/components/marketing/InstallAppButton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
