@@ -181,6 +181,21 @@ export function SettingsView() {
     <div className="space-y-6">
       <AccountCard />
 
+      {/* Install app */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Download className="h-4 w-4" /> Install app
+          </CardTitle>
+          <CardDescription>
+            Add LifeVerse One to your home screen for a full-screen app experience
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <InstallAppButton size="sm" className="rounded-full px-5" />
+        </CardContent>
+      </Card>
+
       {/* Profile Section */}
       <Card>
         <CardHeader>
