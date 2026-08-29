@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GITHUB_URL } from "@/lib/site";
+import { InstallAppButton } from "@/components/marketing/InstallAppButton";
 import { Reveal } from "./Reveal";
 
 export function CTABand() {
@@ -22,6 +23,7 @@ export function CTABand() {
                 Start free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+            <InstallAppButton />
             {GITHUB_URL && (
               <Button asChild size="lg" variant="outline" className="h-12 rounded-full px-7">
                 <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener">

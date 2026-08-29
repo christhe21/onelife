@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Bell, BellOff, Type, Music, Volume2, Upload, Star, Mail } from "lucide-react";
+import { Bell, BellOff, Type, Music, Volume2, Upload, Star, Mail, Download } from "lucide-react";
+import { InstallAppButton } from "@/components/marketing/InstallAppButton";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -180,6 +181,21 @@ export function SettingsView() {
   return (
     <div className="space-y-6">
       <AccountCard />
+
+      {/* Install app */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Download className="h-4 w-4" /> Install app
+          </CardTitle>
+          <CardDescription>
+            Add LifeVerse One to your home screen for a full-screen app experience
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <InstallAppButton size="sm" className="rounded-full px-5" />
+        </CardContent>
+      </Card>
 
       {/* Profile Section */}
       <Card>
