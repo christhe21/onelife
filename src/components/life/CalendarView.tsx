@@ -1217,7 +1217,7 @@ function MonthGrid({
             className="h-2 w-2 rounded-sm"
             style={{ background: "color-mix(in oklab, hsl(var(--primary)) 35%, transparent)" }}
           />
-          Heat
+          Busier day
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full border-2 border-primary" />
