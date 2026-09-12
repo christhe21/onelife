@@ -627,6 +627,149 @@ body.calendar-dragging {
   -webkit-touch-callout: none;
 }
 
+/* Public home: quiet butterfly silhouettes moving behind the content. */
+.butterfly-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  color: color-mix(in oklab, var(--foreground) 42%, transparent);
+}
+
+.butterfly-flight {
+  position: absolute;
+  display: block;
+  width: 2rem;
+  height: 1.5rem;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.butterfly-drift {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: butterfly-drift 3.8s ease-in-out infinite alternate;
+}
+
+.butterfly-wing {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: butterfly-flap 0.42s ease-in-out infinite alternate;
+}
+
+.butterfly-wing-left {
+  transform-origin: right center;
+}
+
+.butterfly-wing-right {
+  transform-origin: left center;
+  animation-delay: -0.05s;
+}
+
+.butterfly-flight-one {
+  top: 3%;
+  left: -4rem;
+  animation: butterfly-cross-right 25s linear 0s infinite;
+}
+
+.butterfly-flight-two {
+  top: 12%;
+  right: -4rem;
+  width: 1.45rem;
+  animation: butterfly-cross-left 31s linear -13s infinite;
+}
+
+.butterfly-flight-three {
+  top: 29%;
+  left: -4rem;
+  width: 2.35rem;
+  animation: butterfly-cross-right 34s linear -21s infinite;
+}
+
+.butterfly-flight-four {
+  top: 46%;
+  right: -4rem;
+  width: 1.7rem;
+  animation: butterfly-cross-left 27s linear -7s infinite;
+}
+
+.butterfly-flight-five {
+  top: 63%;
+  left: -4rem;
+  width: 1.3rem;
+  animation: butterfly-cross-right 29s linear -16s infinite;
+}
+
+.butterfly-flight-six {
+  top: 78%;
+  right: -4rem;
+  width: 2.1rem;
+  animation: butterfly-cross-left 36s linear -26s infinite;
+}
+
+.butterfly-flight-seven {
+  top: 91%;
+  left: -4rem;
+  width: 1.55rem;
+  animation: butterfly-cross-right 32s linear -10s infinite;
+}
+
+@keyframes butterfly-flap {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0.18);
+  }
+}
+
+@keyframes butterfly-drift {
+  from {
+    transform: translateY(-0.75rem) rotate(-7deg);
+  }
+  to {
+    transform: translateY(0.9rem) rotate(7deg);
+  }
+}
+
+@keyframes butterfly-cross-right {
+  0% {
+    transform: translate3d(0, 2rem, 0) rotate(-4deg);
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 0.52;
+  }
+  45% {
+    transform: translate3d(54vw, -3.5rem, 0) rotate(5deg);
+  }
+  100% {
+    transform: translate3d(calc(100vw + 8rem), 1rem, 0) rotate(-3deg);
+    opacity: 0;
+  }
+}
+
+@keyframes butterfly-cross-left {
+  0% {
+    transform: translate3d(0, -1rem, 0) rotate(4deg) scaleX(-1);
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 0.45;
+  }
+  52% {
+    transform: translate3d(-53vw, 3rem, 0) rotate(-6deg) scaleX(-1);
+  }
+  100% {
+    transform: translate3d(calc(-100vw - 8rem), -2rem, 0) rotate(3deg) scaleX(-1);
+    opacity: 0;
+  }
+}
+
 /* --------------------------------------------------------------------------
  * Apple Design accessibility (prefers-reduced-motion / transparency / contrast)
  * From Designing Fluid Interfaces + Principles of Great Design.
@@ -651,6 +794,16 @@ body.calendar-dragging {
   :root[data-theme="frieren"] body::after {
     animation: none !important;
     opacity: 0.08;
+  }
+
+  .butterfly-flight,
+  .butterfly-drift,
+  .butterfly-wing {
+    animation: none !important;
+  }
+
+  .butterfly-flight {
+    opacity: 0.16;
   }
 
   /* Prefer cross-fade style for any remaining motion utilities */
