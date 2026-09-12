@@ -53,9 +53,9 @@ const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: strin
   { id: "overview", label: "Overview", icon: Network, hint: "Mindmap of skills, goals & tasks" },
   { id: "goals", label: "Goals", icon: Target, hint: "Goals & sub-goals" },
   { id: "tasks", label: "Tasks", icon: ListChecks, hint: "To-do list & focus schedule" },
-  { id: "bucket", label: "Bucket list", icon: Sparkles, hint: "Lifetime wishes" },
+  { id: "bucket", label: "Someday", icon: Sparkles, hint: "No-date ideas for one day" },
   { id: "skills", label: "Skills", icon: Palette, hint: "Customize skill areas & colors" },
-  { id: "settings", label: "Settings", icon: SettingsIcon, hint: "Text size, reminders, profile" },
+  { id: "settings", label: "Settings", icon: SettingsIcon, hint: "Profile, appearance & reminders" },
   { id: "marketplace", label: "Marketplace", icon: Store, hint: "Community goals" },
 ];
 

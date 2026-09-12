@@ -72,9 +72,9 @@ export function Dashboard() {
         />
         <StatCard
           icon={<Sparkles className="h-4 w-4" />}
-          label="Bucket list"
+          label="Someday"
           value={bucketRemaining}
-          sub={`${bucketDone} achieved`}
+          sub={`${bucketDone} done`}
         />
       </div>
 
