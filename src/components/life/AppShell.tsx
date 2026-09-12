@@ -119,7 +119,7 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-border/60 bg-background/70 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-background/60">
-            <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
+            <div className="flex items-center gap-2 px-4 py-2.5 lg:px-8">
               <Button
                 size="icon"
                 variant="ghost"
@@ -129,31 +129,48 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <ThemedTabIcon
-                    id={active.id}
-                    fallback={active.icon}
-                    className="h-4 w-4 text-primary"
-                  />
-                  <h1
-                    data-tour="page-heading"
-                    className="font-display text-lg font-semibold tracking-tight"
-                  >
-                    {active.label}
-                  </h1>
-                </div>
-                <p className="truncate text-xs text-muted-foreground">{active.hint}</p>
+              {/* Minimal marker: the selected section's icon, no repeated heading */}
+              <div
+                data-tour="page-heading"
+                className="flex min-w-0 flex-1 items-center gap-2"
+                aria-label={active.label}
+              >
+                <ThemedTabIcon
+                  id={active.id}
+                  fallback={active.icon}
+                  className="h-[1.15rem] w-[1.15rem] text-primary lg:hidden"
+                />
+                <span className="font-display text-sm font-semibold tracking-tight lg:hidden">
+                  {active.label}
+                </span>
               </div>
               {onHome && (
-                <Button size="icon" variant="ghost" onClick={onHome} aria-label="Home" title="Home">
-                  <Home className="h-5 w-5" />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9"
+                  onClick={onHome}
+                  aria-label="Home"
+                  title="Home"
+                >
+                  <Home className="h-[1.15rem] w-[1.15rem]" />
                 </Button>
               )}
               <RankChip onClick={() => onTab("dashboard")} />
               <ExportImport />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9"
+                onClick={() => onTab("settings")}
+                aria-label="Settings"
+                title="Settings"
+              >
+                <SettingsIcon className="h-[1.15rem] w-[1.15rem]" />
+              </Button>
             </div>
           </header>
+
 
           <main
             id="main-content"
