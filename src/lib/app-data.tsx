@@ -810,7 +810,7 @@ export const TEMPLATE_PAYLOAD = {
     themeColor: "monochrome",
     notificationsEnabled: true,
     reminderLeadMinutes: 15,
-    frierenSfx: false,
+    frierenSfx: true,
   },
   goals: [
     {
