@@ -68,7 +68,13 @@ function Shell() {
   }
 
   return (
-    <AppShell tab={tab} onTab={setTab} stats={stats} onHome={() => navigate({ to: "/" })}>
+    <AppShell
+      tab={tab}
+      onTab={setTab}
+      stats={stats}
+      onHome={() => navigate({ to: "/" })}
+      onSurvival={() => navigate({ to: "/survival" })}
+    >
       <DueBanner onGoTasks={() => setTab("tasks")} />
       {tab === "dashboard" && <Dashboard />}
       {tab === "today" && (
