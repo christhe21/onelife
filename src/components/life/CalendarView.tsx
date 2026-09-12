@@ -796,6 +796,32 @@ export function CalendarView({
             resultCount={events.length}
           />
         </div>
+        {(() => {
+          const present = skills.filter((s) => events.some((e) => e.skillId === s.id));
+          if (present.length === 0) return null;
+          return (
+            <div className="shrink-0 pb-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Life areas
+                </span>
+                {present.map((s) => (
+                  <span
+                    key={s.id}
+                    className="inline-flex min-w-0 items-center gap-1.5 text-[11px] text-muted-foreground"
+                  >
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ background: s.color }}
+                    />
+                    <span className="truncate">{s.label}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {filtersActiveCount(filters) > 0 && events.length === 0 && (
           <div className="mb-3 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center">
             <p className="text-sm font-medium">Nothing matches these filters</p>
@@ -1176,9 +1202,10 @@ function MonthGrid({
     ? ["M", "T", "W", "T", "F", "S", "S"]
     : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+  // Softened so the per-area colours of the chips read first.
   const heatBg = (completed: number) => {
     if (completed <= 0) return undefined;
-    const pct = Math.min(45, 8 + completed * 10);
+    const pct = Math.min(18, 4 + completed * 4);
     return `color-mix(in oklab, hsl(var(--primary)) ${pct}%, transparent)`;
   };
 
@@ -1190,7 +1217,7 @@ function MonthGrid({
             className="h-2 w-2 rounded-sm"
             style={{ background: "color-mix(in oklab, hsl(var(--primary)) 35%, transparent)" }}
           />
-          Heat
+          Busier day
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="h-2 w-2 rounded-full border-2 border-primary" />

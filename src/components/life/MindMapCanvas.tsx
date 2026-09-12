@@ -43,9 +43,6 @@ const ROOT_FILL = "#FCD34D";
 const UNLINKED_FILL = "#cbd5e1"; // gray only for genuinely unlinked nodes
 
 const STORAGE_KEY = "mindmap-positions-v1";
-// Layout constants for the radial non-overlap formula
-const BASE_R = [0, 260, 460, 660, 860];
-const MIN_ARC = 100; // px of arc length required per child center at any depth
 
 // Darken a hex color so the border reads as a deeper shade of the fill
 function darken(hex: string, amount = 0.4): string {
@@ -336,43 +333,40 @@ export function MindMapCanvas() {
       });
     }
 
-    // leaves count (collapsed = 1)
-    const countLeaves = (n: Tree): number => {
+    // ── Layered tidy-tree layout ────────────────────────────────────────
+    // Every level sits on its own row; x is packed from subtree widths so
+    // siblings never overlap and parents centre over their children.
+    const nodeWidth = (kind: Kind, label: string) => {
+      const base =
+        kind === "root" ? 240 : kind === "skill" ? 190 : kind === "subtask" ? 170 : 200;
+      const est = Math.min(300, Math.max(base, label.length * 8 + 48));
+      return est;
+    };
+    const H_GAP = 26;
+    const ROW_H = (depth: number) => (depth === 0 ? 150 : depth === 1 ? 140 : 130);
+
+    // Pass 1: measure subtree widths (post-order).
+    const widthOf = new Map<string, number>();
+    const measure = (n: Tree): number => {
+      const own = nodeWidth(n.kind, n.label);
       if (!n.expanded || n.children.length === 0) {
-        n.leaves = 1;
-        return 1;
+        widthOf.set(n.id, own);
+        return own;
       }
-      n.leaves = n.children.reduce((s, c) => s + countLeaves(c), 0);
-      return n.leaves;
+      const kids = n.children.reduce((s, c) => s + measure(c), 0) + H_GAP * (n.children.length - 1);
+      const w = Math.max(own, kids);
+      widthOf.set(n.id, w);
+      return w;
     };
-    countLeaves(root);
+    measure(root);
 
-    // Per-depth radial step (distance from parent to child along the outward cone).
-    // Smaller as depth grows so deep branches stay contained.
-    const stepFor = (depth: number) => {
-      if (depth <= 1) return 280; // root -> skill
-      if (depth === 2) return 230; // skill -> goal
-      if (depth === 3) return 190; // goal -> milestone
-      if (depth === 4) return 160; // milestone -> task
-      return 140; // task -> subtask
-    };
-
-    // Maximum cone half-angle a parent may use for its children, by depth of parent.
-    // Root gets full circle. Deeper nodes get a tighter forward-facing wedge so
-    // subtrees grow outward instead of wrapping back over their ancestors.
-    const maxHalfCone = (parentDepth: number) => {
-      if (parentDepth === 0) return Math.PI; // full 2π
-      if (parentDepth === 1) return (Math.PI * 5) / 12; // 75°
-      if (parentDepth === 2) return Math.PI / 3; // 60°
-      return Math.PI / 4; // 45° for milestone/task fan-outs
-    };
-
-    // Recursive parent-relative layout. Each node receives its absolute position
-    // and the outward direction (angle from parent → self); it then lays out its
-    // own children in a wedge centered on that outward direction.
-    const place = (n: Tree, x: number, y: number, outDir: number, depth: number) => {
+    // Pass 2: assign positions (pre-order), children packed left→right inside
+    // the parent's own subtree band, parent centred over that band.
+    const place = (n: Tree, left: number, y: number, depth: number) => {
       n.depth = depth;
-      seeds[n.id] = { x, y };
+      const band = widthOf.get(n.id) ?? nodeWidth(n.kind, n.label);
+      const cx = left + band / 2;
+      seeds[n.id] = { x: cx, y };
       nodes.push({
         id: n.id,
         label: n.label,
@@ -386,44 +380,28 @@ export function MindMapCanvas() {
       });
       if (!n.expanded || n.children.length === 0) return;
 
-      const childCount = n.children.length;
-      const totalLeaves = n.children.reduce((s, c) => s + c.leaves, 0) || 1;
-      const halfCone = maxHalfCone(depth);
-      // Total sweep we are willing to use; for root this is 2π, otherwise 2*halfCone.
-      const totalSweep = depth === 0 ? Math.PI * 2 : Math.min(Math.PI * 2, halfCone * 2);
-
-      // Ensure each child has at least MIN_ARC of arc length at the chosen radius.
-      let radius = stepFor(depth + 1);
-      const requiredArc = MIN_ARC * childCount;
-      const arcAtR = totalSweep * radius;
-      if (arcAtR < requiredArc) radius = requiredArc / totalSweep;
-
-      // Starting angle: for root span the full circle starting at -π; otherwise
-      // span [outDir - halfCone, outDir + halfCone] so children fan outward.
-      const a0 = depth === 0 ? -Math.PI : outDir - totalSweep / 2;
-
-      let acc = 0;
+      const kidsWidth =
+        n.children.reduce((s, c) => s + (widthOf.get(c.id) ?? 0), 0) +
+        H_GAP * (n.children.length - 1);
+      let cursor = cx - kidsWidth / 2;
+      const childY = y + ROW_H(depth);
       n.children.forEach((c, idx) => {
-        const share = c.leaves / totalLeaves;
-        const childSweep = totalSweep * share;
-        const midA = a0 + acc + childSweep / 2;
-        acc += childSweep;
-        const cx = x + radius * Math.cos(midA);
-        const cy = y + radius * Math.sin(midA);
-        links.push({
-          from: n.id,
-          to: c.id,
-          depth: depth + 1,
-          curl: idx % 2 === 0 ? 1 : -1,
-        });
-        place(c, cx, cy, midA, depth + 1);
+        const w = widthOf.get(c.id) ?? 0;
+        links.push({ from: n.id, to: c.id, depth: depth + 1, curl: idx % 2 === 0 ? 1 : -1 });
+        place(c, cursor, childY, depth + 1);
+        cursor += w + H_GAP;
       });
     };
-    place(root, 0, 0, 0, 0);
+    place(root, 0, 0, 0);
+
+    // Centre the whole tree on the root so panning starts sensibly.
+    const rootX = seeds["root"]?.x ?? 0;
+    for (const id of Object.keys(seeds)) seeds[id]!.x -= rootX;
 
     return { nodes, links, seeds };
     // skillColor / resolveTaskSkillId close over skills & goals; include them
   }, [skills, goals, tasks, open, settings.userName]);
+
 
   const parentMap = useMemo(() => {
     const map = new Map<string, string | null>();
@@ -462,6 +440,27 @@ export function MindMapCanvas() {
     const base = seeds[id] ?? { x: 0, y: 0 };
     return { x: base.x + offset.x, y: base.y + offset.y };
   };
+
+  /** Canvas box sized to the laid-out tree (plus any dragged nodes). */
+  const viewBox = useMemo(() => {
+    const pts = nodes.map((n) => {
+      const p = positions[n.id] ?? seeds[n.id] ?? { x: 0, y: 0 };
+      return p;
+    });
+    if (pts.length === 0) return { x: -600, y: -400, w: 1200, h: 800 };
+    const pad = 220;
+    const minX = Math.min(...pts.map((p) => p.x)) - pad;
+    const maxX = Math.max(...pts.map((p) => p.x)) + pad;
+    const minY = Math.min(...pts.map((p) => p.y)) - pad;
+    const maxY = Math.max(...pts.map((p) => p.y)) + pad;
+    return {
+      x: minX,
+      y: minY,
+      w: Math.max(600, maxX - minX),
+      h: Math.max(400, maxY - minY),
+    };
+  }, [nodes, positions, seeds]);
+
 
   const persist = (next: Record<string, { x: number; y: number }>) => {
     setPositions(next);
@@ -684,7 +683,7 @@ export function MindMapCanvas() {
           </Button>
           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={autoArrange}>
             <Shuffle className="mr-1 h-3.5 w-3.5" />
-            Auto-arrange
+            Tidy layout
           </Button>
         </div>
         <Button
@@ -728,9 +727,9 @@ export function MindMapCanvas() {
             shapeRendering: "geometricPrecision",
             overflow: "visible",
           }}
-          width="1800"
-          height="1800"
-          viewBox="-900 -900 1800 1800"
+          width={viewBox.w}
+          height={viewBox.h}
+          viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
         >
           <defs>
             <marker
@@ -746,31 +745,31 @@ export function MindMapCanvas() {
             </marker>
           </defs>
 
-          {/* arrows — stroke matches the target node's skill color when available */}
+          {/* orthogonal connectors: down out of the parent, across, down into the child */}
           {links.map((l, i) => {
             const a = pos(l.from);
             const b = pos(l.to);
-            const dx = b.x - a.x;
-            const dy = b.y - a.y;
-            const len = Math.hypot(dx, dy) || 1;
-            // shorten end so arrow doesn't overlap shape
-            const pad = 38;
-            const ex = b.x - (dx / len) * pad;
-            const ey = b.y - (dy / len) * pad;
-            const sx = a.x + (dx / len) * pad * 0.7;
-            const sy = a.y + (dy / len) * pad * 0.7;
-            // wavy control point
-            const mx = (sx + ex) / 2 + (-dy / len) * 30 * l.curl;
-            const my = (sy + ey) / 2 + (dx / len) * 30 * l.curl;
-            const w = Math.max(1.2, 2.4 - l.depth * 0.3);
+            const startPad = 34;
+            const endPad = 34;
+            const sy = a.y + startPad;
+            const ey = b.y - endPad;
+            const midY = sy + Math.max(18, (ey - sy) / 2);
+            const r = Math.min(14, Math.abs(b.x - a.x) / 2, Math.abs(midY - sy) || 14);
+            const dir = b.x >= a.x ? 1 : -1;
+            const d =
+              Math.abs(b.x - a.x) < 2
+                ? `M ${a.x} ${sy} L ${b.x} ${ey}`
+                : `M ${a.x} ${sy} L ${a.x} ${midY - r} Q ${a.x} ${midY} ${a.x + r * dir} ${midY} ` +
+                  `L ${b.x - r * dir} ${midY} Q ${b.x} ${midY} ${b.x} ${midY + r} L ${b.x} ${ey}`;
+            const w = Math.max(1.2, 2.2 - l.depth * 0.25);
             const linkColor = fillById.get(l.to) ?? edge;
             return (
               <path
                 key={i}
-                d={`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`}
+                d={d}
                 fill="none"
                 stroke={linkColor}
-                strokeOpacity={0.85}
+                strokeOpacity={0.8}
                 strokeWidth={w}
                 strokeLinecap="round"
                 markerEnd="url(#mm-arrow)"
@@ -779,6 +778,7 @@ export function MindMapCanvas() {
               />
             );
           })}
+
 
           {/* nodes */}
           {nodes.map((n) => {
@@ -917,7 +917,7 @@ export function MindMapCanvas() {
       </div>
 
       <p className="mt-2 text-[11px] text-muted-foreground">
-        Drag nodes to rearrange · tap to expand/collapse · drag empty space to pan · scroll to zoom
+        Tap a card to expand or collapse · drag empty space to pan · scroll to zoom · Tidy layout undoes any dragging
       </p>
     </div>
   );

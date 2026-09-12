@@ -18,19 +18,23 @@ const SFX: Record<Kind, { url: string; rate: number; volume: number }> = {
 
 const audioCache = new Map<string, HTMLAudioElement>();
 
-function isFrierenWithSfx(): boolean {
+/**
+ * Completion sound + confetti are a normal app setting now (any theme),
+ * controlled by the single `frierenSfx` flag kept for storage compatibility.
+ */
+function sfxEnabled(): boolean {
   if (typeof window === "undefined") return false;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
+    if (!raw) return true;
     const parsed = JSON.parse(raw);
     const s = parsed?.settings ?? {};
-    if (s.themeColor !== "frieren") return false;
     return s.frierenSfx !== false; // default on
   } catch {
-    return false;
+    return true;
   }
 }
+
 
 function playChime(kind: Kind) {
   if (typeof window === "undefined") return;
@@ -97,14 +101,14 @@ function burst(kind: Kind) {
 
 export function celebrate(kind: Kind) {
   if (typeof window === "undefined") return;
-  if (!isFrierenWithSfx()) return;
+  if (!sfxEnabled()) return;
   burst(kind);
   playChime(kind);
 }
 
 /**
- * Rank-up celebration: always fires confetti (any theme); the chime still
- * respects the Frieren-SFX condition used by `celebrate()`.
+ * Rank-up celebration: always fires confetti; the chime respects the
+ * completion-sound setting.
  */
 export function celebrateRankUp() {
   if (typeof window === "undefined") return;
@@ -128,5 +132,5 @@ export function celebrateRankUp() {
   fire(0.25, 0);
   fire(0.75, 130);
   fire(0.5, 260);
-  if (isFrierenWithSfx()) playChime("goal");
+  if (sfxEnabled()) playChime("goal");
 }
