@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Activity,
@@ -226,11 +226,12 @@ function targetLabel(rule: SurvivalRule) {
 }
 
 function Metric({ label, value, suffix, min = 0, max = 24, step = 1, onChange }: { label: string; value?: number; suffix?: string; min?: number; max?: number; step?: number; onChange: (value: number | undefined) => void }) {
+  const inputId = useId();
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      <Label htmlFor={inputId}>{label}</Label>
       <div className="relative">
-        <Input type="number" min={min} max={max} step={step} value={value ?? ""} onChange={(event) => onChange(event.target.value === "" ? undefined : Number(event.target.value))} />
+        <Input id={inputId} type="number" min={min} max={max} step={step} value={value ?? ""} onChange={(event) => onChange(event.target.value === "" ? undefined : Number(event.target.value))} />
         {suffix && <span className="pointer-events-none absolute right-3 top-3 text-xs text-muted-foreground">{suffix}</span>}
       </div>
     </div>
