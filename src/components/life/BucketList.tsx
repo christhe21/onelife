@@ -43,7 +43,7 @@ function EditBucketDialog({ item }: { item: BucketItem }) {
       </DialogTrigger>
       <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-2rem)] max-w-lg flex-col overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>Edit bucket item</DialogTitle>
+          <DialogTitle>Edit someday idea</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
