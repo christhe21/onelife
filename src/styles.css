@@ -671,7 +671,6 @@ body.calendar-dragging {
 
 .garden-plant {
   position: absolute;
-  bottom: -1rem;
   display: block;
   transform-origin: 50% 100%;
   animation: garden-sway 7s ease-in-out infinite alternate;
@@ -688,12 +687,12 @@ body.calendar-dragging {
 
 .garden-fine { stroke-width: 1; }
 .garden-fill { fill: currentColor; opacity: 0.5; }
-.garden-plant-one { left: -2rem; width: 14rem; height: 15rem; animation-delay: -1s; }
-.garden-plant-two { left: 7%; width: 7rem; height: 14rem; animation-delay: -4s; }
-.garden-plant-three { right: 10%; width: 6rem; height: 12rem; animation-delay: -2s; }
-.garden-plant-four { left: -1.5rem; width: 8rem; height: 17rem; animation-delay: -5s; }
-.garden-plant-five { right: -2.5rem; width: 15rem; height: 16rem; animation-delay: -3s; }
-.garden-plant-six { right: 4%; width: 8rem; height: 15rem; animation-delay: -6s; }
+.garden-plant-one { left: -2rem; top: 27rem; width: 14rem; height: 15rem; animation-delay: -1s; }
+.garden-plant-two { left: 5%; top: 50rem; width: 7rem; height: 14rem; animation-delay: -4s; }
+.garden-plant-three { right: 7%; top: 59rem; width: 6rem; height: 12rem; animation-delay: -2s; }
+.garden-plant-four { left: -1.5rem; top: 34rem; width: 8rem; height: 17rem; animation-delay: -5s; }
+.garden-plant-five { right: -2.5rem; top: 29rem; width: 15rem; height: 16rem; animation-delay: -3s; }
+.garden-plant-six { right: 2%; top: 49rem; width: 8rem; height: 15rem; animation-delay: -6s; }
 
 .butterfly-flight {
   position: absolute;
@@ -849,6 +848,10 @@ body.calendar-dragging {
 
   .garden-layer-back { opacity: 0.12; }
   .garden-layer-front { opacity: 0.22; }
+  .garden-plant-one { left: -5rem; top: 31rem; }
+  .garden-plant-four { left: -4rem; top: 36rem; }
+  .garden-plant-five { right: -7rem; top: 34rem; }
+  .garden-plant-six { right: -3rem; top: 52rem; }
 }
 
 /* --------------------------------------------------------------------------
