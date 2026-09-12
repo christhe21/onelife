@@ -17,6 +17,7 @@ import { SectionHeading } from "@/components/marketing/SectionHeading";
 import { ShotTabs, type Shot } from "@/components/marketing/ShotTabs";
 import { FaqAccordion, type FaqItem } from "@/components/marketing/FaqAccordion";
 import { CTABand } from "@/components/marketing/CTABand";
+import { ButterflyBackdrop } from "@/components/marketing/ButterflyBackdrop";
 import { APP_DESCRIPTION, APP_NAME, GITHUB_URL, SITE_URL } from "@/lib/site";
 
 const TITLE = `${APP_NAME} — Plan your life like you plan your week`;
@@ -173,6 +174,9 @@ const FAQS: FaqItem[] = [
 function MarketingHome() {
   return (
     <MarketingLayout>
+      <div className="relative isolate overflow-hidden">
+        <ButterflyBackdrop />
+        <div className="relative z-10">
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div
@@ -329,6 +333,8 @@ function MarketingHome() {
       </section>
 
       <CTABand />
+        </div>
+      </div>
     </MarketingLayout>
   );
 }
