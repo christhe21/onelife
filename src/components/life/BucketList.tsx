@@ -100,9 +100,13 @@ export function BucketList() {
     <div className="space-y-4">
       <Card>
         <CardContent className="space-y-2 pt-6">
+          <p className="text-xs text-muted-foreground">
+            Things you want to do one day, with no fixed date. Nothing here appears on your calendar
+            — when you're ready to actually work on one, turn it into a goal.
+          </p>
           <div className="flex flex-wrap gap-2">
             <Input
-              placeholder="Something I want to do..."
+              placeholder="Something I want to do one day..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="min-w-[200px] flex-1"
@@ -113,6 +117,7 @@ export function BucketList() {
               value={year}
               onChange={(e) => setYear(e.target.value)}
               className="w-28"
+              aria-label="Rough year (optional)"
             />
             <Button onClick={submit}>
               <Plus className="mr-2 h-4 w-4" />
@@ -131,7 +136,7 @@ export function BucketList() {
       {bucketList.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Your bucket list is empty. Dream big.
+            Nothing here yet. Add the things you'd love to do one day.
           </CardContent>
         </Card>
       ) : (
@@ -143,16 +148,17 @@ export function BucketList() {
                   checked={b.achieved}
                   onCheckedChange={() => toggleBucket(b.id)}
                   className="mt-1"
+                  aria-label={`Mark "${b.title}" as done`}
                 />
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div
                     className={`text-sm font-medium ${b.achieved ? "line-through text-muted-foreground" : ""}`}
                   >
                     {b.title}
                   </div>
-                  {b.targetYear && (
-                    <div className="text-xs text-muted-foreground">By {b.targetYear}</div>
-                  )}
+                  <div className="text-xs text-muted-foreground">
+                    {b.targetYear ? `Someday · around ${b.targetYear}` : "Someday · no date"}
+                  </div>
                   {b.notes && <div className="mt-1 text-xs text-muted-foreground">{b.notes}</div>}
                 </div>
                 <div className="flex flex-col gap-1">
@@ -160,7 +166,8 @@ export function BucketList() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      title="Promote to a goal"
+                      title="Turn into a goal"
+                      aria-label={`Turn "${b.title}" into a goal`}
                       onClick={() => {
                         const today = new Date().toISOString().slice(0, 10);
                         const target = b.targetYear
@@ -174,7 +181,7 @@ export function BucketList() {
                           targetDate: target,
                           status: "not_started",
                         });
-                        toast.success(`"${b.title}" added as a goal`);
+                        toast.success(`"${b.title}" is now a goal — open Goals to plan it`);
                       }}
                     >
                       <Target className="h-4 w-4" />
@@ -184,7 +191,7 @@ export function BucketList() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    aria-label="Delete idea"
+                    aria-label={`Delete "${b.title}"`}
                     onClick={() => deleteBucket(b.id)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -198,3 +205,4 @@ export function BucketList() {
     </div>
   );
 }
+
