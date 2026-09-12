@@ -17,6 +17,7 @@ import { Route as CreateGoalRouteImport } from './routes/create-goal'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as SurvivalRouteImport } from './routes/survival'
 import { Route as ApiPublicHooksSendRemindersRouteImport } from './routes/api/public/hooks/send-reminders'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SurvivalRoute = SurvivalRouteImport.update({
+  id: '/survival',
+  path: '/survival',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksSendRemindersRoute =
   ApiPublicHooksSendRemindersRouteImport.update({
     id: '/api/public/hooks/send-reminders',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/features': typeof FeaturesRoute
   '/home': typeof HomeRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/survival': typeof SurvivalRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRoutesByTo {
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/features': typeof FeaturesRoute
   '/home': typeof HomeRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/survival': typeof SurvivalRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRoutesById {
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/features': typeof FeaturesRoute
   '/home': typeof HomeRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/survival': typeof SurvivalRoute
   '/api/public/hooks/send-reminders': typeof ApiPublicHooksSendRemindersRoute
 }
 export interface FileRouteTypes {
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/home'
     | '/how-it-works'
+    | '/survival'
     | '/api/public/hooks/send-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/home'
     | '/how-it-works'
+    | '/survival'
     | '/api/public/hooks/send-reminders'
   id:
     | '__root__'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/features'
     | '/home'
     | '/how-it-works'
+    | '/survival'
     | '/api/public/hooks/send-reminders'
   fileRoutesById: FileRoutesById
 }
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   FeaturesRoute: typeof FeaturesRoute
   HomeRoute: typeof HomeRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  SurvivalRoute: typeof SurvivalRoute
   ApiPublicHooksSendRemindersRoute: typeof ApiPublicHooksSendRemindersRoute
 }
 
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/survival': {
+      id: '/survival'
+      path: '/survival'
+      fullPath: '/survival'
+      preLoaderRoute: typeof SurvivalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/send-reminders': {
       id: '/api/public/hooks/send-reminders'
       path: '/api/public/hooks/send-reminders'
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeaturesRoute: FeaturesRoute,
   HomeRoute: HomeRoute,
   HowItWorksRoute: HowItWorksRoute,
+  SurvivalRoute: SurvivalRoute,
   ApiPublicHooksSendRemindersRoute: ApiPublicHooksSendRemindersRoute,
 }
 export const routeTree = rootRouteImport

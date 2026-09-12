@@ -7,6 +7,16 @@ import { celebrate } from "./celebrate";
 import { nativeSaveFile } from "./native-bridge";
 import { reconcilePoints, getOverallRank, type PointsState } from "./rank";
 import {
+  createDefaultSurvivalState,
+  emptySurvivalDay,
+  normalizeSurvivalState,
+  type PreparednessItem,
+  type SurvivalDay,
+  type SurvivalPreferences,
+  type SurvivalRule,
+  type SurvivalState,
+} from "./survival-data";
+import {
   normalizeRule,
   nextOccurrence,
   resolveRule,
@@ -161,6 +171,8 @@ export interface AppData {
   totalPoints?: number;
   /** Ledger of already-awarded item ids -> points, so nothing is counted twice. */
   awardedPoints?: Record<string, number>;
+  /** Separate resilience protocol data; never participates in goals or points. */
+  survival?: SurvivalState;
 }
 
 
@@ -584,6 +596,7 @@ function normalizeAppData(raw: any): AppData {
             Object.entries(raw.awardedPoints).filter(([, v]) => typeof v === "number"),
           ) as Record<string, number>)
         : {},
+    survival: normalizeSurvivalState(raw.survival),
   };
 
 }
@@ -973,6 +986,15 @@ interface Ctx extends AppData {
   settings: Settings;
   setBirthYear: (y: number | undefined) => void;
   updateSettings: (patch: Partial<Settings>) => void;
+  survival: SurvivalState;
+  updateSurvivalDay: (date: string, patch: Partial<SurvivalDay>) => void;
+  toggleSurvivalRule: (ruleId: string, date: string) => void;
+  addSurvivalRule: (rule: Omit<SurvivalRule, "id" | "order" | "isDefault">) => void;
+  updateSurvivalRule: (id: string, patch: Partial<SurvivalRule>) => void;
+  deleteSurvivalRule: (id: string) => void;
+  resetSurvivalRules: () => void;
+  updatePreparednessItem: (id: string, patch: Partial<PreparednessItem>) => void;
+  updateSurvivalPreferences: (patch: Partial<SurvivalPreferences>) => void;
 
   addSkill: (s: Omit<Skill, "id"> & { id?: string }) => void;
   updateSkill: (id: string, patch: Partial<Omit<Skill, "id">>) => void;
@@ -1040,6 +1062,7 @@ function loadInitial(): Stored {
     bucketList: [],
     skills: DEFAULT_SKILLS,
     settings: {},
+    survival: createDefaultSurvivalState(),
   };
   if (typeof window === "undefined") return empty;
   try {
@@ -1129,6 +1152,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [bucketList, setBucketList] = useState<BucketItem[]>(initial.current.bucketList);
   const [skills, setSkills] = useState<Skill[]>(initial.current.skills ?? DEFAULT_SKILLS);
   const [settings, setSettings] = useState<Settings>(initial.current.settings ?? {});
+  const [survival, setSurvival] = useState<SurvivalState>(
+    initial.current.survival ?? createDefaultSurvivalState(),
+  );
   const [points, setPoints] = useState<PointsState>({
     totalPoints: initial.current.totalPoints ?? 0,
     awardedPoints: initial.current.awardedPoints ?? {},
@@ -1181,6 +1207,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setBucketList(norm.bucketList);
         setSkills(remote.skills?.length ? remote.skills : DEFAULT_SKILLS);
         setSettings(remote.settings ?? {});
+        setSurvival(norm.survival ?? createDefaultSurvivalState());
         setPoints({
           totalPoints: norm.totalPoints ?? 0,
           awardedPoints: norm.awardedPoints ?? {},
@@ -1199,6 +1226,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               settings,
               totalPoints: points.totalPoints,
               awardedPoints: points.awardedPoints,
+              survival,
             } as unknown as never,
           },
           { onConflict: "user_id" },
@@ -1234,6 +1262,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       settings,
       totalPoints: points.totalPoints,
       awardedPoints: points.awardedPoints,
+      survival,
     };
     const t = setTimeout(() => {
       if (userId) {
@@ -1253,7 +1282,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList, skills, settings, points, userId, cloudReady]);
+  }, [goals, tasks, bucketList, skills, settings, points, survival, userId, cloudReady]);
 
 
   useEffect(() => {
@@ -1509,8 +1538,71 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     bucketList,
     skills,
     settings,
+    survival,
     setBirthYear: (y) => setSettings((s) => ({ ...s, birthYear: y })),
     updateSettings: (patch) => setSettings((s) => ({ ...s, ...patch })),
+    updateSurvivalDay: (date, patch) =>
+      setSurvival((current) => {
+        const existing = current.days.find((day) => day.date === date) ?? emptySurvivalDay(date);
+        const next = {
+          ...existing,
+          ...patch,
+          date,
+          updatedAt: new Date().toISOString(),
+        };
+        return {
+          ...current,
+          days: [...current.days.filter((day) => day.date !== date), next].sort((a, b) =>
+            a.date.localeCompare(b.date),
+          ),
+        };
+      }),
+    toggleSurvivalRule: (ruleId, date) =>
+      setSurvival((current) => {
+        const existing = current.days.find((day) => day.date === date) ?? emptySurvivalDay(date);
+        const completed = existing.completedRuleIds.includes(ruleId)
+          ? existing.completedRuleIds.filter((id) => id !== ruleId)
+          : [...existing.completedRuleIds, ruleId];
+        const next = { ...existing, completedRuleIds: completed, updatedAt: new Date().toISOString() };
+        return {
+          ...current,
+          days: [...current.days.filter((day) => day.date !== date), next].sort((a, b) =>
+            a.date.localeCompare(b.date),
+          ),
+        };
+      }),
+    addSurvivalRule: (rule) =>
+      setSurvival((current) => ({
+        ...current,
+        rules: [
+          ...current.rules,
+          { ...rule, id: uid(), order: current.rules.length + 1, isDefault: false },
+        ],
+      })),
+    updateSurvivalRule: (id, patch) =>
+      setSurvival((current) => ({
+        ...current,
+        rules: current.rules.map((rule) => (rule.id === id ? { ...rule, ...patch, id } : rule)),
+      })),
+    deleteSurvivalRule: (id) =>
+      setSurvival((current) => ({
+        ...current,
+        rules: current.rules.filter((rule) => rule.id !== id),
+      })),
+    resetSurvivalRules: () =>
+      setSurvival((current) => ({ ...current, rules: createDefaultSurvivalState().rules })),
+    updatePreparednessItem: (id, patch) =>
+      setSurvival((current) => ({
+        ...current,
+        preparedness: current.preparedness.map((item) =>
+          item.id === id ? { ...item, ...patch, id } : item,
+        ),
+      })),
+    updateSurvivalPreferences: (patch) =>
+      setSurvival((current) => ({
+        ...current,
+        preferences: { ...current.preferences, ...patch },
+      })),
 
     addSkill: (s) =>
       setSkills((cur) => {
@@ -1830,6 +1922,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         settings,
         totalPoints: points.totalPoints,
         awardedPoints: points.awardedPoints,
+        survival,
       };
 
       downloadJSON(payload, `onelife-${new Date().toISOString().slice(0, 10)}.json`);
@@ -1864,6 +1957,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         totalPoints: data.totalPoints ?? 0,
         awardedPoints: data.awardedPoints ?? {},
       });
+      setSurvival(data.survival ?? createDefaultSurvivalState());
 
     },
     appendJSON: async (file) => {
@@ -1934,6 +2028,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList(norm.bucketList);
       if (norm.skills) setSkills(norm.skills);
       if (norm.settings) setSettings(norm.settings);
+      setSurvival(norm.survival ?? createDefaultSurvivalState());
       setPoints({
         totalPoints: norm.totalPoints ?? 0,
         awardedPoints: norm.awardedPoints ?? {},
@@ -1945,6 +2040,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList([]);
       setSkills(DEFAULT_SKILLS);
       setSettings({});
+      setSurvival(createDefaultSurvivalState());
       setPoints({ totalPoints: 0, awardedPoints: {} });
       try {
         window.localStorage.removeItem(STORAGE_KEY);
@@ -1970,6 +2066,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setBucketList([]);
       setSkills(DEFAULT_SKILLS);
       setSettings({});
+      setSurvival(createDefaultSurvivalState());
       try {
         window.localStorage.removeItem(STORAGE_KEY);
       } catch {

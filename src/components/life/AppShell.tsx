@@ -65,6 +65,7 @@ interface Props {
   children: ReactNode;
   stats: { goals: number; tasks: number; bucket: number };
   onHome?: () => void;
+  onSurvival?: () => void;
 }
 
 function RankChip({ onClick }: { onClick: () => void }) {
@@ -87,7 +88,7 @@ function RankChip({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
+export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   useRankUp();
   const active = NAV.find((n) => n.id === tab)!;
@@ -114,6 +115,13 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
               />
             ))}
           </nav>
+          {onSurvival && (
+            <div className="border-t border-sidebar-border p-3">
+              <Button variant="outline" className="w-full justify-start" onClick={onSurvival}>
+                <Shield /> Survival Mode
+              </Button>
+            </div>
+          )}
           <SidebarFooter />
         </aside>
 
@@ -154,6 +162,18 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
                   title="Home"
                 >
                   <Home className="h-[1.15rem] w-[1.15rem]" />
+                </Button>
+              )}
+              {onSurvival && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9 lg:hidden"
+                  onClick={onSurvival}
+                  aria-label="Open Survival Mode"
+                  title="Survival Mode"
+                >
+                  <Shield className="h-[1.15rem] w-[1.15rem]" />
                 </Button>
               )}
               <RankChip onClick={() => onTab("dashboard")} />
@@ -218,6 +238,13 @@ export function AppShell({ tab, onTab, children, stats, onHome }: Props) {
                 />
               ))}
             </nav>
+            {onSurvival && (
+              <div className="border-t border-sidebar-border p-3">
+                <Button variant="outline" className="w-full justify-start" onClick={onSurvival}>
+                  <Shield /> Survival Mode
+                </Button>
+              </div>
+            )}
             <SidebarFooter />
           </aside>
         </div>
