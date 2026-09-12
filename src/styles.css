@@ -627,8 +627,10 @@ body.calendar-dragging {
   -webkit-touch-callout: none;
 }
 
-/* Public home: quiet butterfly silhouettes moving behind the content. */
+/* Public home: a quiet monochrome habitat living behind the content. */
 .butterfly-backdrop {
+  --garden-pointer-x: 0px;
+  --garden-pointer-y: 0px;
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -637,6 +639,61 @@ body.calendar-dragging {
   color: color-mix(in oklab, var(--foreground) 42%, transparent);
 }
 
+.garden-haze {
+  position: absolute;
+  width: 36rem;
+  height: 36rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--muted) 62%, transparent);
+  filter: blur(70px);
+  opacity: 0.65;
+}
+
+.garden-haze-left { left: -22rem; top: 14rem; }
+.garden-haze-right { right: -24rem; top: 38rem; }
+
+.garden-layer {
+  position: absolute;
+  inset: 0;
+  transition: transform 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.garden-layer-back {
+  opacity: 0.16;
+  transform: translate(calc(var(--garden-pointer-x) * 0.18), calc(var(--garden-pointer-y) * 0.18));
+}
+
+.garden-layer-front {
+  opacity: 0.28;
+  transform: translate(calc(var(--garden-pointer-x) * 0.38), calc(var(--garden-pointer-y) * 0.38));
+}
+
+.garden-plant {
+  position: absolute;
+  display: block;
+  transform-origin: 50% 100%;
+  animation: garden-sway 7s ease-in-out infinite alternate;
+}
+
+.garden-stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.garden-fine { stroke-width: 1; }
+.garden-fill { fill: currentColor; opacity: 0.5; }
+.garden-plant-one { left: -2rem; top: 27rem; width: 14rem; height: 15rem; animation-delay: -1s; }
+.garden-plant-two { left: 5%; top: 50rem; width: 7rem; height: 14rem; animation-delay: -4s; }
+.garden-plant-three { right: 7%; top: 59rem; width: 6rem; height: 12rem; animation-delay: -2s; }
+.garden-plant-four { left: -1.5rem; top: 34rem; width: 8rem; height: 17rem; animation-delay: -5s; }
+.garden-plant-five { right: -2.5rem; top: 29rem; width: 15rem; height: 16rem; animation-delay: -3s; }
+.garden-plant-six { right: 2%; top: 49rem; width: 8rem; height: 15rem; animation-delay: -6s; }
+
 .butterfly-flight {
   position: absolute;
   display: block;
@@ -644,6 +701,14 @@ body.calendar-dragging {
   height: 1.5rem;
   opacity: 0;
   will-change: transform, opacity;
+}
+
+.butterfly-avoid {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: translate(var(--garden-pointer-x), var(--garden-pointer-y));
+  transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .butterfly-drift {
@@ -669,51 +734,51 @@ body.calendar-dragging {
 }
 
 .butterfly-flight-one {
-  top: 3%;
-  left: -4rem;
-  animation: butterfly-cross-right 25s linear 0s infinite;
+  top: 12%;
+  left: 8%;
+  animation: butterfly-wander-one 29s ease-in-out -7s infinite;
 }
 
 .butterfly-flight-two {
-  top: 12%;
-  right: -4rem;
+  top: 21%;
+  right: 15%;
   width: 1.45rem;
-  animation: butterfly-cross-left 31s linear -13s infinite;
+  animation: butterfly-wander-two 37s ease-in-out -19s infinite;
 }
 
 .butterfly-flight-three {
-  top: 29%;
-  left: -4rem;
+  top: 37%;
+  left: 18%;
   width: 2.35rem;
-  animation: butterfly-cross-right 34s linear -21s infinite;
+  animation: butterfly-wander-three 42s ease-in-out -27s infinite;
 }
 
 .butterfly-flight-four {
-  top: 46%;
-  right: -4rem;
+  top: 48%;
+  right: 10%;
   width: 1.7rem;
-  animation: butterfly-cross-left 27s linear -7s infinite;
+  animation: butterfly-wander-four 33s ease-in-out -5s infinite;
 }
 
 .butterfly-flight-five {
-  top: 63%;
-  left: -4rem;
+  top: 61%;
+  left: 10%;
   width: 1.3rem;
-  animation: butterfly-cross-right 29s linear -16s infinite;
+  animation: butterfly-wander-two 39s ease-in-out -29s infinite reverse;
 }
 
 .butterfly-flight-six {
-  top: 78%;
-  right: -4rem;
+  top: 76%;
+  right: 20%;
   width: 2.1rem;
-  animation: butterfly-cross-left 36s linear -26s infinite;
+  animation: butterfly-wander-one 46s ease-in-out -31s infinite reverse;
 }
 
 .butterfly-flight-seven {
-  top: 91%;
-  left: -4rem;
+  top: 88%;
+  left: 34%;
   width: 1.55rem;
-  animation: butterfly-cross-right 32s linear -10s infinite;
+  animation: butterfly-wander-four 35s ease-in-out -16s infinite reverse;
 }
 
 @keyframes butterfly-flap {
@@ -726,48 +791,67 @@ body.calendar-dragging {
 }
 
 @keyframes butterfly-drift {
-  from {
+  0%, 100% {
     transform: translateY(-0.75rem) rotate(-7deg);
   }
-  to {
+  42% {
     transform: translateY(0.9rem) rotate(7deg);
   }
-}
-
-@keyframes butterfly-cross-right {
-  0% {
-    transform: translate3d(0, 2rem, 0) rotate(-4deg);
-    opacity: 0;
-  }
-  8%,
-  88% {
-    opacity: 0.52;
-  }
-  45% {
-    transform: translate3d(54vw, -3.5rem, 0) rotate(5deg);
-  }
-  100% {
-    transform: translate3d(calc(100vw + 8rem), 1rem, 0) rotate(-3deg);
-    opacity: 0;
+  48%, 55% {
+    transform: translateY(0.2rem) rotate(1deg) scale(0.96);
   }
 }
 
-@keyframes butterfly-cross-left {
-  0% {
-    transform: translate3d(0, -1rem, 0) rotate(4deg) scaleX(-1);
-    opacity: 0;
-  }
-  8%,
-  88% {
-    opacity: 0.45;
-  }
-  52% {
-    transform: translate3d(-53vw, 3rem, 0) rotate(-6deg) scaleX(-1);
-  }
-  100% {
-    transform: translate3d(calc(-100vw - 8rem), -2rem, 0) rotate(3deg) scaleX(-1);
-    opacity: 0;
-  }
+@keyframes garden-sway {
+  from { transform: rotate(-1.5deg) translateX(-0.15rem); }
+  to { transform: rotate(2deg) translateX(0.2rem); }
+}
+
+@keyframes butterfly-wander-one {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); opacity: 0.24; }
+  18% { transform: translate3d(18vw, 5rem, 0) rotate(12deg); opacity: 0.5; }
+  37% { transform: translate3d(9vw, 13rem, 0) rotate(-16deg); }
+  53%, 60% { transform: translate3d(31vw, 18rem, 0) rotate(3deg) scale(0.88); opacity: 0.36; }
+  78% { transform: translate3d(43vw, 8rem, 0) rotate(14deg); opacity: 0.5; }
+}
+
+@keyframes butterfly-wander-two {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(8deg) scaleX(-1); opacity: 0.3; }
+  22% { transform: translate3d(-24vw, 7rem, 0) rotate(-13deg) scaleX(-1); opacity: 0.46; }
+  43% { transform: translate3d(-12vw, 19rem, 0) rotate(10deg) scaleX(-1); }
+  62%, 68% { transform: translate3d(-39vw, 24rem, 0) rotate(-2deg) scale(-0.9, 0.9); opacity: 0.32; }
+  84% { transform: translate3d(-48vw, 11rem, 0) rotate(-14deg) scaleX(-1); }
+}
+
+@keyframes butterfly-wander-three {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-5deg); opacity: 0.3; }
+  16% { transform: translate3d(22vw, -8rem, 0) rotate(14deg); opacity: 0.48; }
+  35% { transform: translate3d(44vw, 3rem, 0) rotate(8deg); }
+  54% { transform: translate3d(57vw, -4rem, 0) rotate(-12deg); }
+  72%, 79% { transform: translate3d(36vw, 13rem, 0) rotate(1deg) scale(0.9); opacity: 0.34; }
+  91% { transform: translate3d(12vw, 8rem, 0) rotate(-10deg); }
+}
+
+@keyframes butterfly-wander-four {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(7deg) scaleX(-1); opacity: 0.24; }
+  21% { transform: translate3d(-15vw, -9rem, 0) rotate(-12deg) scaleX(-1); opacity: 0.48; }
+  39%, 46% { transform: translate3d(-31vw, 2rem, 0) rotate(0deg) scale(-0.88, 0.88); opacity: 0.32; }
+  63% { transform: translate3d(-20vw, 15rem, 0) rotate(13deg) scaleX(-1); }
+  82% { transform: translate3d(8vw, 8rem, 0) rotate(-9deg) scaleX(-1); }
+}
+
+@media (max-width: 640px) {
+  .butterfly-flight-six,
+  .butterfly-flight-seven,
+  .garden-plant-two,
+  .garden-plant-three { display: none; }
+
+  .garden-layer-back { opacity: 0.12; }
+  .garden-layer-front { opacity: 0.22; }
+  .garden-plant-one { left: -5rem; top: 31rem; }
+  .garden-plant-four { left: -4rem; top: 36rem; }
+  .garden-plant-five { right: -7rem; top: 34rem; }
+  .garden-plant-six { right: -3rem; top: 52rem; }
 }
 
 /* --------------------------------------------------------------------------
@@ -798,12 +882,19 @@ body.calendar-dragging {
 
   .butterfly-flight,
   .butterfly-drift,
-  .butterfly-wing {
+  .butterfly-wing,
+  .garden-plant {
     animation: none !important;
   }
 
   .butterfly-flight {
     opacity: 0.16;
+  }
+
+  .garden-layer,
+  .butterfly-avoid {
+    transform: none !important;
+    transition: none !important;
   }
 
   /* Prefer cross-fade style for any remaining motion utilities */
