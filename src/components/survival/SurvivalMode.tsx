@@ -360,14 +360,24 @@ function CheckField({ label, checked, onChange }: { label: string; checked?: boo
   return <label className="flex cursor-pointer items-center gap-3 text-sm"><Checkbox checked={checked ?? false} onCheckedChange={(value) => onChange(value === true)} />{label}</label>;
 }
 
-function SafetyNote({ day }: { day: ReturnType<typeof emptySurvivalDay> }) {
-  const needsCare = (day.mood != null && day.mood <= 1) || (day.stress != null && day.stress >= 5) || (day.pain != null && day.pain >= 4);
+function GuidanceBanner() {
   return (
-    <div className={cn("mt-6 border-l-2 pl-4 text-sm leading-relaxed text-muted-foreground", needsCare && "border-destructive text-foreground")}>
-      {needsCare ? "Today’s check-in suggests reducing demands. Stop strenuous activity for concerning symptoms, and contact a trusted person or qualified health professional. If you may be in immediate danger, use your local emergency service." : "General guidance only. Adapt this protocol for your health, ability, responsibilities, and professional advice."}
+    <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+      General guidance only. Adapt this protocol for your health, ability, responsibilities, and professional advice.
     </div>
   );
 }
+
+function SafetyNote({ day }: { day: ReturnType<typeof emptySurvivalDay> }) {
+  const needsCare = (day.mood != null && day.mood <= 1) || (day.stress != null && day.stress >= 5) || (day.pain != null && day.pain >= 4);
+  if (!needsCare) return null;
+  return (
+    <div className="mt-6 border-l-2 border-destructive pl-4 text-sm leading-relaxed text-foreground">
+      Today’s check-in suggests reducing demands. Stop strenuous activity for concerning symptoms, and contact a trusted person or qualified health professional. If you may be in immediate danger, use your local emergency service.
+    </div>
+  );
+}
+
 
 function SurvivalHistory() {
   const { survival } = useAppData();
