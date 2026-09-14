@@ -37,7 +37,14 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: `${SITE_URL}/marketing/dashboard.jpg` },
     ],
-    links: [{ rel: "canonical", href: SITE_URL }],
+    links: [
+      { rel: "canonical", href: SITE_URL },
+      { rel: "preload", href: "/marketing/dashboard.jpg", as: "image" },
+      { rel: "preload", href: "/marketing/calendar.jpg", as: "image" },
+      { rel: "preload", href: "/marketing/overview.jpg", as: "image" },
+      { rel: "preload", href: "/marketing/goals.jpg", as: "image" },
+      { rel: "preload", href: "/marketing/ranks.jpg", as: "image" },
+    ],
     scripts: [
       {
         type: "application/ld+json",

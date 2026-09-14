@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ScreenshotFrame } from "./ScreenshotFrame";
 
@@ -13,6 +13,16 @@ export interface Shot {
 export function ShotTabs({ shots, className }: { shots: Shot[]; className?: string }) {
   const [active, setActive] = useState(shots[0]?.id);
   const current = shots.find((s) => s.id === active) ?? shots[0];
+
+  useEffect(() => {
+    const preloaders = shots.map(({ src }) => {
+      const image = new Image();
+      image.src = src;
+      return image;
+    });
+    return () => preloaders.forEach((image) => { image.onload = null; });
+  }, [shots]);
+
   if (!current) return null;
 
   return (
