@@ -694,6 +694,76 @@ body.calendar-dragging {
 .garden-plant-five { right: -2.5rem; top: 29rem; width: 15rem; height: 16rem; animation-delay: -3s; }
 .garden-plant-six { right: 2%; top: 49rem; width: 8rem; height: 15rem; animation-delay: -6s; }
 
+/* Small habitats reappear between sections so the garden grows with the page. */
+.garden-layer-groves {
+  opacity: 0.2;
+  transform: translate(calc(var(--garden-pointer-x) * 0.28), calc(var(--garden-pointer-y) * 0.28));
+}
+
+.garden-grove {
+  position: absolute;
+  width: 15rem;
+  height: 16rem;
+}
+
+.garden-grove .garden-plant:nth-child(1) {
+  left: 0;
+  bottom: 0;
+  width: 7rem;
+  height: 13rem;
+}
+
+.garden-grove .garden-plant:nth-child(2) {
+  right: 0;
+  bottom: 0;
+  width: 10rem;
+  height: 11rem;
+  animation-delay: -3.5s;
+}
+
+.garden-grove .garden-plant:nth-child(3) {
+  left: 40%;
+  bottom: 0;
+  width: 6rem;
+  height: 10rem;
+  animation-delay: -5.5s;
+}
+
+.garden-grove-one { right: -4rem; top: 86rem; transform: scale(0.88); }
+.garden-grove-two { left: -5rem; top: 126rem; transform: scale(1.08); }
+.garden-grove-three { right: -3rem; top: 171rem; transform: scale(0.82); }
+.garden-grove-four { left: -4rem; top: 213rem; transform: scale(0.94); }
+
+/* Product previews retain their shape while the real image decodes. */
+.image-placeholder {
+  overflow: hidden;
+  background: color-mix(in oklab, var(--muted) 82%, var(--card));
+}
+
+.image-placeholder::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--foreground) 7%, transparent), transparent);
+  animation: image-placeholder-shimmer 1.5s ease-in-out infinite;
+}
+
+.image-placeholder-bar,
+.image-placeholder-panel {
+  position: absolute;
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--foreground) 9%, transparent);
+}
+
+.image-placeholder-bar-one { left: 5%; top: 9%; width: 23%; height: 5%; }
+.image-placeholder-bar-two { left: 5%; top: 18%; width: 38%; height: 3%; }
+.image-placeholder-panel { left: 5%; right: 5%; top: 29%; bottom: 8%; }
+
+@keyframes image-placeholder-shimmer {
+  to { transform: translateX(100%); }
+}
+
 .butterfly-flight {
   position: absolute;
   display: block;
@@ -852,6 +922,12 @@ body.calendar-dragging {
   .garden-plant-four { left: -4rem; top: 36rem; }
   .garden-plant-five { right: -7rem; top: 34rem; }
   .garden-plant-six { right: -3rem; top: 52rem; }
+  .garden-layer-groves { opacity: 0.16; }
+  .garden-grove { width: 11rem; height: 13rem; }
+  .garden-grove-one { right: -6rem; top: 95rem; }
+  .garden-grove-two { left: -7rem; top: 141rem; }
+  .garden-grove-three { right: -6rem; top: 190rem; }
+  .garden-grove-four { left: -7rem; top: 236rem; }
 }
 
 /* --------------------------------------------------------------------------
@@ -884,6 +960,10 @@ body.calendar-dragging {
   .butterfly-drift,
   .butterfly-wing,
   .garden-plant {
+    animation: none !important;
+  }
+
+  .image-placeholder::after {
     animation: none !important;
   }
 

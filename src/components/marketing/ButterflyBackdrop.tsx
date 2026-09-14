@@ -105,6 +105,26 @@ export function ButterflyBackdrop() {
         <span className="garden-plant garden-plant-five"><Plant variant="grass" /></span>
         <span className="garden-plant garden-plant-six"><Plant variant="fern" /></span>
       </div>
+      <div className="garden-layer garden-layer-groves">
+        <div className="garden-grove garden-grove-one">
+          <span className="garden-plant"><Plant variant="fern" /></span>
+          <span className="garden-plant"><Plant variant="grass" /></span>
+        </div>
+        <div className="garden-grove garden-grove-two">
+          <span className="garden-plant"><Plant variant="stem" /></span>
+          <span className="garden-plant"><Plant variant="fern" /></span>
+          <span className="garden-plant"><Plant variant="grass" /></span>
+        </div>
+        <div className="garden-grove garden-grove-three">
+          <span className="garden-plant"><Plant variant="grass" /></span>
+          <span className="garden-plant"><Plant variant="stem" /></span>
+        </div>
+        <div className="garden-grove garden-grove-four">
+          <span className="garden-plant"><Plant variant="fern" /></span>
+          <span className="garden-plant"><Plant variant="stem" /></span>
+          <span className="garden-plant"><Plant variant="grass" /></span>
+        </div>
+      </div>
       {BUTTERFLIES.map((name) => (
         <span key={name} className={`butterfly-flight butterfly-flight-${name}`}>
           <span className="butterfly-avoid">
