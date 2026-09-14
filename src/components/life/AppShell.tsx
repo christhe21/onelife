@@ -166,16 +166,18 @@ export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Pr
               )}
               {onSurvival && (
                 <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-9 w-9 lg:hidden"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 px-2.5"
                   onClick={onSurvival}
                   aria-label="Open Survival Mode"
                   title="Survival Mode"
                 >
                   <Shield className="h-[1.15rem] w-[1.15rem]" />
+                  <span className="hidden sm:inline">Survival</span>
                 </Button>
               )}
+
               <RankChip onClick={() => onTab("dashboard")} />
               <ExportImport />
               <Button

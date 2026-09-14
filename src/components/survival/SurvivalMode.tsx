@@ -142,51 +142,103 @@ function PageIntro({ eyebrow, title, description }: { eyebrow: string; title: st
   );
 }
 
+const ESSENTIAL_RULE_IDS = ["survival-mind-pause", "survival-body-basics", "survival-work-shutdown", "survival-body-daylight"];
+const SHUTDOWN_RULE_ID = "survival-work-shutdown";
+const EVENING_HOUR = 17;
+
+function essentialRules(rules: SurvivalRule[]) {
+  const picked = ESSENTIAL_RULE_IDS.map((ruleId) => rules.find((rule) => rule.id === ruleId)).filter(
+    (rule): rule is SurvivalRule => Boolean(rule),
+  );
+  if (picked.length >= 3) return picked.slice(0, 4).sort((a, b) => a.order - b.order);
+  const extras = rules.filter((rule) => !picked.includes(rule));
+  return [...picked, ...extras].slice(0, Math.max(3, picked.length)).sort((a, b) => a.order - b.order);
+}
+
+function priorityScore(rule: SurvivalRule, hour: number) {
+  const evening = hour >= EVENING_HOUR;
+  if (rule.id === SHUTDOWN_RULE_ID) return evening ? 0 : Number.POSITIVE_INFINITY;
+  if (evening) {
+    if (rule.id === "survival-mind-pause") return 1;
+    if (rule.id === "survival-body-basics") return 2;
+    if (rule.id === "survival-mind-connect") return 3;
+    return 4 + rule.order / 100;
+  }
+  if (hour < 6) return 1 + rule.order / 100;
+  if (rule.id === "survival-body-daylight") return 1;
+  if (rule.id === "survival-body-move") return 2;
+  if (rule.id === "survival-body-basics") return 3;
+  if (rule.id === "survival-work-focus") return hour >= 10 ? 4 : 6;
+  if (rule.id === "survival-mind-pause") return 5;
+  return 7 + rule.order / 100;
+}
+
+export function selectProtocol(rules: SurvivalRule[], completedIds: string[], reducedDay: boolean, hour: number) {
+  const enabled = rules.filter((rule) => rule.enabled).sort((a, b) => a.order - b.order);
+  const visible = reducedDay ? essentialRules(enabled) : enabled;
+  const completed = new Set(completedIds);
+  const remaining = visible.filter((rule) => !completed.has(rule.id));
+  const eligible = remaining.filter((rule) => Number.isFinite(priorityScore(rule, hour)));
+  const featured =
+    [...eligible].sort((a, b) => priorityScore(a, hour) - priorityScore(b, hour))[0] ?? remaining[0];
+  const done = visible.filter((rule) => completed.has(rule.id)).length;
+  return { visible, featured, done, completed };
+}
+
 function TodayProtocol({ onOpenCheckIn }: { onOpenCheckIn: () => void }) {
   const { survival, toggleSurvivalRule, updateSurvivalDay } = useAppData();
   const date = localDate();
   const day = survival.days.find((entry) => entry.date === date) ?? emptySurvivalDay(date);
-  const rules = survival.rules.filter((rule) => rule.enabled).sort((a, b) => a.order - b.order);
-  const completed = new Set(day.completedRuleIds);
-  const next = rules.find((rule) => !completed.has(rule.id));
-  const percent = rules.length ? Math.round((completed.size / rules.length) * 100) : 0;
+  const { visible, featured, done, completed } = selectProtocol(
+    survival.rules,
+    day.completedRuleIds,
+    day.reducedDay,
+    new Date().getHours(),
+  );
+  const percent = visible.length ? Math.round((done / visible.length) * 100) : 0;
 
   return (
     <div className="mx-auto max-w-3xl">
       <PageIntro eyebrow={new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })} title={day.reducedDay ? "Keep today gentle" : "Do the next useful thing"} description={day.reducedDay ? "A reduced day protects recovery. Basic care is enough." : "A grounded daily protocol for your mind, body, work, and practical readiness."} />
+      <GuidanceBanner />
 
-      <Card className="border-foreground/20">
+      <Card className="mt-6 border-foreground/20">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardDescription>Next action</CardDescription>
-              <CardTitle className="mt-1 text-xl">{next?.title ?? "Protocol complete"}</CardTitle>
+              <CardTitle className="mt-1 text-xl">{featured?.title ?? "Protocol complete"}</CardTitle>
             </div>
-            <span className="text-sm font-medium tabular-nums">{completed.size}/{rules.length}</span>
+            <span className="text-sm font-medium tabular-nums">{done}/{visible.length}</span>
           </div>
           <Progress value={percent} aria-label={`${percent}% of today's protocol complete`} />
         </CardHeader>
         <CardContent>
-          {next ? (
+          {featured ? (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{next.guidance}</p>
-                <p className="mt-2 text-xs font-medium text-foreground">{targetLabel(next)}</p>
+                <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{featured.guidance}</p>
+                <p className="mt-2 text-xs font-medium text-foreground">{targetLabel(featured)}</p>
               </div>
-              <Button onClick={() => toggleSurvivalRule(next.id, date)}><Check /> Mark done</Button>
+              <Button onClick={() => toggleSurvivalRule(featured.id, date)}><Check /> Mark done</Button>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">You covered today’s enabled rules. Rest is part of readiness.</p>
+            <p className="text-sm text-muted-foreground">You covered today’s items. Rest is part of readiness.</p>
           )}
         </CardContent>
       </Card>
 
-      <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/40 p-3">
-        <div>
-          <p className="text-sm font-medium">Reduced day</p>
-          <p className="text-xs text-muted-foreground">Use for illness, injury, severe fatigue, or overload.</p>
+      <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">Reduced day</p>
+            <p className="text-xs text-muted-foreground">Use for illness, injury, severe fatigue, or overload.</p>
+          </div>
+          <Switch checked={day.reducedDay} onCheckedChange={(checked) => updateSurvivalDay(date, { reducedDay: checked })} aria-label="Use reduced day" />
         </div>
-        <Switch checked={day.reducedDay} onCheckedChange={(checked) => updateSurvivalDay(date, { reducedDay: checked })} aria-label="Use reduced day" />
+        {day.reducedDay && (
+          <p className="mt-2 border-t border-border pt-2 text-xs text-muted-foreground">Reduced day: showing your essentials only.</p>
+        )}
       </div>
 
       <section className="mt-8" aria-labelledby="protocol-heading">
@@ -195,15 +247,15 @@ function TodayProtocol({ onOpenCheckIn }: { onOpenCheckIn: () => void }) {
           <Button variant="ghost" size="sm" onClick={onOpenCheckIn}>Daily check-in <ChevronRight /></Button>
         </div>
         <div className="divide-y divide-border border-y border-border">
-          {rules.map((rule) => {
-            const done = completed.has(rule.id);
+          {visible.map((rule) => {
+            const isDone = completed.has(rule.id);
             const Icon = AREAS[rule.area].icon;
             return (
-              <label key={rule.id} className="flex cursor-pointer items-start gap-3 py-4">
-                <Checkbox className="mt-0.5 h-5 w-5" checked={done} onCheckedChange={() => toggleSurvivalRule(rule.id, date)} aria-label={`${done ? "Undo" : "Complete"} ${rule.title}`} />
+              <label key={rule.id} className={cn("flex cursor-pointer items-start gap-3 py-4", rule.id === featured?.id && "bg-muted/30")}>
+                <Checkbox className="mt-0.5 h-5 w-5" checked={isDone} onCheckedChange={() => toggleSurvivalRule(rule.id, date)} aria-label={`${isDone ? "Undo" : "Complete"} ${rule.title}`} />
                 <Icon className="mt-0.5 h-5 w-5 text-muted-foreground" />
                 <span className="min-w-0 flex-1">
-                  <span className={cn("block text-sm font-medium", done && "text-muted-foreground line-through")}>{rule.title}</span>
+                  <span className={cn("block text-sm font-medium", isDone && "text-muted-foreground line-through")}>{rule.title}</span>
                   <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{rule.guidance}</span>
                 </span>
                 <span className="hidden text-xs text-muted-foreground sm:block">{targetLabel(rule)}</span>
@@ -217,6 +269,7 @@ function TodayProtocol({ onOpenCheckIn }: { onOpenCheckIn: () => void }) {
     </div>
   );
 }
+
 
 function targetLabel(rule: SurvivalRule) {
   if (rule.targetType === "check") return "Once today";
@@ -261,7 +314,9 @@ function DailyJournal() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageIntro eyebrow="Detailed journal" title="Notice what your system needs" description="This is observation, not a score. Entries save as you make them." />
-      <div className="mb-6 max-w-xs"><Label htmlFor="journal-date">Day</Label><Input id="journal-date" className="mt-2" type="date" max={localDate()} value={date} onChange={(event) => setDate(event.target.value)} /></div>
+      <GuidanceBanner />
+      <div className="mb-6 mt-6 max-w-xs"><Label htmlFor="journal-date">Day</Label><Input id="journal-date" className="mt-2" type="date" max={localDate()} value={date} onChange={(event) => setDate(event.target.value)} /></div>
+
 
       <Card>
         <CardHeader><CardTitle>Condition</CardTitle><CardDescription>Use rough estimates. You do not need perfect measurements.</CardDescription></CardHeader>
@@ -307,14 +362,24 @@ function CheckField({ label, checked, onChange }: { label: string; checked?: boo
   return <label className="flex cursor-pointer items-center gap-3 text-sm"><Checkbox checked={checked ?? false} onCheckedChange={(value) => onChange(value === true)} />{label}</label>;
 }
 
-function SafetyNote({ day }: { day: ReturnType<typeof emptySurvivalDay> }) {
-  const needsCare = (day.mood != null && day.mood <= 1) || (day.stress != null && day.stress >= 5) || (day.pain != null && day.pain >= 4);
+function GuidanceBanner() {
   return (
-    <div className={cn("mt-6 border-l-2 pl-4 text-sm leading-relaxed text-muted-foreground", needsCare && "border-destructive text-foreground")}>
-      {needsCare ? "Today’s check-in suggests reducing demands. Stop strenuous activity for concerning symptoms, and contact a trusted person or qualified health professional. If you may be in immediate danger, use your local emergency service." : "General guidance only. Adapt this protocol for your health, ability, responsibilities, and professional advice."}
+    <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+      General guidance only. Adapt this protocol for your health, ability, responsibilities, and professional advice.
     </div>
   );
 }
+
+function SafetyNote({ day }: { day: ReturnType<typeof emptySurvivalDay> }) {
+  const needsCare = (day.mood != null && day.mood <= 1) || (day.stress != null && day.stress >= 5) || (day.pain != null && day.pain >= 4);
+  if (!needsCare) return null;
+  return (
+    <div className="mt-6 border-l-2 border-destructive pl-4 text-sm leading-relaxed text-foreground">
+      Today’s check-in suggests reducing demands. Stop strenuous activity for concerning symptoms, and contact a trusted person or qualified health professional. If you may be in immediate danger, use your local emergency service.
+    </div>
+  );
+}
+
 
 function SurvivalHistory() {
   const { survival } = useAppData();
