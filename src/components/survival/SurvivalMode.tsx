@@ -314,7 +314,9 @@ function DailyJournal() {
   return (
     <div className="mx-auto max-w-3xl">
       <PageIntro eyebrow="Detailed journal" title="Notice what your system needs" description="This is observation, not a score. Entries save as you make them." />
-      <div className="mb-6 max-w-xs"><Label htmlFor="journal-date">Day</Label><Input id="journal-date" className="mt-2" type="date" max={localDate()} value={date} onChange={(event) => setDate(event.target.value)} /></div>
+      <GuidanceBanner />
+      <div className="mb-6 mt-6 max-w-xs"><Label htmlFor="journal-date">Day</Label><Input id="journal-date" className="mt-2" type="date" max={localDate()} value={date} onChange={(event) => setDate(event.target.value)} /></div>
+
 
       <Card>
         <CardHeader><CardTitle>Condition</CardTitle><CardDescription>Use rough estimates. You do not need perfect measurements.</CardDescription></CardHeader>
