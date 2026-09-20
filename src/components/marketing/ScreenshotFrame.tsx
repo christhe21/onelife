@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -6,10 +6,21 @@ interface Props {
   alt: string;
   caption?: string;
   className?: string;
+  priority?: boolean;
 }
 
-export function ScreenshotFrame({ src, alt, caption, className }: Props) {
+export function ScreenshotFrame({ src, alt, caption, className, priority }: Props) {
   const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img && img.complete && img.naturalWidth > 0) {
+      setLoaded(true);
+      return;
+    }
+    setLoaded(false);
+  }, [src]);
 
   return (
     <figure className={cn("group", className)}>
@@ -29,11 +40,14 @@ export function ScreenshotFrame({ src, alt, caption, className }: Props) {
             </div>
           )}
           <img
+            ref={imgRef}
             src={src}
             alt={alt}
-            loading="lazy"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : undefined}
             decoding="async"
             onLoad={() => setLoaded(true)}
+            onError={() => setLoaded(true)}
             className={cn(
               "absolute inset-0 block h-full w-full object-cover transition-opacity duration-500",
               loaded ? "opacity-100" : "opacity-0",

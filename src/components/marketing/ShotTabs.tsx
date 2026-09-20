@@ -56,6 +56,7 @@ export function ShotTabs({ shots, className }: { shots: Shot[]; className?: stri
           src={current.src}
           alt={current.alt}
           caption={current.caption}
+          priority={current.id === shots[0]?.id}
         />
       </div>
     </div>
