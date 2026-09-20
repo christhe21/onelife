@@ -734,6 +734,98 @@ body.calendar-dragging {
 .garden-grove-three { right: -3rem; top: 171rem; transform: scale(0.82); }
 .garden-grove-four { left: -4rem; top: 213rem; transform: scale(0.94); }
 
+/* Homepage Survival Mode band — a contained dusk moment, not a global theme switch. */
+.survival-band {
+  --background: oklch(0.29 0 0);
+  --foreground: oklch(0.94 0 0);
+  --card: oklch(0.25 0 0);
+  --card-foreground: oklch(0.94 0 0);
+  --primary: oklch(0.94 0 0);
+  --primary-foreground: oklch(0.16 0 0);
+  --muted: oklch(0.25 0 0);
+  --muted-foreground: oklch(0.73 0 0);
+  --accent: oklch(0.34 0 0);
+  --accent-foreground: oklch(0.96 0 0);
+  --border: oklch(0.39 0 0);
+  --input: oklch(0.39 0 0);
+  --ring: oklch(0.88 0 0);
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: background-color 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.survival-band.is-visible {
+  --background: oklch(0.16 0 0);
+}
+
+.survival-band-garden {
+  position: absolute;
+  inset: 0;
+  color: var(--foreground);
+  opacity: 0.08;
+  transform: translateY(1.5rem);
+  transition: opacity 900ms ease, transform 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.survival-band.is-visible .survival-band-garden {
+  opacity: 0.15;
+  transform: translateY(0);
+}
+
+.survival-stem {
+  position: absolute;
+  bottom: -1rem;
+  width: 14rem;
+  height: 18rem;
+  border-left: 1px solid currentColor;
+  border-radius: 50%;
+  transform-origin: bottom center;
+  animation: garden-sway 6s ease-in-out infinite alternate;
+}
+
+.survival-stem::before,
+.survival-stem::after {
+  content: "";
+  position: absolute;
+  width: 6rem;
+  height: 2.75rem;
+  border: 1px solid currentColor;
+  border-radius: 100% 0 100% 0;
+}
+
+.survival-stem::before { left: -5.5rem; top: 5rem; transform: rotate(18deg); }
+.survival-stem::after { left: -0.25rem; top: 9rem; transform: rotate(-20deg) scaleX(-1); }
+.survival-stem-left { left: 4%; transform: rotate(-8deg); }
+.survival-stem-right { right: 2%; transform: rotate(15deg) scaleX(-1); animation-delay: -2.5s; }
+
+.survival-butterfly {
+  position: absolute;
+  right: 18%;
+  top: 20%;
+  width: 2rem;
+  height: 1.25rem;
+  animation: survival-butterfly-drift 9s ease-in-out infinite alternate;
+}
+
+.survival-wing {
+  position: absolute;
+  top: 0;
+  width: 1rem;
+  height: 1.2rem;
+  border: 1px solid currentColor;
+  border-radius: 80% 20% 70% 30%;
+  transform-origin: bottom center;
+  animation: butterfly-flap 0.5s ease-in-out infinite alternate;
+}
+
+.survival-wing-left { left: 0; transform: rotate(-25deg); }
+.survival-wing-right { right: 0; transform: rotate(25deg) scaleX(-1); animation-delay: -0.08s; }
+
+@keyframes survival-butterfly-drift {
+  from { transform: translate3d(-2rem, 1rem, 0) rotate(-5deg); }
+  to { transform: translate3d(3rem, -2rem, 0) rotate(8deg); }
+}
+
 /* Product previews retain their shape while the real image decodes. */
 .image-placeholder {
   overflow: hidden;
@@ -960,6 +1052,26 @@ body.calendar-dragging {
   .butterfly-drift,
   .butterfly-wing,
   .garden-plant {
+    animation: none !important;
+  }
+
+  .survival-band,
+  .survival-band-garden {
+    transition: none !important;
+  }
+
+  .survival-band {
+    --background: oklch(0.16 0 0);
+  }
+
+  .survival-band-garden {
+    opacity: 0.15;
+    transform: none;
+  }
+
+  .survival-stem,
+  .survival-butterfly,
+  .survival-wing {
     animation: none !important;
   }
 

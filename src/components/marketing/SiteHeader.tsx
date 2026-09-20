@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Github, Menu, X } from "lucide-react";
+import { Github, Menu, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GITHUB_URL, APP_NAME } from "@/lib/site";
 import { BrandMark } from "@/components/marketing/BrandMark";
@@ -9,6 +9,7 @@ const LINKS = [
   { to: "/", label: "Home" },
   { to: "/how-it-works", label: "How it works" },
   { to: "/features", label: "Features" },
+  { to: "/survival", label: "Survival" },
   { to: "/about", label: "About" },
 ] as const;
 
@@ -23,7 +24,7 @@ export function SiteHeader() {
           <span className="font-display text-base font-semibold tracking-tight">{APP_NAME}</span>
         </Link>
 
-        <nav className="ml-6 hidden items-center gap-1 sm:flex">
+        <nav className="ml-6 hidden items-center gap-1 md:flex">
           {LINKS.map((l) => (
             <Link
               key={l.to}
@@ -32,6 +33,7 @@ export function SiteHeader() {
               activeProps={{ className: "bg-accent text-accent-foreground" }}
               className="rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
+              {l.to === "/survival" && <ShieldCheck className="mr-1.5 inline h-3.5 w-3.5" />}
               {l.label}
             </Link>
           ))}
@@ -57,7 +59,7 @@ export function SiteHeader() {
           <Button
             size="icon"
             variant="ghost"
-            className="sm:hidden"
+            className="md:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
           >
@@ -67,7 +69,7 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <nav className="border-t border-border bg-background px-5 py-2 sm:hidden">
+        <nav className="border-t border-border bg-background px-5 py-2 md:hidden">
           {LINKS.map((l) => (
             <Link
               key={l.to}
@@ -75,7 +77,10 @@ export function SiteHeader() {
               onClick={() => setOpen(false)}
               className="block rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
             >
-              {l.label}
+              <span className="flex items-center gap-2">
+                {l.to === "/survival" && <ShieldCheck className="h-4 w-4" />}
+                {l.label}
+              </span>
             </Link>
           ))}
         </nav>
