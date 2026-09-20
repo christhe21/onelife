@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Github } from "lucide-react";
+import { Github, ShieldCheck } from "lucide-react";
 import { GITHUB_URL, APP_NAME, APP_TAGLINE } from "@/lib/site";
 import { BrandMark } from "@/components/marketing/BrandMark";
 
@@ -38,6 +38,11 @@ export function SiteFooter() {
             <li>
               <Link to="/about" className="text-foreground hover:underline">
                 About
+              </Link>
+            </li>
+            <li>
+              <Link to="/survival" className="inline-flex items-center gap-2 text-foreground hover:underline">
+                <ShieldCheck className="h-4 w-4" /> Survival Mode
               </Link>
             </li>
             <li>

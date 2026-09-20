@@ -18,6 +18,7 @@ import { ShotTabs, type Shot } from "@/components/marketing/ShotTabs";
 import { FaqAccordion, type FaqItem } from "@/components/marketing/FaqAccordion";
 import { CTABand } from "@/components/marketing/CTABand";
 import { ButterflyBackdrop } from "@/components/marketing/ButterflyBackdrop";
+import { SurvivalFeatureBand } from "@/components/marketing/SurvivalFeatureBand";
 import { APP_DESCRIPTION, APP_NAME, GITHUB_URL, SITE_URL } from "@/lib/site";
 
 const TITLE = `${APP_NAME} — Plan your life like you plan your week`;
@@ -330,6 +331,8 @@ function MarketingHome() {
           </Reveal>
         </div>
       </section>
+
+      <SurvivalFeatureBand />
 
       {/* FAQ */}
       <section className="mx-auto w-full max-w-3xl px-5 py-16">
