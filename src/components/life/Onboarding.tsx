@@ -785,6 +785,14 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
               Continue <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
+          {step === "plugins" && (
+            <Button
+              onClick={() => setStep("start")}
+              className="h-11 min-w-[140px] rounded-full px-6 text-base sm:h-12 sm:min-w-[180px]"
+            >
+              Continue <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
           {step === "shape" && (
             <Button
               onClick={() => commit()}
