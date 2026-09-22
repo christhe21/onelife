@@ -14,6 +14,8 @@ import {
   Settings as SettingsIcon,
   Store,
   Shield,
+  Puzzle,
+  BookOpen,
 } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
@@ -44,7 +46,9 @@ export type TabId =
   | "bucket"
   | "skills"
   | "settings"
-  | "marketplace";
+  | "marketplace"
+  | "plugins"
+  | "books";
 
 const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Overview & progress" },
@@ -55,6 +59,8 @@ const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: strin
   { id: "tasks", label: "Tasks", icon: ListChecks, hint: "To-do list & focus schedule" },
   { id: "bucket", label: "Someday", icon: Sparkles, hint: "No-date ideas for one day" },
   { id: "skills", label: "Skills", icon: Palette, hint: "Customize skill areas & colors" },
+  { id: "books", label: "Books", icon: BookOpen, hint: "Your library & reading time" },
+  { id: "plugins", label: "Plugins", icon: Puzzle, hint: "Add life activities to track" },
   { id: "settings", label: "Settings", icon: SettingsIcon, hint: "Profile, appearance & reminders" },
   { id: "marketplace", label: "Marketplace", icon: Store, hint: "Community goals" },
 ];
