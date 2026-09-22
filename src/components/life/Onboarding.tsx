@@ -14,7 +14,10 @@ import {
   Compass,
   PenLine,
   Sparkles,
+  BookOpen,
+  Puzzle,
 } from "lucide-react";
+import { PLUGIN_CATALOG } from "@/lib/plugins-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -97,8 +100,17 @@ function GoalContextChip({ title }: { title: string }) {
 }
 
 export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
-  const { addSkill, addGoal, addSubGoal, addTask, updateSettings, skills, ensureDefaultMilestone } =
-    useAppData();
+  const {
+    addSkill,
+    addGoal,
+    addSubGoal,
+    addTask,
+    updateSettings,
+    skills,
+    ensureDefaultMilestone,
+    plugins,
+    setPluginEnabled,
+  } = useAppData();
   const [step, setStep] = useState<Step>("welcome");
   const [aiMode, setAiMode] = useState(false);
 
@@ -154,7 +166,7 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
     const chosen = useDefaults || areas.size === 0 ? new Set(DEFAULT_AREAS) : areas;
     setAreas(chosen);
     ensureSkills(chosen);
-    setStep("start");
+    setStep("plugins");
   };
 
   const applyTemplate = (t: GoalTemplate | null) => {
