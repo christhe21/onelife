@@ -33,12 +33,13 @@ import { DatePicker } from "@/components/ui/pickers/DatePicker";
 import { AiInterview } from "@/components/life/ai/AiInterview";
 
 
-const STEPS = ["welcome", "areas", "start", "shape", "done"] as const;
+const STEPS = ["welcome", "areas", "plugins", "start", "shape", "done"] as const;
 type Step = (typeof STEPS)[number];
 
 const STEP_LABELS: Record<Step, string> = {
   welcome: "Welcome",
   areas: "Life areas",
+  plugins: "Plugins",
   start: "Starting point",
   shape: "Your goal",
   done: "Done",
@@ -406,6 +407,59 @@ export function Onboarding({ onFinish }: { onFinish?: () => void } = {}) {
                 </button>
               </div>
             )}
+
+            {step === "plugins" && (
+              <div>
+                <h1 className="font-display text-2xl font-semibold tracking-tight">
+                  Anything else you keep track of?
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Plugins add their own section to the sidebar. You can switch these on or off later
+                  from Plugins.
+                </p>
+                <div className="mt-5 space-y-3">
+                  {PLUGIN_CATALOG.map((p) => {
+                    const enabled = plugins.enabled.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        disabled={!p.available}
+                        onClick={() => setPluginEnabled(p.id, !enabled)}
+                        className={cn(
+                          "flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors",
+                          enabled ? "border-primary bg-primary/5" : "bg-card hover:bg-accent",
+                          !p.available && "cursor-not-allowed opacity-50",
+                        )}
+                      >
+                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          {p.id === "books" ? (
+                            <BookOpen className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Puzzle className="h-4 w-4 text-primary" />
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2 text-sm font-semibold">
+                            {p.name}
+                            {!p.available && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                Coming soon
+                              </Badge>
+                            )}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {p.description}
+                          </span>
+                        </span>
+                        {enabled && <Check className="mt-1 h-4 w-4 shrink-0 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
 
             {step === "start" && aiMode && (
               <AiInterview
