@@ -17,6 +17,16 @@ import {
   type SurvivalState,
 } from "./survival-data";
 import {
+  createDefaultBooksState,
+  createDefaultPluginsState,
+  normalizeBooksState,
+  normalizePluginsState,
+  type Book,
+  type BooksState,
+  type PluginsState,
+  type ReadingSession,
+} from "./plugins-data";
+import {
   normalizeRule,
   nextOccurrence,
   resolveRule,
@@ -173,6 +183,10 @@ export interface AppData {
   awardedPoints?: Record<string, number>;
   /** Separate resilience protocol data; never participates in goals or points. */
   survival?: SurvivalState;
+  /** Optional add-on modules the user switched on. */
+  plugins?: PluginsState;
+  /** Books plugin library. */
+  books?: BooksState;
 }
 
 
@@ -597,6 +611,8 @@ function normalizeAppData(raw: any): AppData {
           ) as Record<string, number>)
         : {},
     survival: normalizeSurvivalState(raw.survival),
+    plugins: normalizePluginsState(raw.plugins),
+    books: normalizeBooksState(raw.books),
   };
 
 }
@@ -996,6 +1012,19 @@ interface Ctx extends AppData {
   updatePreparednessItem: (id: string, patch: Partial<PreparednessItem>) => void;
   updateSurvivalPreferences: (patch: Partial<SurvivalPreferences>) => void;
 
+  plugins: PluginsState;
+  isPluginEnabled: (id: string) => boolean;
+  setPluginEnabled: (id: string, enabled: boolean) => void;
+
+  books: BooksState;
+  addBook: (b: Partial<Book> & { title: string }) => string;
+  updateBook: (id: string, patch: Partial<Book>) => void;
+  deleteBook: (id: string) => void;
+  setBookmark: (id: string, page: number) => void;
+  addReadingSession: (bookId: string, session: Omit<ReadingSession, "id" | "done">) => void;
+  toggleReadingSession: (bookId: string, sessionId: string) => void;
+  deleteReadingSession: (bookId: string, sessionId: string) => void;
+
   addSkill: (s: Omit<Skill, "id"> & { id?: string }) => void;
   updateSkill: (id: string, patch: Partial<Omit<Skill, "id">>) => void;
   deleteSkill: (id: string) => void;
@@ -1063,6 +1092,8 @@ function loadInitial(): Stored {
     skills: DEFAULT_SKILLS,
     settings: {},
     survival: createDefaultSurvivalState(),
+    plugins: createDefaultPluginsState(),
+    books: createDefaultBooksState(),
   };
   if (typeof window === "undefined") return empty;
   try {
@@ -1155,6 +1186,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [survival, setSurvival] = useState<SurvivalState>(
     initial.current.survival ?? createDefaultSurvivalState(),
   );
+  const [plugins, setPlugins] = useState<PluginsState>(
+    initial.current.plugins ?? createDefaultPluginsState(),
+  );
+  const [books, setBooks] = useState<BooksState>(
+    initial.current.books ?? createDefaultBooksState(),
+  );
   const [points, setPoints] = useState<PointsState>({
     totalPoints: initial.current.totalPoints ?? 0,
     awardedPoints: initial.current.awardedPoints ?? {},
@@ -1208,6 +1245,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setSkills(remote.skills?.length ? remote.skills : DEFAULT_SKILLS);
         setSettings(remote.settings ?? {});
         setSurvival(norm.survival ?? createDefaultSurvivalState());
+        setPlugins(norm.plugins ?? createDefaultPluginsState());
+        setBooks(norm.books ?? createDefaultBooksState());
         setPoints({
           totalPoints: norm.totalPoints ?? 0,
           awardedPoints: norm.awardedPoints ?? {},
@@ -1227,6 +1266,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               totalPoints: points.totalPoints,
               awardedPoints: points.awardedPoints,
               survival,
+              plugins,
+              books,
             } as unknown as never,
           },
           { onConflict: "user_id" },
@@ -1263,6 +1304,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       totalPoints: points.totalPoints,
       awardedPoints: points.awardedPoints,
       survival,
+      plugins,
+      books,
     };
     const t = setTimeout(() => {
       if (userId) {
@@ -1282,7 +1325,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList, skills, settings, points, survival, userId, cloudReady]);
+  }, [goals, tasks, bucketList, skills, settings, points, survival, plugins, books, userId, cloudReady]);
 
 
   useEffect(() => {
@@ -1539,6 +1582,108 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     skills,
     settings,
     survival,
+    plugins,
+    books,
+    isPluginEnabled: (id) => plugins.enabled.includes(id),
+    setPluginEnabled: (id, enabled) =>
+      setPlugins((cur) => ({
+        ...cur,
+        enabled: enabled
+          ? Array.from(new Set([...cur.enabled, id]))
+          : cur.enabled.filter((x) => x !== id),
+      })),
+    addBook: (b) => {
+      const id = uid();
+      setBooks((cur) => ({
+        ...cur,
+        books: [
+          ...cur.books,
+          {
+            id,
+            title: b.title,
+            author: b.author,
+            isbn: b.isbn,
+            coverUrl: b.coverUrl,
+            pageCount: b.pageCount,
+            currentPage: b.currentPage ?? 0,
+            shelf: b.shelf ?? "queue",
+            priority: b.priority ?? "medium",
+            notes: b.notes,
+            addedAt: new Date().toISOString(),
+            startedAt: b.shelf === "reading" ? new Date().toISOString() : undefined,
+            finishedAt: undefined,
+            sessions: [],
+          },
+        ],
+      }));
+      return id;
+    },
+    updateBook: (id, patch) =>
+      setBooks((cur) => ({
+        ...cur,
+        books: cur.books.map((bk) => {
+          if (bk.id !== id) return bk;
+          const next = { ...bk, ...patch };
+          if (patch.shelf === "reading" && !next.startedAt) next.startedAt = new Date().toISOString();
+          if (patch.shelf === "finished") {
+            next.finishedAt = next.finishedAt ?? new Date().toISOString();
+            if (next.pageCount) next.currentPage = next.pageCount;
+          }
+          if (patch.shelf && patch.shelf !== "finished") next.finishedAt = undefined;
+          return next;
+        }),
+      })),
+    deleteBook: (id) =>
+      setBooks((cur) => ({ ...cur, books: cur.books.filter((bk) => bk.id !== id) })),
+    setBookmark: (id, page) =>
+      setBooks((cur) => ({
+        ...cur,
+        books: cur.books.map((bk) => {
+          if (bk.id !== id) return bk;
+          const max = bk.pageCount && bk.pageCount > 0 ? bk.pageCount : Number.MAX_SAFE_INTEGER;
+          const currentPage = Math.max(0, Math.min(max, Math.round(page)));
+          const finished = !!bk.pageCount && currentPage >= bk.pageCount;
+          return {
+            ...bk,
+            currentPage,
+            shelf: finished ? "finished" : currentPage > 0 ? "reading" : bk.shelf,
+            startedAt: bk.startedAt ?? (currentPage > 0 ? new Date().toISOString() : undefined),
+            finishedAt: finished ? (bk.finishedAt ?? new Date().toISOString()) : undefined,
+          };
+        }),
+      })),
+    addReadingSession: (bookId, session) =>
+      setBooks((cur) => ({
+        ...cur,
+        books: cur.books.map((bk) =>
+          bk.id === bookId
+            ? { ...bk, sessions: [...bk.sessions, { ...session, id: uid(), done: false }] }
+            : bk,
+        ),
+      })),
+    toggleReadingSession: (bookId, sessionId) =>
+      setBooks((cur) => ({
+        ...cur,
+        books: cur.books.map((bk) =>
+          bk.id === bookId
+            ? {
+                ...bk,
+                sessions: bk.sessions.map((s) =>
+                  s.id === sessionId ? { ...s, done: !s.done } : s,
+                ),
+              }
+            : bk,
+        ),
+      })),
+    deleteReadingSession: (bookId, sessionId) =>
+      setBooks((cur) => ({
+        ...cur,
+        books: cur.books.map((bk) =>
+          bk.id === bookId
+            ? { ...bk, sessions: bk.sessions.filter((s) => s.id !== sessionId) }
+            : bk,
+        ),
+      })),
     setBirthYear: (y) => setSettings((s) => ({ ...s, birthYear: y })),
     updateSettings: (patch) => setSettings((s) => ({ ...s, ...patch })),
     updateSurvivalDay: (date, patch) =>
@@ -1923,6 +2068,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         totalPoints: points.totalPoints,
         awardedPoints: points.awardedPoints,
         survival,
+        plugins,
+        books,
       };
 
       downloadJSON(payload, `onelife-${new Date().toISOString().slice(0, 10)}.json`);
@@ -1958,6 +2105,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         awardedPoints: data.awardedPoints ?? {},
       });
       setSurvival(data.survival ?? createDefaultSurvivalState());
+      setPlugins(data.plugins ?? createDefaultPluginsState());
+      setBooks(data.books ?? createDefaultBooksState());
 
     },
     appendJSON: async (file) => {
@@ -2029,6 +2178,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (norm.skills) setSkills(norm.skills);
       if (norm.settings) setSettings(norm.settings);
       setSurvival(norm.survival ?? createDefaultSurvivalState());
+      setPlugins(norm.plugins ?? createDefaultPluginsState());
+      setBooks(norm.books ?? createDefaultBooksState());
       setPoints({
         totalPoints: norm.totalPoints ?? 0,
         awardedPoints: norm.awardedPoints ?? {},
@@ -2041,6 +2192,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setSkills(DEFAULT_SKILLS);
       setSettings({});
       setSurvival(createDefaultSurvivalState());
+      setPlugins(createDefaultPluginsState());
+      setBooks(createDefaultBooksState());
       setPoints({ totalPoints: 0, awardedPoints: {} });
       try {
         window.localStorage.removeItem(STORAGE_KEY);

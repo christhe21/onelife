@@ -14,6 +14,8 @@ import {
   Settings as SettingsIcon,
   Store,
   Shield,
+  Puzzle,
+  BookOpen,
 } from "lucide-react";
 import { ExportImport } from "@/components/life/ExportImport";
 import { Button } from "@/components/ui/button";
@@ -44,7 +46,9 @@ export type TabId =
   | "bucket"
   | "skills"
   | "settings"
-  | "marketplace";
+  | "marketplace"
+  | "plugins"
+  | "books";
 
 const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: string }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, hint: "Overview & progress" },
@@ -55,6 +59,8 @@ const NAV: { id: TabId; label: string; icon: typeof LayoutDashboard; hint: strin
   { id: "tasks", label: "Tasks", icon: ListChecks, hint: "To-do list & focus schedule" },
   { id: "bucket", label: "Someday", icon: Sparkles, hint: "No-date ideas for one day" },
   { id: "skills", label: "Skills", icon: Palette, hint: "Customize skill areas & colors" },
+  { id: "books", label: "Books", icon: BookOpen, hint: "Your library & reading time" },
+  { id: "plugins", label: "Plugins", icon: Puzzle, hint: "Add life activities to track" },
   { id: "settings", label: "Settings", icon: SettingsIcon, hint: "Profile, appearance & reminders" },
   { id: "marketplace", label: "Marketplace", icon: Store, hint: "Community goals" },
 ];
@@ -91,6 +97,8 @@ function RankChip({ onClick }: { onClick: () => void }) {
 export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   useRankUp();
+  const { isPluginEnabled } = useAppData();
+  const nav = NAV.filter((n) => n.id !== "books" || isPluginEnabled("books"));
   const active = NAV.find((n) => n.id === tab)!;
 
   return (
@@ -105,7 +113,7 @@ export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Pr
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex xl:w-72">
           <Brand />
           <nav className="flex-1 space-y-1 px-3 py-4">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <NavButton
                 key={item.id}
                 item={item}
@@ -227,7 +235,7 @@ export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Pr
               </Button>
             </div>
             <nav className="flex-1 space-y-1 px-3 py-4">
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <NavButton
                   key={item.id}
                   item={item}
