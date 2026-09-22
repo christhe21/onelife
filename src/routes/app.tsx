@@ -18,6 +18,8 @@ import { Onboarding } from "@/components/life/Onboarding";
 import { CalendarView } from "@/components/life/CalendarView";
 import { SettingsView } from "@/components/life/Settings";
 import { GoalMarketplace } from "@/components/life/GoalMarketplace";
+import { PluginsView } from "@/components/life/plugins/PluginsView";
+import { BooksView } from "@/components/life/plugins/BooksView";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 import { APP_NAME } from "@/lib/site";
 
@@ -90,6 +92,8 @@ function Shell() {
       {tab === "tasks" && <Tasks />}
       {tab === "bucket" && <BucketList />}
       {tab === "skills" && <Skills />}
+      {tab === "plugins" && <PluginsView onOpenBooks={() => setTab("books")} />}
+      {tab === "books" && <BooksView />}
       {tab === "settings" && (
         <>
           <TourReplayCard />

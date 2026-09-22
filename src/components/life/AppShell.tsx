@@ -97,6 +97,8 @@ function RankChip({ onClick }: { onClick: () => void }) {
 export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   useRankUp();
+  const { isPluginEnabled } = useAppData();
+  const nav = NAV.filter((n) => n.id !== "books" || isPluginEnabled("books"));
   const active = NAV.find((n) => n.id === tab)!;
 
   return (
@@ -111,7 +113,7 @@ export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Pr
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground lg:flex xl:w-72">
           <Brand />
           <nav className="flex-1 space-y-1 px-3 py-4">
-            {NAV.map((item) => (
+            {nav.map((item) => (
               <NavButton
                 key={item.id}
                 item={item}
@@ -233,7 +235,7 @@ export function AppShell({ tab, onTab, children, stats, onHome, onSurvival }: Pr
               </Button>
             </div>
             <nav className="flex-1 space-y-1 px-3 py-4">
-              {NAV.map((item) => (
+              {nav.map((item) => (
                 <NavButton
                   key={item.id}
                   item={item}
