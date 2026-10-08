@@ -1585,6 +1585,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const autoScheduleGoalFn = (goalId: string): AutoScheduleResult => {
     const { tasks: next, result } = planGoal(goalId, tasks);
+    if (result.blockedReason) focusBlocked();
     if (result.blocks.length > 0) setTasks(next);
     return result;
   };
@@ -1605,6 +1606,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
   const autoScheduleSkillFn = (skillId: string): AutoScheduleResult => {
     const { tasks: next, result } = planSkill(skillId);
+    if (result.blockedReason) focusBlocked();
     if (result.blocks.length > 0) setTasks(next);
     return result;
   };
@@ -1914,8 +1916,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       );
     },
 
-    addTask: (t) =>
-      setTasks((cur) => [...cur, { ...t, id: uid(), done: false, subtasks: t.subtasks ?? [] }]),
+    addTask: (t) => {
+      const goal = goals.find((g) =>
+        g.id === t.goalId || g.subGoals.some((subGoal) => subGoal.id === t.subGoalId),
+      );
+      const allowed = goalIsFocused(goal, focus);
+      const hasSchedule = Boolean(t.startDate || t.endDate || t.subtasks?.some((s) => s.startDate || s.endDate));
+      const safeTask = allowed ? t : {
+        ...t,
+        startDate: undefined,
+        endDate: undefined,
+        subtasks: t.subtasks?.map((s) => ({ ...s, startDate: undefined, endDate: undefined })),
+      };
+      if (hasSchedule && !allowed) focusBlocked();
+      setTasks((cur) => [...cur, { ...safeTask, id: uid(), done: false, subtasks: safeTask.subtasks ?? [] }]);
+    },
     updateTask: (id, patch) => {
       if ((patch.startDate || patch.endDate) && !canScheduleTask(id)) {
         focusBlocked();
@@ -1990,14 +2005,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       toast.success(newStartHM ? `Moved to ${newYmd} ${newStartHM}` : `Moved to ${newYmd}`);
     },
 
-    addSubtask: (taskId, st) =>
+    addSubtask: (taskId, st) => {
+      const allowed = canScheduleTask(taskId);
+      const safeSubtask = allowed ? st : { ...st, startDate: undefined, endDate: undefined };
+      if ((st.startDate || st.endDate) && !allowed) focusBlocked();
       setTasks((cur) =>
         cur.map((t) =>
           t.id === taskId
-            ? { ...t, subtasks: [...t.subtasks, { ...st, id: uid(), done: false }] }
+            ? { ...t, subtasks: [...t.subtasks, { ...safeSubtask, id: uid(), done: false }] }
             : t,
         ),
-      ),
+      );
+    },
     updateSubtask: (taskId, subId, patch) => {
       if ((patch.startDate || patch.endDate) && !canScheduleTask(taskId)) {
         focusBlocked();

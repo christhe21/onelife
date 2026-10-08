@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const DEFAULT_SESSION_H = 2;
 
 export function Skills() {
-  const { skills, addSkill, updateSkill, deleteSkill, goals, tasks, autoScheduleSkill, focus } =
+  const { skills, addSkill, updateSkill, deleteSkill, goals, tasks, autoScheduleSkill } =
     useAppData();
   const [label, setLabel] = useState("");
   const [color, setColor] = useState("#10b981");
