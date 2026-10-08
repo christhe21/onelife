@@ -3,6 +3,7 @@ import { expect, test, describe, beforeEach } from "vitest";
 import { AppDataProvider, useAppData, autoScheduleTasks, type Task } from "../app-data";
 import { MarketplaceGoalTemplate } from "../marketplace";
 import React from "react";
+import { goalIsFocused, normalizeFocusState } from "../focus";
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <AppDataProvider>{children}</AppDataProvider>
@@ -10,6 +11,29 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 beforeEach(() => {
   if (typeof window !== "undefined") window.localStorage.clear();
+});
+
+describe("monthly focus pillars", () => {
+  test("keeps at most three unique skill or goal choices", () => {
+    const focus = normalizeFocusState({ current: { month: "2026-10", reviewed: true, pillars: [
+      { type: "skill", id: "learning" }, { type: "skill", id: "learning" },
+      { type: "goal", id: "g1" }, { type: "skill", id: "technical" }, { type: "goal", id: "g2" },
+    ] }, history: [] }, new Date("2026-10-08T12:00:00"));
+    expect(focus.current.pillars).toHaveLength(3);
+  });
+
+  test("health is always focused without taking a pillar", () => {
+    const focus = normalizeFocusState(undefined, new Date("2026-10-08T12:00:00"));
+    expect(goalIsFocused({ id: "health-goal", skill: "health" }, focus)).toBe(true);
+    expect(focus.current.pillars).toHaveLength(0);
+  });
+
+  test("carries choices into a new month for review", () => {
+    const focus = normalizeFocusState({ current: { month: "2026-09", reviewed: true, pillars: [{ type: "skill", id: "learning" }] }, history: [] }, new Date("2026-10-01T12:00:00"));
+    expect(focus.current.month).toBe("2026-10");
+    expect(focus.current.reviewed).toBe(false);
+    expect(focus.current.pillars[0]?.id).toBe("learning");
+  });
 });
 
 function buildTemplate(overrides: Partial<MarketplaceGoalTemplate> = {}): MarketplaceGoalTemplate {

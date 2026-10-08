@@ -134,7 +134,12 @@ export function Skills() {
                         variant="outline"
                         className="gap-1.5"
                         onClick={() => {
-                          const n = autoScheduleSkill(s.id).blocks.length;
+                          const result = autoScheduleSkill(s.id);
+                          if (result.blockedReason) {
+                            toast.warning("Choose this skill as one of your three focus pillars first.");
+                            return;
+                          }
+                          const n = result.blocks.length;
                           toast.success(
                             n > 0
                               ? `Scheduled ${n} block${n === 1 ? "" : "s"}`
