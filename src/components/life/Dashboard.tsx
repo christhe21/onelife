@@ -7,6 +7,7 @@ import { LifeTimeline } from "@/components/life/LifeTimeline";
 import { EmptyStateHero } from "@/components/life/EmptyStateHero";
 import { RankCard } from "@/components/life/RankCard";
 import { RankLadderDialog } from "@/components/life/RankLadderDialog";
+import { FocusPillars } from "@/components/life/FocusPillars";
 
 
 import { progressFor, useAppData } from "@/lib/app-data";
@@ -35,6 +36,7 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <FocusPillars />
       {isEmpty && <EmptyStateHero />}
 
       <div data-tour="dash-rank">

@@ -12,7 +12,7 @@ import { toast } from "sonner";
 const DEFAULT_SESSION_H = 2;
 
 export function Skills() {
-  const { skills, addSkill, updateSkill, deleteSkill, goals, tasks, autoScheduleSkill } =
+  const { skills, addSkill, updateSkill, deleteSkill, goals, tasks, autoScheduleSkill, focus } =
     useAppData();
   const [label, setLabel] = useState("");
   const [color, setColor] = useState("#10b981");
@@ -134,7 +134,12 @@ export function Skills() {
                         variant="outline"
                         className="gap-1.5"
                         onClick={() => {
-                          const n = autoScheduleSkill(s.id).blocks.length;
+                          const result = autoScheduleSkill(s.id);
+                          if (result.blockedReason) {
+                            toast.warning("Choose this skill as one of your three focus pillars first.");
+                            return;
+                          }
+                          const n = result.blocks.length;
                           toast.success(
                             n > 0
                               ? `Scheduled ${n} block${n === 1 ? "" : "s"}`

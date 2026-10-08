@@ -53,7 +53,7 @@ export function AddToScheduleDialog({
   defaultDate?: string;
   preselect?: { taskId: string; subId?: string };
 }) {
-  const { tasks, goals, skills, updateTask, updateSubtask } = useAppData();
+  const { tasks, goals, skills, updateTask, updateSubtask, canScheduleTask } = useAppData();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<FlatItem | null>(null);
   const now = new Date();
@@ -126,6 +126,7 @@ export function AddToScheduleDialog({
   };
 
   const blockedParent = selected?.kind === "task" && !!selected.hasSubtasks;
+  const blockedFocus = !!selected && !canScheduleTask(selected.taskId);
 
   // Apply preselect on open
   useEffect(() => {
@@ -275,6 +276,11 @@ export function AddToScheduleDialog({
               auto-completes when all sub-tasks are done.
             </p>
           )}
+          {blockedFocus && (
+            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              This is outside your three focus pillars. Replace a focus pillar before scheduling it.
+            </p>
+          )}
 
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <label className="min-w-0 space-y-1">
@@ -316,7 +322,7 @@ export function AddToScheduleDialog({
           </Button>
           <Button
             onClick={submit}
-            disabled={!selected || from >= till || blockedParent}
+            disabled={!selected || from >= till || blockedParent || blockedFocus}
             className="w-full sm:w-auto"
           >
             Schedule
