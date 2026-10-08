@@ -32,6 +32,13 @@ import {
   resolveRule,
   type RecurrenceRule,
 } from "./recurrence";
+import {
+  createDefaultFocusState,
+  goalIsFocused,
+  normalizeFocusState,
+  type FocusPillar,
+  type FocusState,
+} from "./focus";
 export type { RecurrenceRule } from "./recurrence";
 
 
@@ -187,6 +194,8 @@ export interface AppData {
   plugins?: PluginsState;
   /** Books plugin library. */
   books?: BooksState;
+  /** Three growth priorities for the current calendar month. Health is always active. */
+  focus?: FocusState;
 }
 
 
@@ -407,6 +416,7 @@ export interface AutoScheduleResult {
   blocks: ProposedBlock[];
   firstStart?: string;
   lastEnd?: string;
+  blockedReason?: string;
 }
 
 export function emptyAutoScheduleResult(): AutoScheduleResult {
@@ -613,6 +623,7 @@ function normalizeAppData(raw: any): AppData {
     survival: normalizeSurvivalState(raw.survival),
     plugins: normalizePluginsState(raw.plugins),
     books: normalizeBooksState(raw.books),
+    focus: normalizeFocusState(raw.focus),
   };
 
 }
@@ -1025,6 +1036,11 @@ interface Ctx extends AppData {
   toggleReadingSession: (bookId: string, sessionId: string) => void;
   deleteReadingSession: (bookId: string, sessionId: string) => void;
 
+  focus: FocusState;
+  setFocusPillars: (pillars: FocusPillar[]) => void;
+  confirmFocusMonth: () => void;
+  canScheduleTask: (taskId: string) => boolean;
+
   addSkill: (s: Omit<Skill, "id"> & { id?: string }) => void;
   updateSkill: (id: string, patch: Partial<Omit<Skill, "id">>) => void;
   deleteSkill: (id: string) => void;
@@ -1094,6 +1110,7 @@ function loadInitial(): Stored {
     survival: createDefaultSurvivalState(),
     plugins: createDefaultPluginsState(),
     books: createDefaultBooksState(),
+    focus: createDefaultFocusState(),
   };
   if (typeof window === "undefined") return empty;
   try {
@@ -1192,6 +1209,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [books, setBooks] = useState<BooksState>(
     initial.current.books ?? createDefaultBooksState(),
   );
+  const [focus, setFocus] = useState<FocusState>(
+    normalizeFocusState(initial.current.focus),
+  );
   const [points, setPoints] = useState<PointsState>({
     totalPoints: initial.current.totalPoints ?? 0,
     awardedPoints: initial.current.awardedPoints ?? {},
@@ -1247,6 +1267,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setSurvival(norm.survival ?? createDefaultSurvivalState());
         setPlugins(norm.plugins ?? createDefaultPluginsState());
         setBooks(norm.books ?? createDefaultBooksState());
+        setFocus(normalizeFocusState(norm.focus));
         setPoints({
           totalPoints: norm.totalPoints ?? 0,
           awardedPoints: norm.awardedPoints ?? {},
@@ -1268,6 +1289,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               survival,
               plugins,
               books,
+              focus,
             } as unknown as never,
           },
           { onConflict: "user_id" },
@@ -1306,6 +1328,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       survival,
       plugins,
       books,
+      focus,
     };
     const t = setTimeout(() => {
       if (userId) {
@@ -1325,7 +1348,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList, skills, settings, points, survival, plugins, books, userId, cloudReady]);
+  }, [goals, tasks, bucketList, skills, settings, points, survival, plugins, books, focus, userId, cloudReady]);
 
 
   useEffect(() => {
@@ -1394,6 +1417,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       ),
     );
   };
+
+  const goalForTask = (task: Task | undefined) => {
+    if (!task) return undefined;
+    return goals.find((goal) =>
+      goal.id === task.goalId || goal.subGoals.some((subGoal) => subGoal.id === task.subGoalId),
+    );
+  };
+  const canScheduleTask = (taskId: string) => goalIsFocused(goalForTask(tasks.find((t) => t.id === taskId)), focus);
+  const focusBlocked = () => toast.warning(
+    "This is outside your three focus pillars. Adding more active work has a high chance of burnout and stress. Replace a focus pillar first.",
+  );
 
   const importMarketplaceGoal = (
     template: MarketplaceGoalTemplate,
@@ -1481,7 +1515,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     });
 
     let scheduledTasks = newTasks;
-    if (opts?.autoSchedule) {
+    if (opts?.autoSchedule && goalIsFocused(newGoal, focus)) {
       const existing: Array<{ startDate?: string; endDate?: string }> = [];
       for (const t of tasks) {
         existing.push({ startDate: t.startDate, endDate: t.endDate });
@@ -1493,7 +1527,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setGoals((prev) => [...prev, newGoal]);
     setTasks((prev) => [...prev, ...scheduledTasks]);
     const vocab = getFrierenVocabulary(settings.themeColor === "frieren");
-    if (opts?.autoSchedule) {
+    if (opts?.autoSchedule && goalIsFocused(newGoal, focus)) {
       const blocks = scheduledTasks.reduce((n, t) => {
         const subBlocks = t.subtasks.filter((s) => s.startDate && s.endDate).length;
         const taskBlock = t.startDate && t.endDate ? 1 : 0;
@@ -1505,6 +1539,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           : `Goal imported · ${blocks} blocks scheduled`,
       );
     } else {
+      if (opts?.autoSchedule) focusBlocked();
       toast.success(
         vocab.isFrieren ? `A new quest inscribed in the grimoire.` : "Goal imported successfully!",
       );
@@ -1518,6 +1553,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   ): { tasks: Task[]; result: AutoScheduleResult } => {
     const goal = goals.find((g) => g.id === goalId);
     if (!goal) return { tasks: baseTasks, result: emptyAutoScheduleResult() };
+    if (!goalIsFocused(goal, focus)) {
+      return { tasks: baseTasks, result: { blocks: [], blockedReason: "outside-focus" } };
+    }
     const subGoalIds = new Set(goal.subGoals.map((sg) => sg.id));
     const goalTasks = baseTasks.filter((t) => t.subGoalId && subGoalIds.has(t.subGoalId));
     const otherBlocks: Array<{ startDate?: string; endDate?: string }> = [];
@@ -1584,6 +1622,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     survival,
     plugins,
     books,
+    focus,
+    setFocusPillars: (pillars) =>
+      setFocus((current) => normalizeFocusState({
+        ...current,
+        current: { ...current.current, pillars, reviewed: true },
+      })),
+    confirmFocusMonth: () =>
+      setFocus((current) => ({ ...current, current: { ...current.current, reviewed: true } })),
+    canScheduleTask,
     isPluginEnabled: (id) => plugins.enabled.includes(id),
     setPluginEnabled: (id, enabled) =>
       setPlugins((cur) => ({
@@ -1869,8 +1916,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
 
     addTask: (t) =>
       setTasks((cur) => [...cur, { ...t, id: uid(), done: false, subtasks: t.subtasks ?? [] }]),
-    updateTask: (id, patch) =>
-      setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t))),
+    updateTask: (id, patch) => {
+      if ((patch.startDate || patch.endDate) && !canScheduleTask(id)) {
+        focusBlocked();
+        return;
+      }
+      setTasks((cur) => cur.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    },
     toggleTask: (id) => {
       let promoted: string | undefined;
       let goalDelta = 0;
@@ -1920,6 +1972,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     },
     deleteTask: (id) => setTasks((cur) => cur.filter((t) => t.id !== id)),
     rescheduleTask: (id, newYmd, newStartHM) => {
+      if (!canScheduleTask(id)) {
+        focusBlocked();
+        return;
+      }
       setTasks((cur) =>
         cur.map((t) =>
           t.id === id
@@ -1942,14 +1998,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             : t,
         ),
       ),
-    updateSubtask: (taskId, subId, patch) =>
+    updateSubtask: (taskId, subId, patch) => {
+      if ((patch.startDate || patch.endDate) && !canScheduleTask(taskId)) {
+        focusBlocked();
+        return;
+      }
       setTasks((cur) =>
         cur.map((t) =>
           t.id === taskId
             ? { ...t, subtasks: t.subtasks.map((s) => (s.id === subId ? { ...s, ...patch } : s)) }
             : t,
         ),
-      ),
+      );
+    },
     toggleSubtask: (taskId, subId) => {
       let promoted: string | undefined;
       let goalDelta = 0;
@@ -2026,6 +2087,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         ),
       ),
     rescheduleSubtask: (taskId, subId, newYmd, newStartHM) => {
+      if (!canScheduleTask(taskId)) {
+        focusBlocked();
+        return;
+      }
       setTasks((cur) =>
         cur.map((t) =>
           t.id === taskId
@@ -2070,6 +2135,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         survival,
         plugins,
         books,
+        focus,
       };
 
       downloadJSON(payload, `onelife-${new Date().toISOString().slice(0, 10)}.json`);
@@ -2107,6 +2173,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setSurvival(data.survival ?? createDefaultSurvivalState());
       setPlugins(data.plugins ?? createDefaultPluginsState());
       setBooks(data.books ?? createDefaultBooksState());
+      setFocus(normalizeFocusState(data.focus));
 
     },
     appendJSON: async (file) => {
@@ -2180,6 +2247,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setSurvival(norm.survival ?? createDefaultSurvivalState());
       setPlugins(norm.plugins ?? createDefaultPluginsState());
       setBooks(norm.books ?? createDefaultBooksState());
+      setFocus(normalizeFocusState(norm.focus));
       setPoints({
         totalPoints: norm.totalPoints ?? 0,
         awardedPoints: norm.awardedPoints ?? {},
@@ -2194,6 +2262,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setSurvival(createDefaultSurvivalState());
       setPlugins(createDefaultPluginsState());
       setBooks(createDefaultBooksState());
+      setFocus(createDefaultFocusState());
       setPoints({ totalPoints: 0, awardedPoints: {} });
       try {
         window.localStorage.removeItem(STORAGE_KEY);
