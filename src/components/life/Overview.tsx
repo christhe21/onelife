@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { lazy, Suspense, useRef, useState } from "react";
+import { ClientOnly } from "@tanstack/react-router";
 import { ChevronRight, Pencil, Network, ListTree } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAppData } from "@/lib/app-data";
-import { MindMapCanvas } from "@/components/life/MindMapCanvas";
+const LifeEditor = lazy(() => import("@/components/life/LifeEditor"));
 
 /**
  * Mindmap-style overview:
@@ -133,7 +134,7 @@ export function Overview({
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="font-display text-base">
-              {view === "tree" ? "Mindmap" : "Map view"}
+              {view === "tree" ? "Mindmap" : "Life editor"}
             </CardTitle>
             <div className="flex items-center rounded-md border bg-background p-0.5">
               <Button
@@ -161,7 +162,7 @@ export function Overview({
           <p className="text-xs text-muted-foreground">
             {view === "tree"
               ? "Tap a node to expand. Long-press (or double-click) to rename."
-              : "Drag to pan, scroll to zoom. Goals can link tasks directly or through sub-goals."}
+              : "Drag cards, connect handles to re-link items, double-click to rename. Add goals, tasks or shapes from the toolbar."}
           </p>
         </CardHeader>
         <CardContent>
@@ -179,7 +180,11 @@ export function Overview({
           </div>
 
           {view === "map" ? (
-            <MindMapCanvas />
+            <ClientOnly fallback={<div className="h-[70vh] min-h-[480px] animate-pulse rounded-lg border bg-muted/40" />}>
+              <Suspense fallback={<div className="h-[70vh] min-h-[480px] animate-pulse rounded-lg border bg-muted/40" />}>
+                <LifeEditor />
+              </Suspense>
+            </ClientOnly>
           ) : (
             <div className="space-y-1">
               {skills.map((skill) => (
