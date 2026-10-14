@@ -56,7 +56,7 @@ export const TOUR_STEPS: TourStep[] = [
     tab: "overview",
     target: "overview-map",
     title: "Overview",
-    body: "Your whole plan as a tree or a mindmap: life area → goal → milestone → task. Drag to pan, scroll to zoom.",
+    body: "Your whole plan as a tree or a mindmap: life area → goal → milestone → task. Switch to Map to edit everything on a drag-and-connect board.",
     overviewView: "map",
   },
   {

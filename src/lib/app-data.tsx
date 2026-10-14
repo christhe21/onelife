@@ -39,6 +39,7 @@ import {
   type FocusPillar,
   type FocusState,
 } from "./focus";
+import { createDefaultEditorState, normalizeEditorState, type EditorState } from "./editor-data";
 export type { RecurrenceRule } from "./recurrence";
 
 
@@ -196,6 +197,8 @@ export interface AppData {
   books?: BooksState;
   /** Three growth priorities for the current calendar month. Health is always active. */
   focus?: FocusState;
+  /** Life Editor board layout and free drawings. */
+  editor?: EditorState;
 }
 
 
@@ -624,6 +627,7 @@ function normalizeAppData(raw: any): AppData {
     plugins: normalizePluginsState(raw.plugins),
     books: normalizeBooksState(raw.books),
     focus: normalizeFocusState(raw.focus),
+    editor: normalizeEditorState(raw.editor),
   };
 
 }
@@ -1023,6 +1027,9 @@ interface Ctx extends AppData {
   updatePreparednessItem: (id: string, patch: Partial<PreparednessItem>) => void;
   updateSurvivalPreferences: (patch: Partial<SurvivalPreferences>) => void;
 
+  editor: EditorState;
+  setEditor: (updater: (cur: EditorState) => EditorState) => void;
+  moveSubGoal: (subId: string, toGoalId: string) => void;
   plugins: PluginsState;
   isPluginEnabled: (id: string) => boolean;
   setPluginEnabled: (id: string, enabled: boolean) => void;
@@ -1111,6 +1118,7 @@ function loadInitial(): Stored {
     plugins: createDefaultPluginsState(),
     books: createDefaultBooksState(),
     focus: createDefaultFocusState(),
+    editor: createDefaultEditorState(),
   };
   if (typeof window === "undefined") return empty;
   try {
@@ -1212,6 +1220,9 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [focus, setFocus] = useState<FocusState>(
     normalizeFocusState(initial.current.focus),
   );
+  const [editor, setEditorState] = useState<EditorState>(
+    normalizeEditorState(initial.current.editor),
+  );
   const [points, setPoints] = useState<PointsState>({
     totalPoints: initial.current.totalPoints ?? 0,
     awardedPoints: initial.current.awardedPoints ?? {},
@@ -1268,6 +1279,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         setPlugins(norm.plugins ?? createDefaultPluginsState());
         setBooks(norm.books ?? createDefaultBooksState());
         setFocus(normalizeFocusState(norm.focus));
+        setEditorState(normalizeEditorState(norm.editor));
         setPoints({
           totalPoints: norm.totalPoints ?? 0,
           awardedPoints: norm.awardedPoints ?? {},
@@ -1290,6 +1302,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
               plugins,
               books,
               focus,
+              editor,
             } as unknown as never,
           },
           { onConflict: "user_id" },
@@ -1329,6 +1342,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       plugins,
       books,
       focus,
+      editor,
     };
     const t = setTimeout(() => {
       if (userId) {
@@ -1348,7 +1362,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       }
     }, 400);
     return () => clearTimeout(t);
-  }, [goals, tasks, bucketList, skills, settings, points, survival, plugins, books, focus, userId, cloudReady]);
+  }, [goals, tasks, bucketList, skills, settings, points, survival, plugins, books, focus, editor, userId, cloudReady]);
 
 
   useEffect(() => {
@@ -1625,6 +1639,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     plugins,
     books,
     focus,
+    editor,
+    setEditor: (updater) => setEditorState((cur) => updater(cur)),
+    moveSubGoal: (subId, toGoalId) =>
+      setGoals((cur) => {
+        const sg = cur.flatMap((g) => g.subGoals).find((x) => x.id === subId);
+        if (!sg) return cur;
+        return cur.map((g) =>
+          g.id === toGoalId
+            ? { ...g, subGoals: [...g.subGoals.filter((x) => x.id !== subId), sg] }
+            : { ...g, subGoals: g.subGoals.filter((x) => x.id !== subId) },
+        );
+      }),
     setFocusPillars: (pillars) =>
       setFocus((current) => normalizeFocusState({
         ...current,
