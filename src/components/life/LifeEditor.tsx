@@ -445,6 +445,7 @@ function Editor() {
         snapToGrid
         snapGrid={[10, 10]}
         fitView
+        fitViewOptions={{ padding: 0.15, minZoom: 0.55 }}
         minZoom={0.1}
         deleteKeyCode={["Delete", "Backspace"]}
         proOptions={{ hideAttribution: true }}
