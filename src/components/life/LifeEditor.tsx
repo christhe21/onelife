@@ -33,14 +33,14 @@ import type { EditorState, ShapeKind } from "@/lib/editor-data";
 import { cn } from "@/lib/utils";
 
 type Kind = "skill" | "goal" | "ms" | "task" | "shape";
-interface CardData extends Record<string, unknown> {
+interface BaseData {
   kind: Kind;
   label: string;
   color: string;
   done?: boolean;
   shape?: ShapeKind;
-  onRename: (v: string) => void;
 }
+type CardData = BaseData & { onRename: (v: string) => void } & Record<string, unknown>;
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 const kindOf = (id: string) => id.split(":")[0] as Kind;
@@ -126,7 +126,7 @@ function Editor() {
 
   // ---------- Build graph from real data ----------
   const graph = useMemo(() => {
-    type Raw = { id: string; parent?: string; data: Omit<CardData, "onRename"> };
+    type Raw = { id: string; parent?: string; data: BaseData };
     const raws: Raw[] = [];
     for (const s of skills) raws.push({ id: `skill:${s.id}`, data: { kind: "skill", label: s.label, color: s.color } });
     for (const g of goals) {
@@ -262,7 +262,7 @@ function Editor() {
         return;
       }
       const pick = (k: Kind) => (a === k ? rawId(c.source!) : b === k ? rawId(c.target!) : undefined);
-      const pair = new Set([a, b]);
+      const pair = new Set<Kind>([a, b]);
       const has = (x: Kind, y: Kind) => pair.has(x) && pair.has(y) && pair.size === 2;
       if (has("skill", "goal")) app.updateGoal(pick("goal")!, { skill: pick("skill")! });
       else if (has("goal", "ms")) app.moveSubGoal(pick("ms")!, pick("goal")!);
