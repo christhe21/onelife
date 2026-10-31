@@ -230,7 +230,7 @@ async function answerQuestion(
           name,
           tool({
             description: def.description,
-            inputSchema: (def.input as z.ZodObject).strict() as unknown as z.ZodType<Record<string, unknown>>,
+            inputSchema: (def.input as z.AnyZodObject).strict() as unknown as z.ZodType<Record<string, unknown>>,
             execute: async (args: Record<string, unknown>) => {
               signal.throwIfAborted();
               onAction({ action: name, args });
