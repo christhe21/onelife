@@ -9,10 +9,18 @@ export type LiveConfig = {
   liveModel: string;
   backendModel: string;
   openingInstructions?: string;
+  appContext?: string;
+  accessToken?: string;
 };
 
 // Fill from co-loaded knowledge: the gateway URL, the Live model and the resolved chat model.
-const liveSettings = { baseURL: "", liveModel: "", backendModel: "" };
+const liveSettings = {
+  baseURL: "https://ai.gateway.lovable.dev/v1",
+  liveModel: "openai/gpt-live-1",
+  backendModel: "openai/gpt-6-astra",
+  openingInstructions:
+    "Greet the user briefly in English as the OneLife assistant, then ask what they would like to add or change in their plan today.",
+};
 
 export type LiveSocket = {
   readonly readyState: number;
@@ -111,34 +119,78 @@ export function handleLiveRequest(request: Request): Response {
   return new Response(null, response);
 }
 
-const conversationInstructions = `You are Mira, a calm learning companion.
-Speak naturally in brief replies. Ask a focused question when details are unclear.
-Backchannel policy: Use moderate listening sounds without taking over.
+const conversationInstructions = `You are the OneLife voice assistant, a calm, friendly helper inside a personal life-planning app.
+Speak naturally in brief replies. Ask one focused question when details are unclear.
+Never pressure the user; the app limits active work to three monthly focus pillars to avoid stress.
+Backchannel policy: Use few listening sounds.
 Interruption policy: Stop your answer and listen when the user interrupts.
 Delegation policy:
-Backend tools: Reason through questions and plan study sessions across days.
-Delegate to the backend when: The user wants a study schedule or careful reasoning,
-or a correction changes a question already being worked on.
-Do not delegate to the backend when: Greeting, clarifying a question, or repeating
-a still-current answer. Wait for the backend result before presenting its answer.`;
+Backend tools: Read the user's plan and create or change goals, milestones, tasks, skills, books, reading sessions, and send suggestions to the app's creator.
+Delegate to the backend when: The user wants to add, change, complete or look up anything in their plan, or share a suggestion or feedback.
+Do not delegate to the backend when: Greeting, clarifying, or small talk.
+Before anything is deleted, ask the user to confirm. Wait for the backend result before saying what was done.`;
 
-const studyScheduleInput = z
-  .object({
-    total_minutes: z.number().int().min(1).max(10_080),
-    days: z.number().int().min(1).max(30),
-  })
-  .strict();
+export type AssistantAction = { action: string; args: Record<string, unknown> };
 
-function planStudySchedule(args: z.infer<typeof studyScheduleInput>) {
-  const daily = Math.floor(args.total_minutes / args.days);
-  return {
-    total_minutes: args.total_minutes,
-    days: args.days,
-    sessions: Array.from({ length: args.days }, (_, index) => ({
-      day: index + 1,
-      minutes: daily + (index < args.total_minutes % args.days ? 1 : 0),
-    })),
-  };
+const nullableString = z.string().nullable();
+const actionTools = {
+  create_goal: {
+    description: "Create a goal. skill_id must be an existing skill id from the plan. Dates are YYYY-MM-DD.",
+    input: z.object({ title: z.string(), skill_id: z.string(), target_date: nullableString, description: nullableString }).strict(),
+  },
+  create_milestone: {
+    description: "Create a milestone under an existing goal.",
+    input: z.object({ goal_id: z.string(), title: z.string(), target_date: nullableString }).strict(),
+  },
+  create_task: {
+    description: "Create a task under an existing goal (and optionally a milestone). Priority is low, medium or high.",
+    input: z.object({ title: z.string(), goal_id: z.string(), milestone_id: nullableString, due_date: nullableString, priority: nullableString }).strict(),
+  },
+  create_skill: {
+    description: "Create a new skill/area of life.",
+    input: z.object({ label: z.string() }).strict(),
+  },
+  complete_task: {
+    description: "Mark an existing task as done (or not done).",
+    input: z.object({ task_id: z.string(), done: z.boolean() }).strict(),
+  },
+  rename_item: {
+    description: "Rename a goal, task or skill. kind is goal, task or skill.",
+    input: z.object({ kind: z.string(), id: z.string(), title: z.string() }).strict(),
+  },
+  delete_item: {
+    description: "Delete a goal, task or book. Only call after the user explicitly confirmed. kind is goal, task or book.",
+    input: z.object({ kind: z.string(), id: z.string() }).strict(),
+  },
+  add_book: {
+    description: "Add a book to the reading list. shelf is queue, reading or finished.",
+    input: z.object({ title: z.string(), author: nullableString, page_count: z.number().nullable(), shelf: nullableString }).strict(),
+  },
+  log_reading: {
+    description: "Log a reading session for an existing book; optionally update the bookmark page.",
+    input: z.object({ book_id: z.string(), minutes: z.number(), date: nullableString, current_page: z.number().nullable() }).strict(),
+  },
+} as const;
+
+async function verifyUser(token: string | undefined) {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!token || !url || !key) return null;
+  const response = await fetch(`${url}/auth/v1/user`, { headers: { apikey: key, Authorization: `Bearer ${token}` } });
+  if (!response.ok) return null;
+  const user = (await response.json()) as { id?: string };
+  return user.id ?? null;
+}
+
+async function saveSuggestion(token: string, userId: string, text: string) {
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  const response = await fetch(`${url}/rest/v1/suggestions`, {
+    method: "POST",
+    headers: { apikey: key ?? "", Authorization: `Bearer ${token}`, "Content-Type": "application/json", Prefer: "return=minimal" },
+    body: JSON.stringify({ user_id: userId, text: text.slice(0, 4000), source: "voice" }),
+  });
+  return response.ok;
 }
 
 function isListeningSound(text: string) {
@@ -152,7 +204,7 @@ async function answerQuestion(
   correlation: { runID: string; sessionID: string | undefined; delegationID: string },
   signal: AbortSignal,
   consumeInput: () => void,
-  onPlan: (plan: ReturnType<typeof planStudySchedule>) => void,
+  onAction: (action: AssistantAction) => void,
 ) {
   signal.throwIfAborted();
   const provider = createOpenAI({
@@ -200,23 +252,39 @@ async function answerQuestion(
       },
     },
     system:
-      "Help a spoken learning companion answer the latest user question. " +
+      "Help a spoken assistant for the OneLife planning app act on the user's latest request. " +
       "Transcripts may be incomplete or corrected. Use the latest correction. " +
       "Continue from completed tool results; do not repeat completed actions. " +
-      "Return verified facts and useful next steps in at most 150 words. " +
-      "To display a study schedule for the current request, call plan_study_schedule with its total minutes and days. " +
-      "Ask for missing details instead of guessing. The tool only calculates a draft plan; " +
-      "it does not save calendar events. You have no other tools.",
+      "Use ids from the plan below; pass null for unknown optional fields. If a goal or skill is ambiguous, ask instead of guessing. " +
+      "Tool calls are applied in the user's app, which may refuse scheduling outside the three monthly focus pillars; say the app will confirm on screen. " +
+      "Never delete without explicit confirmation in the transcript. " +
+      "Reply with a short spoken summary in at most 80 words.\n\nToday: " + new Date().toISOString().slice(0, 10) +
+      "\n\nUser plan:\n" + (config.appContext || "(empty)"),
     messages,
     tools: {
-      plan_study_schedule: tool({
-        description: "Distribute a total study time evenly across days and return a draft schedule.",
-        inputSchema: studyScheduleInput,
-        execute: async (args) => {
+      ...Object.fromEntries(
+        Object.entries(actionTools).map(([name, def]) => [
+          name,
+          tool({
+            description: def.description,
+            inputSchema: def.input as z.ZodType<Record<string, unknown>>,
+            execute: async (args: Record<string, unknown>) => {
+              signal.throwIfAborted();
+              onAction({ action: name, args });
+              return { status: "sent_to_app" };
+            },
+          }),
+        ]),
+      ),
+      send_suggestion: tool({
+        description: "Send the user's suggestion or feedback about the app to the app's creator.",
+        inputSchema: z.object({ text: z.string() }).strict(),
+        execute: async ({ text }) => {
           signal.throwIfAborted();
-          const plan = planStudySchedule(args);
-          onPlan(plan);
-          return plan;
+          const userId = await verifyUser(config.accessToken);
+          const ok = userId ? await saveSuggestion(config.accessToken!, userId, text) : false;
+          if (ok) onAction({ action: "suggestion_saved", args: { text } });
+          return { status: ok ? "saved" : "failed" };
         },
       }),
     },
@@ -285,7 +353,6 @@ export function bindLiveConnection(
   let task: AbortController | undefined;
   const pendingDelegations: Array<{
     event: ProviderEvent;
-    plan?: ReturnType<typeof planStudySchedule>;
   }> = [];
   let completedDelegation: (typeof pendingDelegations)[number] | undefined;
   const backendMessages: ModelMessage[] = [];
@@ -406,7 +473,7 @@ export function bindLiveConnection(
     restartTimer = setTimeout(() => void runDelegation(), 300);
   }
 
-  function deliverResult(delegationID: string, answer: string, plan?: ReturnType<typeof planStudySchedule>) {
+  function deliverResult(delegationID: string, answer: string) {
     if (closing) return;
     if (gateway?.readyState !== 1) return stop();
     try {
@@ -420,7 +487,6 @@ export function bindLiveConnection(
           }),
         );
       }
-      if (plan) emit({ type: "app.study_schedule.plan", delegation_id: delegationID, plan });
       completedDelegation = pendingDelegations.shift();
     } catch {
       stop();
@@ -444,18 +510,17 @@ export function bindLiveConnection(
         controller.signal,
         () => {
           const updates = transcripts.slice(transcriptCursor);
-          if (updates.some(({ role, listeningSound }) => role === "user" && !listeningSound)) delete pending.plan;
           backendMessages.push(...updates.map(({ role, text }) => ({ role, content: text })));
           transcriptCursor = transcripts.length;
           taskRevision = revision;
         },
-        (plan) => {
-          pending.plan = plan;
+        (action) => {
+          emit({ type: "app.assistant.action", delegation_id: id, ...action });
         },
       );
       if (closing || controller.signal.aborted) return;
       if (taskRevision !== revision) return;
-      deliverResult(id, answer.trim(), pending.plan);
+      deliverResult(id, answer.trim());
     } catch {
       if (closing || controller.signal.aborted) return;
       backendMessages.push({
@@ -566,6 +631,8 @@ export function bindLiveConnection(
   async function startSession(sdp: string) {
     if (closing || browser.readyState !== 1) return;
     clearTimeout(startTimer);
+    if (!(await verifyUser(config.accessToken))) throw new Error("Please sign in to use the voice assistant");
+    if (closing || browser.readyState !== 1) return;
     startupTimer = setTimeout(() => {
       emit({ type: "app.error", error: { message: "Voice startup timed out" } });
       stop();
@@ -606,7 +673,7 @@ export function bindLiveConnection(
 
   browser.onMessage((data) => {
     try {
-      if (typeof data !== "string" || data.length > 64 * 1024) throw new Error("Invalid client message");
+      if (typeof data !== "string" || data.length > 96 * 1024) throw new Error("Invalid client message");
       const event = JSON.parse(data);
       if (event.type === "session.close") return stop();
       if (closing) return;
@@ -615,6 +682,8 @@ export function bindLiveConnection(
           throw new Error("Voice startup message required");
         }
         starting = true;
+        config.accessToken = typeof event.token === "string" ? event.token : undefined;
+        config.appContext = typeof event.context === "string" ? event.context.slice(0, 40_000) : "";
         execution.waitUntil(
           startSession(event.sdp).catch((error) => {
             if (!closing)
