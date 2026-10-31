@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAppData } from "@/lib/app-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useLiveVoice, type LiveEvent } from "@/hooks/use-live-voice";
-import { applyAssistantAction, buildAssistantContext, type AssistantApi } from "@/lib/assistant-actions";
+import { ASSISTANT_TOOL_LIST, applyAssistantAction, buildAssistantContext, type AssistantApi } from "@/lib/assistant-actions";
 
 const KEY = "onelife:assistant-visible";
 const EVENT = "onelife:assistant-visibility";
@@ -229,5 +229,22 @@ export function AssistantSettingsCard() {
       </div>
       <Button variant="outline" onClick={() => setVisible(!visible)}>{visible ? "Hide" : "Show"}</Button>
     </div>
+  );
+}
+
+export function AssistantToolsCard() {
+  return (
+    <details className="mb-6 rounded-xl border border-border bg-card p-4">
+      <summary className="cursor-pointer font-medium">Assistant tools ({ASSISTANT_TOOL_LIST.length})</summary>
+      <p className="mt-2 text-sm text-muted-foreground">Everything the voice assistant can change. It asks before every change and never touches Settings.</p>
+      <ol className="mt-3 space-y-2 text-sm">
+        {ASSISTANT_TOOL_LIST.map((t, i) => (
+          <li key={t.name} className="flex gap-3">
+            <span className="w-6 shrink-0 text-muted-foreground">{i + 1}.</span>
+            <span><code className="font-mono text-xs">{t.name}</code> — <span className="text-muted-foreground">{t.description}</span></span>
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }

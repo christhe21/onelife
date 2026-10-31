@@ -1,3 +1,4 @@
+import { ASSISTANT_TOOLS } from "./assistant-actions";
 import { createOpenAI } from "@ai-sdk/openai";
 import { stepCountIs, streamText, tool, type ModelMessage } from "ai";
 import process from "node:process";
@@ -125,52 +126,14 @@ Never pressure the user; the app limits active work to three monthly focus pilla
 Backchannel policy: Use few listening sounds.
 Interruption policy: Stop your answer and listen when the user interrupts.
 Delegation policy:
-Backend tools: Read the user's plan and create or change goals, milestones, tasks, skills, books, reading sessions, and send suggestions to the app's creator.
+Backend tools: Read the user's plan and create, change or delete anything in it: skills, goals, milestones, tasks, checklist steps, calendar events with times and repeats, auto-scheduling, monthly focus pillars, Someday list, books and reading sessions, plugins, Survival Mode protocol, and send suggestions. App settings are off-limits.
 Delegate to the backend when: The user wants to add, change, complete or look up anything in their plan, or share a suggestion or feedback.
 Do not delegate to the backend when: Greeting, clarifying, or small talk.
-Before anything is deleted, ask the user to confirm. Wait for the backend result before saying what was done.`;
+Permission rule: before any change, say briefly what you will do and wait for the user to say yes; only then delegate. Reading or listing needs no confirmation. Never change app settings (theme, notifications, account, export, clear data). Wait for the backend result before saying what was done.`;
 
 export type AssistantAction = { action: string; args: Record<string, unknown> };
 
-const nullableString = z.string().nullable();
-const actionTools = {
-  create_goal: {
-    description: "Create a goal. skill_id must be an existing skill id from the plan. Dates are YYYY-MM-DD.",
-    input: z.object({ title: z.string(), skill_id: z.string(), target_date: nullableString, description: nullableString }).strict(),
-  },
-  create_milestone: {
-    description: "Create a milestone under an existing goal.",
-    input: z.object({ goal_id: z.string(), title: z.string(), target_date: nullableString }).strict(),
-  },
-  create_task: {
-    description: "Create a task under an existing goal (and optionally a milestone). Priority is low, medium or high.",
-    input: z.object({ title: z.string(), goal_id: z.string(), milestone_id: nullableString, due_date: nullableString, priority: nullableString }).strict(),
-  },
-  create_skill: {
-    description: "Create a new skill/area of life.",
-    input: z.object({ label: z.string() }).strict(),
-  },
-  complete_task: {
-    description: "Mark an existing task as done (or not done).",
-    input: z.object({ task_id: z.string(), done: z.boolean() }).strict(),
-  },
-  rename_item: {
-    description: "Rename a goal, task or skill. kind is goal, task or skill.",
-    input: z.object({ kind: z.string(), id: z.string(), title: z.string() }).strict(),
-  },
-  delete_item: {
-    description: "Delete a goal, task or book. Only call after the user explicitly confirmed. kind is goal, task or book.",
-    input: z.object({ kind: z.string(), id: z.string() }).strict(),
-  },
-  add_book: {
-    description: "Add a book to the reading list. shelf is queue, reading or finished.",
-    input: z.object({ title: z.string(), author: nullableString, page_count: z.number().nullable(), shelf: nullableString }).strict(),
-  },
-  log_reading: {
-    description: "Log a reading session for an existing book; optionally update the bookmark page.",
-    input: z.object({ book_id: z.string(), minutes: z.number(), date: nullableString, current_page: z.number().nullable() }).strict(),
-  },
-} as const;
+const actionTools = ASSISTANT_TOOLS;
 
 async function verifyUser(token: string | undefined) {
   const url = process.env["SUPABASE_URL"];
@@ -257,7 +220,7 @@ async function answerQuestion(
       "Continue from completed tool results; do not repeat completed actions. " +
       "Use ids from the plan below; pass null for unknown optional fields. If a goal or skill is ambiguous, ask instead of guessing. " +
       "Tool calls are applied in the user's app, which may refuse scheduling outside the three monthly focus pillars; say the app will confirm on screen. " +
-      "Never delete without explicit confirmation in the transcript. " +
+      "Only make changes the user explicitly agreed to in the transcript; if not yet confirmed, ask instead of calling a change tool. list_calendar can be used freely. Never touch app settings. " +
       "Reply with a short spoken summary in at most 80 words.\n\nToday: " + new Date().toISOString().slice(0, 10) +
       "\n\nUser plan:\n" + (config.appContext || "(empty)"),
     messages,
@@ -267,7 +230,7 @@ async function answerQuestion(
           name,
           tool({
             description: def.description,
-            inputSchema: def.input as z.ZodType<Record<string, unknown>>,
+            inputSchema: (def.input as z.ZodObject).strict() as unknown as z.ZodType<Record<string, unknown>>,
             execute: async (args: Record<string, unknown>) => {
               signal.throwIfAborted();
               onAction({ action: name, args });
