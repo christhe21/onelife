@@ -28,3 +28,28 @@ describe("assistant actions", () => {
     expect(a.updateTask).toHaveBeenCalledWith("t1", { done: true });
   });
 });
+
+describe("full-access assistant tools", () => {
+  it("schedules an event at the given date and time", () => {
+    const a = { ...api(), canScheduleTask: () => true };
+    applyAssistantAction(a, "schedule_event", { task_id: "t1", date: "2026-11-02", start_time: "09:30", minutes: 45, repeat: null });
+    expect(a.updateTask).toHaveBeenCalledWith("t1", expect.objectContaining({ startDate: "2026-11-02T09:30:00", endDate: "2026-11-02T10:15:00" }));
+  });
+  it("refuses scheduling outside the focus pillars", () => {
+    const a = { ...api(), canScheduleTask: () => false };
+    expect(() => applyAssistantAction(a, "schedule_event", { task_id: "t1", date: "2026-11-02", start_time: "09:30", minutes: 30 })).toThrow(/focus/);
+    expect(a.updateTask).not.toHaveBeenCalled();
+  });
+  it("allows at most three focus pillars", () => {
+    const a = { ...api(), skills: [1, 2, 3, 4].map((n) => ({ id: `s${n}`, label: `S${n}`, color: "#000" })), setFocusPillars: vi.fn() };
+    expect(() => applyAssistantAction(a, "set_focus_pillars", { pillars: [1, 2, 3, 4].map((n) => ({ type: "skill", id: `s${n}` })) })).toThrow();
+    applyAssistantAction(a, "set_focus_pillars", { pillars: [{ type: "skill", id: "s1" }, { type: "skill", id: "s2" }] });
+    expect(a.setFocusPillars).toHaveBeenCalledWith([{ type: "skill", id: "s1" }, { type: "skill", id: "s2" }]);
+  });
+  it("moves a milestone to another goal", () => {
+    const a = { ...api(), moveSubGoal: vi.fn() };
+    a.goals.push({ ...a.goals[0], id: "g2", title: "English", subGoals: [] });
+    applyAssistantAction(a, "move_milestone", { milestone_id: "m1", to_goal_id: "g2" });
+    expect(a.moveSubGoal).toHaveBeenCalledWith("m1", "g2");
+  });
+});
