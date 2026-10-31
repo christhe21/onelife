@@ -20,6 +20,7 @@ import { usePushReminders } from "@/hooks/use-push";
 import { useAuth } from "@/hooks/use-auth";
 import { getSkillPoints, getSkillTitle, getOverallRank } from "@/lib/rank";
 import { RankLadderDialog } from "@/components/life/RankLadderDialog";
+import { SuggestionsInbox } from "@/components/life/SuggestionsInbox";
 import { celebrate } from "@/lib/celebrate";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -562,6 +563,9 @@ export function SettingsView() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Suggestions inbox ─────────────────────────────── */}
+      <SuggestionsInbox />
     </div>
   );
 }
