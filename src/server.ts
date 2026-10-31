@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { APIRoute } from "./routes/api.send-reminders";
 import { renderErrorPage } from "./lib/error-page";
+import { handleLiveRequest } from "./lib/live-relay.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -71,6 +72,12 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const url = new URL(request.url);
+      if (url.pathname === "/api/live") {
+        const exec = ctx as { waitUntil?: (task: Promise<unknown>) => void } | undefined;
+        const live = request as Request & { waitUntil?: (task: Promise<unknown>) => void };
+        if (!live.waitUntil && exec?.waitUntil) live.waitUntil = exec.waitUntil.bind(exec);
+        return handleLiveRequest(live);
+      }
       if (url.pathname === "/api/send-reminders" && request.method === "POST") {
         return await APIRoute.action({ request });
       }
