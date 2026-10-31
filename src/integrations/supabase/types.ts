@@ -92,6 +92,33 @@ export type Database = {
         }
         Relationships: []
       }
+      suggestions: {
+        Row: {
+          created_at: string
+          emailed: boolean
+          id: string
+          source: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emailed?: boolean
+          id?: string
+          source?: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emailed?: boolean
+          id?: string
+          source?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_app_data: {
         Row: {
           created_at: string

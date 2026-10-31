@@ -22,6 +22,7 @@ import { PluginsView } from "@/components/life/plugins/PluginsView";
 import { BooksView } from "@/components/life/plugins/BooksView";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 import { APP_NAME } from "@/lib/site";
+import { AssistantFloater, AssistantSettingsCard } from "@/components/life/AssistantFloater";
 
 export const Route = createFileRoute("/app")({
   validateSearch: z.object({
@@ -97,6 +98,7 @@ function Shell() {
       {tab === "settings" && (
         <>
           <TourReplayCard />
+          <AssistantSettingsCard />
           <SettingsView />
         </>
       )}
@@ -108,6 +110,7 @@ function Shell() {
           }}
         />
       )}
+      <AssistantFloater />
       <ProductTour tab={tab} onTab={setTab} onOverviewView={setOverviewView} />
     </AppShell>
   );
