@@ -563,6 +563,9 @@ export function SettingsView() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Suggestions inbox ─────────────────────────────── */}
+      <SuggestionsInbox />
     </div>
   );
 }
