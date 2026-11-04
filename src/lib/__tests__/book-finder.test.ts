@@ -24,3 +24,16 @@ describe("parseBookFinderPayload", () => {
     expect(out[0].pageCount).toBe(412);
   });
 });
+
+import { decodeBookFinderHash } from "../book-finder";
+describe("decodeBookFinderHash", () => {
+  it("reads books from the return address", () => {
+    const json = JSON.stringify({ type: "onelife.books", book: { title: "Dune" } });
+    const hash = "#books=" + btoa(json);
+    const out = parseBookFinderPayload(BOOK_FINDER_ORIGIN, decodeBookFinderHash(hash));
+    expect(out.map((b) => b.title)).toEqual(["Dune"]);
+  });
+  it("ignores a broken address", () => {
+    expect(decodeBookFinderHash("#books=%%%")).toBeNull();
+  });
+});

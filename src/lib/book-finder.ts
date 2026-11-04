@@ -57,3 +57,16 @@ export function parseBookFinderPayload(
 export function bookFinderLaunchUrl(returnOrigin: string): string {
   return `${BOOK_FINDER_URL}/?return=${encodeURIComponent(returnOrigin)}`;
 }
+
+/** Decode the `#books=<base64 json>` return hash Book Finder uses when no popup window exists. */
+export function decodeBookFinderHash(hash: string): unknown {
+  const m = /(?:^#|&)books=([^&]+)/.exec(hash);
+  if (!m) return null;
+  try {
+    const b64 = decodeURIComponent(m[1]).replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    return null;
+  }
+}
