@@ -1,5 +1,7 @@
-import { useMemo, useState } from "react";
-import { BookOpen, Bookmark, CalendarPlus, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, Bookmark, CalendarPlus, Plus, ScanLine, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { bookFinderLaunchUrl, parseBookFinderPayload } from "@/lib/book-finder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +35,28 @@ const SHELF_LABEL: Record<BookShelf, string> = {
 };
 
 export function BooksView() {
-  const { books } = useAppData();
+  const { books, addBook } = useAppData();
   const [adding, setAdding] = useState(false);
   const [filter, setFilter] = useState<"all" | BookShelf>("all");
+  const isbnsRef = useRef<string[]>([]);
+  isbnsRef.current = books.books.map((b) => b.isbn ?? "").filter(Boolean);
+
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      const incoming = parseBookFinderPayload(e.origin, e.data, isbnsRef.current);
+      for (const b of incoming) {
+        addBook({ ...b, shelf: "queue" });
+        isbnsRef.current.push(b.isbn ?? "");
+        toast.success(`"${b.title}" added from Book Finder.`);
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [addBook]);
+
+  const openScanner = () => {
+    window.open(bookFinderLaunchUrl(window.location.origin), "book-finder");
+  };
 
   const list = useMemo(() => {
     const sorted = sortBooks(books.books);
@@ -54,9 +75,14 @@ export function BooksView() {
             {books.books.length} in your library · {reading} reading · {finished} finished
           </p>
         </div>
-        <Button onClick={() => setAdding(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Add book
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={openScanner}>
+            <ScanLine className="mr-2 h-4 w-4" /> Scan with Book Finder
+          </Button>
+          <Button onClick={() => setAdding(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Add book
+          </Button>
+        </div>
       </div>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
