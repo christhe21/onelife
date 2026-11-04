@@ -22,6 +22,7 @@ import { PluginsView } from "@/components/life/plugins/PluginsView";
 import { BooksView } from "@/components/life/plugins/BooksView";
 import { useAppSettingsEffects } from "@/hooks/use-app-settings";
 import { APP_NAME } from "@/lib/site";
+import { BookFinderReturn } from "@/components/life/plugins/BookFinderReturn";
 import { AssistantFloater, AssistantSettingsCard, AssistantToolsCard } from "@/components/life/AssistantFloater";
 
 export const Route = createFileRoute("/app")({
@@ -112,6 +113,7 @@ function Shell() {
         />
       )}
       <AssistantFloater />
+      <BookFinderReturn />
       <ProductTour tab={tab} onTab={setTab} onOverviewView={setOverviewView} />
     </AppShell>
   );

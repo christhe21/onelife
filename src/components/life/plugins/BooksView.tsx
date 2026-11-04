@@ -55,7 +55,10 @@ export function BooksView() {
   }, [addBook]);
 
   const openScanner = () => {
-    window.open(bookFinderLaunchUrl(window.location.origin), "book-finder");
+    const url = bookFinderLaunchUrl(window.location.origin);
+    const win = window.open(url, "book-finder");
+    // Pop-up blocked: go there in this tab; Book Finder returns to /app#books=...
+    if (!win) window.location.href = url;
   };
 
   const list = useMemo(() => {
